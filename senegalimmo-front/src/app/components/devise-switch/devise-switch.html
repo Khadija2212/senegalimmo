@@ -1,0 +1,19 @@
+<div class="dv-wrap">
+  <div class="dv-switch" role="group" aria-label="Devise d'affichage">
+    @for (o of options; track o.value) {
+      <button type="button" class="dv-btn"
+        [class.active]="service.devise() === o.value"
+        (click)="service.choisir(o.value)">
+        {{ o.label }}
+      </button>
+    }
+  </div>
+
+  @if (service.devise() !== 'FCFA') {
+    <small class="dv-note"
+      [title]="service.taux()?.source ?? ''">
+      Indicatif · paiement en FCFA
+      @if (service.taux()?.indicatif) { · taux de secours }
+    </small>
+  }
+</div>

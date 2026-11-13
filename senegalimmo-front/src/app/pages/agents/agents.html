@@ -1,0 +1,81 @@
+<div class="lp-bg">
+  <header class="lp-nav">
+    <a class="lp-logo" routerLink="/"><img src="/images/logo-senegalimmo.jpg" alt="SénégalImmo" class="brand-logo-img" /> SénégalImmo</a>
+    <nav class="lp-nav-actions">
+      <a class="lp-link" routerLink="/agence/dashboard">Mon espace</a>
+      <button class="lp-btn" (click)="logout()">Déconnexion</button>
+    </nav>
+  </header>
+
+  <main class="lp-page">
+    <a class="lp-back" routerLink="/agence/dashboard">← Retour au tableau de bord</a>
+
+    <h1>Mes agents</h1>
+    <p class="lp-sub">Créez les comptes de vos agents et suivez leurs performances.</p>
+
+    <div class="lp-actions" style="margin-bottom:16px">
+      <button mat-raised-button color="primary" (click)="showForm = !showForm">
+        {{ showForm ? 'Fermer le formulaire' : '+ Nouvel agent' }}
+      </button>
+    </div>
+
+    @if (showForm) {
+      <div class="lp-form" style="margin-bottom:20px">
+        <div class="lp-row">
+          <label class="lp-field"><span>Prénom</span><input type="text" [(ngModel)]="form.prenom"></label>
+          <label class="lp-field"><span>Nom</span><input type="text" [(ngModel)]="form.nom"></label>
+        </div>
+        <div class="lp-row">
+          <label class="lp-field"><span>E-mail (identifiant de connexion)</span><input type="email" [(ngModel)]="form.email"></label>
+          <label class="lp-field"><span>Téléphone</span><input type="text" [(ngModel)]="form.telephone"></label>
+        </div>
+        <label class="lp-field">
+          <span>Mot de passe provisoire (6 caractères minimum)</span>
+          <input type="text" [(ngModel)]="form.password">
+        </label>
+        <div class="lp-actions">
+          <button mat-raised-button color="primary" [disabled]="saving" (click)="create()">
+            {{ saving ? 'Création...' : 'Créer l\'agent' }}
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (isLoading) {
+      <div class="lp-state">Chargement...</div>
+    } @else if (agents.length === 0) {
+      <div class="lp-state">Vous n'avez encore aucun agent.</div>
+    } @else {
+      <div class="lp-list">
+        @for (a of agents; track a.id) {
+          <article class="lp-item">
+            <div class="lp-info">
+              <div class="lp-top">
+                <h3>{{ a.prenom }} {{ a.nom }}</h3>
+                <span class="lp-badge" [class.lp-s-signe]="a.statut === 'actif'"
+                  [class.lp-s-annulee]="a.statut !== 'actif'">
+                  {{ a.statut === 'actif' ? 'Actif' : 'Suspendu' }}
+                </span>
+              </div>
+
+              <p><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> {{ a.email }} · <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>{{ a.telephone }}</p>
+
+              <div class="dash-stats">
+                <div class="dash-card"><div class="label">Biens assignés</div><div class="value">{{ a.biens_assignes }}</div></div>
+                <div class="dash-card"><div class="label">Visites effectuées</div><div class="value">{{ a.visites_effectuees }}</div></div>
+                <div class="dash-card"><div class="label">Transactions</div><div class="value">{{ a.transactions }}</div></div>
+                <div class="dash-card"><div class="label">Commissions</div><div class="value">{{ a.commissions | number:'1.0-0' }} FCFA</div></div>
+              </div>
+
+              <div class="lp-actions">
+                <button mat-stroked-button [color]="a.statut === 'actif' ? 'warn' : 'primary'" (click)="toggle(a)">
+                  {{ a.statut === 'actif' ? 'Suspendre' : 'Réactiver' }}
+                </button>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </main>
+</div>

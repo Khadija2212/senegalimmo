@@ -1,0 +1,142 @@
+<div class="lp-bg">
+  <header class="lp-nav">
+    <a class="lp-logo" routerLink="/">
+      <img src="/images/logo-senegalimmo.jpg" alt="SénégalImmo" class="brand-logo-img" />
+      SénégalImmo
+    </a>
+    <nav class="lp-nav-actions">
+      <a class="lp-link" [routerLink]="dashboardLink">Mon espace</a>
+    </nav>
+  </header>
+
+  <main class="lp-page">
+    <a class="lp-back" [routerLink]="dashboardLink">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m15 18-6-6 6-6"/>
+      </svg>
+      Retour au tableau de bord
+    </a>
+
+    @if (isLoading) {
+      <div class="lp-state">Chargement...</div>
+    } @else {
+      <h1>Mon profil</h1>
+      <p class="lp-sub">{{ roleLabel(user.role) }}
+        @if (user.role === 'agent' && user.matricule) { · matricule {{ user.matricule }} }
+      </p>
+
+      <section class="lp-block">
+        <h2>Informations personnelles</h2>
+
+        <div class="lp-row">
+          <label class="lp-field"><span>Prénom</span><input type="text" [(ngModel)]="form.prenom"></label>
+          <label class="lp-field"><span>Nom</span><input type="text" [(ngModel)]="form.nom"></label>
+        </div>
+        <div class="lp-row">
+          <label class="lp-field"><span>E-mail</span><input type="email" [(ngModel)]="form.email"></label>
+          <label class="lp-field"><span>Téléphone</span><input type="text" [(ngModel)]="form.telephone"></label>
+        </div>
+        <label class="lp-field"><span>Adresse</span><input type="text" [(ngModel)]="form.adresse"></label>
+
+        @if (user.role === 'proprietaire') {
+          <label class="lp-field"><span>Numéro de carte d'identité (CNI)</span>
+            <input type="text" [(ngModel)]="form.numero_cni"></label>
+        }
+
+        @if (user.role === 'locataire' || user.role === 'client') {
+          <div class="lp-row">
+            <label class="lp-field"><span>Profession</span><input type="text" [(ngModel)]="form.profession"></label>
+            <label class="lp-field"><span>Revenu mensuel (FCFA)</span>
+              <input type="number" min="0" [(ngModel)]="form.revenu_mensuel"></label>
+          </div>
+        }
+
+        @if (user.role === 'acheteur' || user.role === 'client') {
+          <div class="lp-row">
+            <label class="lp-field"><span>Budget minimum (FCFA)</span>
+              <input type="number" min="0" [(ngModel)]="form.budget_min"></label>
+            <label class="lp-field"><span>Budget maximum (FCFA)</span>
+              <input type="number" min="0" [(ngModel)]="form.budget_max"></label>
+          </div>
+        }
+
+        @if (user.role === 'agent' || user.role === 'agence') {
+          <div class="lp-row">
+            <label class="lp-field"><span>Nom du cabinet / agence (optionnel)</span>
+              <input type="text" [(ngModel)]="form.nom_agence"></label>
+            <label class="lp-field"><span>Numéro de licence / agrément</span>
+              <input type="text" [(ngModel)]="form.numero_licence"></label>
+          </div>
+        }
+
+        <div class="lp-actions">
+          <button class="lp-btn" [disabled]="saving" (click)="save()">
+            {{ saving ? 'Enregistrement...' : 'Enregistrer les modifications' }}
+          </button>
+        </div>
+      </section>
+
+      @if (user.role !== 'administrateur') {
+        <section class="lp-block">
+          <h2>Vérification d'identité</h2>
+
+          <span class="lp-badge"
+            [class.lp-s-signe]="user.verification === 'verifie'"
+            [class.lp-s-en_attente]="user.verification === 'en_attente'"
+            [class.lp-s-refusee]="user.verification === 'refuse'"
+            [class.lp-s-annulee]="user.verification === 'non_soumis'">
+            {{ verificationLabel(user.verification) }}
+          </span>
+
+          @if (user.verification === 'refuse' && user.verification_motif) {
+            <p class="lp-motif">Motif : {{ user.verification_motif }}</p>
+          }
+
+          <p class="lp-sub" style="margin-top:12px">
+            Envoyez une pièce d'identité (PDF, JPG ou PNG, 5 Mo maximum) pour obtenir le badge « compte vérifié ».
+            Le document n'est visible que par vous et par l'administrateur.
+          </p>
+
+          @if (user.verification !== 'verifie') {
+            <label class="lp-upload" for="doc-input">
+              <span class="lp-upload-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="20" height="14" x="2" y="5" rx="2"/>
+                  <line x1="2" y1="10" x2="22" y2="10"/>
+                </svg>
+              </span>
+              <span>{{ uploading ? 'Envoi en cours...' : 'Choisir un document' }}</span>
+              <small>PDF, JPG ou PNG</small>
+            </label>
+            <input id="doc-input" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden (change)="onFile($event)">
+          }
+
+          @if (user.a_document) {
+            <div class="lp-actions">
+              <button class="lp-btn lp-btn-outline" (click)="voirDocument()">Voir mon document</button>
+            </div>
+          }
+        </section>
+      }
+
+      <section class="lp-block">
+        <h2>Changer mon mot de passe</h2>
+
+        <label class="lp-field"><span>Mot de passe actuel</span>
+          <input type="password" [(ngModel)]="mdp.mot_de_passe_actuel"></label>
+        <div class="lp-row">
+          <label class="lp-field"><span>Nouveau mot de passe (6 caractères minimum)</span>
+            <input type="password" [(ngModel)]="mdp.password"></label>
+          <label class="lp-field"><span>Confirmation</span>
+            <input type="password" [(ngModel)]="mdp.password_confirmation"></label>
+        </div>
+
+        <div class="lp-actions">
+          <button class="lp-btn" [disabled]="savingPwd" (click)="changePassword()">
+            {{ savingPwd ? 'Modification...' : 'Modifier le mot de passe' }}
+          </button>
+        </div>
+      </section>
+    }
+  </main>
+</div>

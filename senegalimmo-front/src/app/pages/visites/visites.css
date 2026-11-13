@@ -1,0 +1,240 @@
+:host {
+  display: block;
+  background: var(--bg-app, #f8f7f4);
+  min-height: 100vh;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 40px;
+  background: #fff;
+  border-bottom: 1px solid var(--border, #e4e2dc);
+  box-shadow: 0 1px 4px rgba(25, 32, 29, 0.04);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.nav-logo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary, #184e3b);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-link {
+  color: var(--primary, #184e3b);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.nav-link:hover {
+  text-decoration: underline;
+}
+
+.nav-btn {
+  padding: 8px 16px;
+  border-radius: var(--radius-sm, 6px);
+  border: none;
+  background: var(--primary, #184e3b);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: inline-block;
+  transition: background 0.15s ease;
+}
+
+.nav-btn:hover {
+  background: var(--primary-hover, #123d2e);
+}
+
+.page {
+  max-width: 950px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  color: var(--primary, #184e3b);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.back:hover {
+  text-decoration: underline;
+}
+
+.page h1 {
+  margin: 0 0 4px;
+  font-size: 1.65rem;
+  color: var(--dark, #19201d);
+  letter-spacing: -0.4px;
+}
+
+.subtitle {
+  margin: 0 0 24px;
+  color: var(--text-muted, #6b7570);
+  font-size: 0.95rem;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.tab {
+  border: 1px solid var(--border, #e4e2dc);
+  background: #fff;
+  color: var(--text-main, #232a26);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tab.active {
+  background: var(--primary, #184e3b);
+  color: #fff;
+  border-color: var(--primary, #184e3b);
+}
+
+.state {
+  background: #fff;
+  border-radius: var(--radius-md, 10px);
+  padding: 40px;
+  text-align: center;
+  color: var(--text-muted, #6b7570);
+  border: 1px solid var(--border, #e4e2dc);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.item {
+  display: flex;
+  gap: 18px;
+  background: #fff;
+  border-radius: var(--radius-md, 10px);
+  padding: 18px;
+  border: 1px solid var(--border, #e4e2dc);
+  box-shadow: 0 1px 3px rgba(25, 32, 29, 0.04);
+}
+
+.photo {
+  flex-shrink: 0;
+  width: 170px;
+  height: 130px;
+  border-radius: var(--radius-sm, 6px);
+  overflow: hidden;
+  background: #edece8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted, #6b7570);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.top h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--dark, #19201d);
+  font-weight: 700;
+}
+
+.lieu, .date, .who {
+  margin: 0 0 6px;
+  color: var(--text-muted, #6b7570);
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.comment {
+  font-style: italic;
+  color: #57534e;
+  background: #faf9f6;
+  padding: 6px 10px;
+  border-left: 3px solid var(--border, #e4e2dc);
+  border-radius: 0 4px 4px 0;
+  font-size: 0.88rem;
+  margin: 8px 0;
+}
+
+.statut {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.statut-en_attente { background: #fef3c7; color: #92400e; }
+.statut-confirme { background: #dcfce7; color: #166534; }
+.statut-effectue { background: #e0f2fe; color: #075985; }
+.statut-annule { background: #fee2e2; color: #991b1b; }
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+@media (max-width: 700px) {
+  .item {
+    flex-direction: column;
+  }
+  .photo {
+    width: 100%;
+    height: 180px;
+  }
+}

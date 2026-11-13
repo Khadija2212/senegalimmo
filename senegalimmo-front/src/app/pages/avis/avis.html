@@ -1,0 +1,44 @@
+<div class="lp-bg">
+  <header class="lp-nav">
+    <a class="lp-logo" routerLink="/"><img src="/images/logo-senegalimmo.jpg" alt="SénégalImmo" class="brand-logo-img" /> SénégalImmo</a>
+  </header>
+
+  <main class="lp-page">
+    <a class="lp-back" routerLink="/">← Retour aux annonces</a>
+
+    @if (isLoading) {
+      <div class="lp-state">Chargement...</div>
+    } @else if (notFound) {
+      <div class="lp-state">Ce propriétaire est introuvable.</div>
+    } @else {
+      <h1>Avis sur {{ data.proprietaire.prenom }} {{ data.proprietaire.nom }}</h1>
+
+      <div class="lp-state rate-summary">
+        @if (data.total > 0) {
+          <div class="rate-score">{{ data.moyenne | number:'1.1-1' }} / 5</div>
+          <div class="rate-stars-static">{{ etoiles(data.moyenne) }}</div>
+          <p>{{ data.total }} avis</p>
+        } @else {
+          <p>Ce propriétaire n'a pas encore reçu d'avis.</p>
+        }
+      </div>
+
+      <div class="lp-list">
+        @for (a of data.avis; track $index) {
+          <article class="lp-item">
+            <div class="lp-info">
+              <div class="lp-top">
+                <span class="rate-stars-static">{{ etoiles(a.note) }}</span>
+                <span class="lp-sub">{{ a.date | date:'d MMM y' }}</span>
+              </div>
+              @if (a.commentaire) {
+                <p>{{ a.commentaire }}</p>
+              }
+              <p class="lp-sub">Par {{ a.auteur }}@if (a.bien) { · {{ a.bien }} }</p>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </main>
+</div>

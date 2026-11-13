@@ -1,0 +1,138 @@
+<div class="lp-bg">
+  <header class="lp-nav">
+    <a class="lp-logo" routerLink="/"><img src="/images/logo-senegalimmo.jpg" alt="SénégalImmo" class="brand-logo-img" /> SénégalImmo</a>
+    <nav class="lp-nav-actions">
+      <a class="lp-link" [routerLink]="dashboardLink">Mon espace</a>
+    </nav>
+  </header>
+
+  <main class="lp-page">
+    <a class="lp-back" routerLink="/contrats">← Retour aux baux</a>
+
+    <h1>États des lieux</h1>
+    @if (contrat) {
+      <p class="lp-sub">{{ contrat.bien?.titre }} · {{ contrat.bien?.quartier }}, {{ contrat.bien?.ville }}</p>
+    }
+
+    @if (isLoading) {
+      <div class="lp-state">Chargement...</div>
+    } @else {
+      @for (t of types; track t.value) {
+        <section class="lp-block">
+          <h2>{{ t.label }}</h2>
+
+          @if (find(t.value); as e) {
+            <span class="lp-badge" [class.lp-s-confirme]="e.valide_locataire" [class.lp-s-en_attente]="!e.valide_locataire">
+              {{ e.valide_locataire ? '✓ Validé par le locataire' : 'En attente de validation du locataire' }}
+            </span>
+
+            <table class="lp-pieces">
+              <thead><tr><th>Pièce</th><th>État</th><th>Remarque</th></tr></thead>
+              <tbody>
+                @for (p of e.pieces; track $index) {
+                  <tr>
+                    <td>{{ p.piece }}</td>
+                    <td><span class="lp-etat-{{ p.etat }}">{{ niveauLabel(p.etat) }}</span></td>
+                    <td>{{ p.remarque }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+
+            @if (e.observations) {
+              <p><strong>Observations :</strong> {{ e.observations }}</p>
+            }
+
+            @if (e.photos_urls?.length) {
+              <div class="lp-thumbs">
+                @for (src of e.photos_urls; track src) {
+                  <a [href]="src" target="_blank"><img [src]="src" alt="Photo de l'état des lieux"></a>
+                }
+              </div>
+            }
+
+            <p class="lp-sub">Établi le {{ e.created_at | date:'d MMM y à HH:mm' }}</p>
+
+            @if (e.valide_locataire) {
+              <p class="lp-paid">
+                ✓ Validé le {{ e.valide_le | date:'d MMM y à HH:mm' }}
+                @if (e.remarque_locataire) { · Remarque du locataire : « {{ e.remarque_locataire }} » }
+              </p>
+            } @else if (!isOwner) {
+              <label class="lp-field">
+                <span>Remarque (facultatif)</span>
+                <textarea rows="2" [(ngModel)]="remarques[e.id]"></textarea>
+              </label>
+              <button mat-raised-button color="primary" (click)="validate(e)">Valider cet état des lieux</button>
+            }
+
+          } @else if (canCreate(t.value)) {
+            @if (formType === t.value) {
+              <div class="lp-form">
+                @for (p of pieces; track $index) {
+                  <div class="lp-prow">
+                    <input type="text" placeholder="Pièce" [(ngModel)]="p.piece">
+                    <select [(ngModel)]="p.etat">
+                      @for (n of niveaux; track n.value) {
+                        <option [value]="n.value">{{ n.label }}</option>
+                      }
+                    </select>
+                    <input type="text" placeholder="Remarque (facultatif)" [(ngModel)]="p.remarque">
+                    <button type="button" mat-button color="warn" (click)="removePiece($index)">✕</button>
+                  </div>
+                }
+                <button type="button" mat-stroked-button (click)="addPiece()">+ Ajouter une pièce</button>
+
+                <label class="lp-field" style="margin-top:14px">
+                  <span>Observations générales</span>
+                  <textarea rows="3" [(ngModel)]="observations"></textarea>
+                </label>
+
+                 <label class="lp-upload" for="edl-photos">
+                  <span class="lp-upload-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                  </span>
+                  <span>Ajouter des photos ({{ files.length }}/{{ maxPhotos }})</span>
+                  <small>JPG, PNG ou WebP, 4 Mo maximum par photo</small>
+                </label>
+                <input id="edl-photos" type="file" accept="image/*" multiple hidden
+                  (change)="onFiles($event)">
+
+                @if (previews.length) {
+                  <div class="lp-thumbs">
+                    @for (src of previews; track src; let i = $index) {
+                      <div class="lp-prev">
+                        <img [src]="src" alt="Aperçu">
+                        <button type="button" class="lp-prev-x" (click)="removeFile(i)">×</button>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <div class="lp-actions">
+                  <button mat-raised-button color="primary" [disabled]="saving" (click)="submit()">
+                    {{ saving ? 'Enregistrement...' : 'Enregistrer' }}
+                  </button>
+                  <button mat-button (click)="closeForm()">Annuler</button>
+                </div>
+              </div>
+            } @else {
+              <button mat-raised-button color="primary" (click)="openForm(t.value)">
+                Établir l'{{ t.label.toLowerCase() }}
+              </button>
+            }
+
+          } @else {
+            <p class="lp-sub">
+              @if (t.value === 'sortie') {
+                Disponible une fois l'état des lieux d'entrée validé par le locataire.
+              } @else {
+                Le propriétaire n'a pas encore établi cet état des lieux.
+              }
+            </p>
+          }
+        </section>
+      }
+    }
+  </main>
+</div>

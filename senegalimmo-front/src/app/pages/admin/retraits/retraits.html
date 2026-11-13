@@ -1,0 +1,102 @@
+<div class="lp-bg">
+  <header class="lp-nav">
+    <a class="lp-logo" routerLink="/"><img src="/images/logo-senegalimmo.jpg" alt="SénégalImmo" class="brand-logo-img" /> SénégalImmo</a>
+    <nav class="lp-nav-actions">
+      <a class="lp-link" routerLink="/admin/dashboard">Tableau de bord</a>
+    </nav>
+  </header>
+
+  <main class="lp-page">
+    <a class="lp-back" routerLink="/admin/dashboard">← Retour au tableau de bord</a>
+
+    <h1>Demandes de retrait</h1>
+    <p class="lp-sub">
+      Effectuez le transfert vers le compte indiqué, puis validez la demande en joignant la preuve.
+      En cas de rejet, le montant est remboursé sur le portefeuille.
+    </p>
+
+    <div class="lp-tabs">
+      @for (t of tabs; track t.value) {
+        <button type="button" class="lp-tab" [class.active]="statut === t.value" (click)="choisir(t.value)">
+          {{ t.label }}
+        </button>
+      }
+    </div>
+
+    @if (isLoading) {
+      <div class="lp-state">Chargement...</div>
+    } @else if (retraits.length === 0) {
+      <div class="lp-state">Aucune demande dans cette catégorie.</div>
+    } @else {
+      <div class="lp-list">
+        @for (r of retraits; track r.id) {
+          <article class="lp-item">
+            <div class="lp-info">
+              <div class="lp-top">
+                <h3>{{ r.montant | number:'1.0-0' }} FCFA</h3>
+                <span class="lp-badge" [class.lp-s-en_attente]="r.statut === 'en_attente'"
+                  [class.lp-s-signe]="r.statut === 'validee'" [class.lp-s-refusee]="r.statut === 'rejetee'">
+                  {{ statutLabel(r.statut) }}
+                </span>
+              </div>
+
+              <p><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>{{ r.user?.prenom }} {{ r.user?.nom }} ({{ r.user?.role }})</p>
+              <p><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>{{ methodeLabel(r.methode) }} · <strong>{{ r.numero_telephone }}</strong></p>
+              <p class="lp-sub">Demandé le {{ r.created_at | date:'d MMM y à HH:mm' }}</p>
+
+              @if (r.reference_transfert) {
+                <p class="lp-sub">Référence du transfert : {{ r.reference_transfert }}</p>
+              }
+              @if (r.statut === 'rejetee' && r.motif_rejet) {
+                <p class="lp-motif">Motif du rejet : {{ r.motif_rejet }}</p>
+              }
+
+              @if (panel && panel.id === r.id) {
+                <div class="lp-form">
+                  @if (panel.mode === 'valider') {
+                    <label class="lp-field">
+                      <span>Référence du transfert (facultatif)</span>
+                      <input type="text" [(ngModel)]="reference">
+                    </label>
+
+                    <label class="lp-upload" [attr.for]="'preuve-' + r.id">
+                      <span class="lp-upload-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 7h8"/><path d="M8 11h8"/><path d="M8 15h5"/></svg>
+                      </span>
+                      <span>{{ fichier ? fichier.name : 'Joindre la preuve de transfert (facultatif)' }}</span>
+                      <small>PDF, JPG ou PNG, 5 Mo maximum</small>
+                    </label>
+                    <input [id]="'preuve-' + r.id" type="file" accept=".pdf,.jpg,.jpeg,.png" hidden (change)="onFile($event)">
+                  } @else {
+                    <label class="lp-field">
+                      <span>Motif du rejet (visible par l'utilisateur)</span>
+                      <textarea rows="3" [(ngModel)]="motif"></textarea>
+                    </label>
+                  }
+
+                  <div class="lp-actions">
+                    <button mat-raised-button [color]="panel.mode === 'valider' ? 'primary' : 'warn'"
+                      [disabled]="saving" (click)="confirmer(r)">
+                      {{ panel.mode === 'valider' ? 'Valider le retrait' : 'Confirmer le rejet' }}
+                    </button>
+                    <button mat-button (click)="panel = null">Annuler</button>
+                  </div>
+                </div>
+              } @else {
+                <div class="lp-actions">
+                  @if (r.statut === 'en_attente') {
+                    <button mat-raised-button color="primary" (click)="open(r, 'valider')">Valider</button>
+                    <button mat-stroked-button color="warn" (click)="open(r, 'rejeter')">Rejeter</button>
+                  }
+                  @if (r.a_preuve) {
+                    <button mat-stroked-button color="primary" (click)="voirPreuve(r)">Voir la preuve</button>
+                  }
+                </div>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </main>
+</div>

@@ -1,0 +1,68 @@
+<div class="lp-bg">
+  <header class="lp-nav">
+    <a class="lp-logo" routerLink="/"><img src="/images/logo-senegalimmo.jpg" alt="SénégalImmo" class="brand-logo-img" /> SénégalImmo</a>
+    <nav class="lp-nav-actions">
+      <a class="lp-link" [routerLink]="dashboardLink">Mon espace</a>
+      <button class="lp-btn" (click)="logout()">Déconnexion</button>
+    </nav>
+  </header>
+
+  <main class="lp-page">
+    <a class="lp-back" [routerLink]="dashboardLink">← Retour au tableau de bord</a>
+
+    <h1>{{ isOwner ? 'Commissions dues' : 'Commissions' }}</h1>
+    <p class="lp-sub">
+      Calculées à la signature d'un bail (taux × loyer × min(durée, 12 mois)) ou d'une promesse de vente (taux × prix).
+    </p>
+
+    <div class="dash-stats">
+      <div class="dash-card"><div class="label">Total</div><div class="value">{{ data.total | number:'1.0-0' }} FCFA</div></div>
+      <div class="dash-card"><div class="label">À régler</div><div class="value">{{ data.due | number:'1.0-0' }} FCFA</div></div>
+      <div class="dash-card"><div class="label">Réglées</div><div class="value">{{ data.reglee | number:'1.0-0' }} FCFA</div></div>
+    </div>
+
+    @if (isLoading) {
+      <div class="lp-state">Chargement...</div>
+    } @else if (data.commissions.length === 0) {
+      <div class="lp-state">Aucune commission pour le moment.</div>
+    } @else {
+      <div class="lp-list">
+        @for (c of data.commissions; track c.id) {
+          <article class="lp-item">
+            <div class="lp-info">
+              <div class="lp-top">
+                <h3>{{ c.bien?.titre }}</h3>
+                <span class="lp-badge" [class.lp-s-en_attente]="c.statut === 'due'"
+                  [class.lp-s-signe]="c.statut === 'reglee'">
+                  {{ c.statut === 'due' ? 'À régler' : 'Réglée' }}
+                </span>
+              </div>
+
+              <p class="lp-strong">{{ c.montant | number:'1.0-0' }} FCFA</p>
+              <p>
+                {{ c.type === 'location' ? 'Location' : 'Vente' }} :
+                {{ c.taux | number:'1.0-2' }} % de {{ c.base | number:'1.0-0' }} FCFA
+              </p>
+              <p><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Agent immobilier : {{ (c.agent || c.agence)?.prenom }} {{ (c.agent || c.agence)?.nom }}</p>
+              <p><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Propriétaire : {{ c.proprietaire?.prenom }} {{ c.proprietaire?.nom }}</p>
+              <p class="lp-sub">Générée le {{ c.created_at | date:'d MMM y' }}
+                @if (c.reglee_le) { · réglée le {{ c.reglee_le | date:'d MMM y' }} }
+              </p>
+
+              @if (isAgence && c.statut === 'due') {
+                <div class="lp-actions">
+                  <button mat-stroked-button color="primary" (click)="regler(c)">Marquer comme réglée</button>
+                </div>
+              }
+              @if (isProprietaire && c.statut === 'due') {
+                <div class="lp-actions">
+                  <button mat-raised-button color="primary" (click)="payer(c)">Payer depuis mon portefeuille</button>
+                </div>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </main>
+</div>

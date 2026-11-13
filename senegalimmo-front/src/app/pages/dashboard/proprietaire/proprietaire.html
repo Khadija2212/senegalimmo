@@ -1,0 +1,72 @@
+<div class="dash">
+  <aside class="dash-sidebar">
+    <div class="dash-logo">
+      <img src="/images/logo-senegalimmo.jpg" alt="SénégalImmo" class="brand-logo-img" />
+      SénégalImmo
+    </div>
+    <ul class="dash-menu">
+      <li class="active" routerLink="/proprietaire/dashboard">Tableau de bord</li>
+      <li routerLink="/proprietaire/biens">Mes biens</li>
+      <li routerLink="/proprietaire/annonces">Mes annonces</li>
+      <li routerLink="/visites">Visites</li>
+      <li routerLink="/demandes">Demandes de location</li>
+      <li routerLink="/contrats">Contrats</li>
+      <li routerLink="/offres">Offres d'achat</li>
+      <li routerLink="/promesses">Promesses de vente</li>
+      <li routerLink="/paiements">Paiements</li>
+      <li routerLink="/quittances">Quittances émises</li>
+      <li routerLink="/messages">Messages</li>
+      <li routerLink="/mandats">Mandats</li>
+      <li routerLink="/commissions">Commissions</li>
+      <li routerLink="/portefeuille">Portefeuille</li>
+      <li routerLink="/profil">Mon profil</li>
+      <li [routerLink]="['/avis', user?.id]">Mes avis</li>
+      </ul>
+    <button class="dash-logout" (click)="logout()">Déconnexion</button>
+  </aside>
+
+  <main class="dash-main">
+    <div class="dash-header">
+      <h1>Espace Propriétaire</h1>
+      <p>Bienvenue, {{ user?.prenom }} {{ user?.nom }}</p>
+    </div>
+
+    <div class="dash-stats">
+      <div class="dash-card clickable" routerLink="/proprietaire/biens" style="cursor: pointer;">
+        <div class="label">Mes biens</div>
+        <div class="value">{{ stats?.biens ?? 0 }}</div>
+      </div>
+      <div class="dash-card clickable" [routerLink]="['/proprietaire/annonces']" [queryParams]="{ filtre: 'publiee' }" style="cursor: pointer;">
+        <div class="label">Annonces publiées</div>
+        <div class="value">{{ stats?.annonces_publiees ?? 0 }}</div>
+      </div>
+      <div class="dash-card clickable" [routerLink]="['/proprietaire/annonces']" [queryParams]="{ filtre: 'en_attente' }" style="cursor: pointer;">
+        <div class="label">Annonces en validation</div>
+        <div class="value">{{ stats?.annonces_en_attente ?? 0 }}</div>
+      </div>
+      <div class="dash-card clickable" routerLink="/visites" style="cursor: pointer;">
+        <div class="label">Visites à traiter</div>
+        <div class="value">{{ stats?.visites_en_attente ?? 0 }}</div>
+      </div>
+      <div class="dash-card clickable" routerLink="/portefeuille" style="cursor: pointer;">
+        <div class="label">Solde du portefeuille</div>
+        <div class="value">{{ stats?.solde ?? 0 | number:'1.0-0' }} FCFA</div>
+      </div>
+       <div class="dash-card clickable" routerLink="/messages" style="cursor: pointer;">
+        <div class="label">Messages non lus</div>
+        <div class="value">{{ stats?.messages_non_lus ?? 0 }}</div>
+      </div>
+      <div class="dash-card clickable" [routerLink]="['/avis', user?.id]" style="cursor: pointer;">
+        <div class="label">Note moyenne</div>
+        <div class="value">
+          @if (stats?.nb_avis) { {{ stats.note_moyenne | number:'1.1-1' }} / 5 } @else { - }
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-section">
+      <h2>Dernières demandes de location</h2>
+      <div class="dash-empty">Aucune demande pour le moment.</div>
+    </div>
+  </main>
+</div>

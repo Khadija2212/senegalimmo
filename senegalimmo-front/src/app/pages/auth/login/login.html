@@ -1,0 +1,97 @@
+<div class="login-container">
+  <div class="login-left">
+    <div class="login-brand">
+      <div class="brand-title">
+        <img src="/images/logo-senegalimmo.jpg" alt="SénégalImmo" class="brand-logo-img brand-logo-img-lg" />
+        <h1>SénégalImmo</h1>
+      </div>
+      <p>La plateforme immobilière de référence au Sénégal</p>
+    </div>
+    <div class="login-features">
+      <div class="feature">
+        <span class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        </span>
+        <span>Des milliers de biens audités et disponibles</span>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        </span>
+        <span>Paiements d'acompte Wave & Orange Money</span>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </span>
+        <span>Transactions sécurisées et baux numériques</span>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+        </span>
+        <span>Plateforme 100% digitale, fiable et sécurisée</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="login-right">
+    <div class="login-card">
+      <div class="login-header">
+        <h2>Connexion</h2>
+        <p>Accédez à votre espace personnel</p>
+      </div>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Adresse email</mat-label>
+          <input matInput type="email" formControlName="email"
+            placeholder="exemple@email.com">
+          <mat-icon matPrefix>email</mat-icon>
+          @if (loginForm.get('email')?.hasError('required')) {
+            <mat-error>L'email est obligatoire</mat-error>
+          }
+          @if (loginForm.get('email')?.hasError('email')) {
+            <mat-error>Email invalide</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Mot de passe</mat-label>
+          <input matInput [type]="hidePassword ? 'password' : 'text'"
+            formControlName="password">
+          <mat-icon matPrefix>lock</mat-icon>
+          <button mat-icon-button matSuffix type="button"
+            (click)="hidePassword = !hidePassword">
+            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (loginForm.get('password')?.hasError('required')) {
+            <mat-error>Le mot de passe est obligatoire</mat-error>
+          }
+          @if (loginForm.get('password')?.hasError('minlength')) {
+            <mat-error>Minimum 6 caractères</mat-error>
+          }
+        </mat-form-field>
+
+        <button
+          mat-raised-button
+          color="primary"
+          type="submit"
+          class="full-width submit-btn"
+          [disabled]="loginForm.invalid || isLoading">
+          @if (isLoading) {
+            <mat-spinner diameter="20"></mat-spinner>
+          } @else {
+            Se connecter
+          }
+        </button>
+      </form>
+
+      <div class="login-footer">
+        <p>Pas encore de compte ?
+          <a routerLink="/register">Créer un compte</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

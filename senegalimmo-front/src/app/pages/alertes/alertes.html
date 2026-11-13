@@ -1,0 +1,39 @@
+<div class="lp-bg">
+  <header class="lp-nav">
+    <a class="lp-logo" routerLink="/"><img src="/images/logo-senegalimmo.jpg" alt="SénégalImmo" class="brand-logo-img" /> SénégalImmo</a>
+    <nav class="lp-nav-actions">
+      <a class="lp-link" [routerLink]="dashboardLink">Mon espace</a>
+    </nav>
+  </header>
+
+  <main class="lp-page">
+    <a class="lp-back" [routerLink]="dashboardLink">← Retour au tableau de bord</a>
+
+    <h1>Notifications</h1>
+    <p class="lp-sub">Les événements qui vous concernent : demandes, signatures, paiements, validations.</p>
+
+    <div class="lp-actions" style="margin-bottom:16px">
+      <button mat-stroked-button color="primary" (click)="toutLire()">Tout marquer comme lu</button>
+    </div>
+
+    @if (isLoading) {
+      <div class="lp-state">Chargement...</div>
+    } @else if (alertes.length === 0) {
+      <div class="lp-state">Aucune notification pour le moment.</div>
+    } @else {
+      <div class="lp-list">
+        @for (a of alertes; track a.id) {
+          <article class="lp-item al-item" [class.al-unread]="!a.lue" (click)="ouvrir(a)">
+            <div class="lp-info">
+              <div class="lp-top">
+                <h3>{{ a.titre }}</h3>
+                <span class="lp-sub">{{ a.created_at | date:'d MMM, HH:mm' }}</span>
+              </div>
+              <p>{{ a.message }}</p>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </main>
+</div>

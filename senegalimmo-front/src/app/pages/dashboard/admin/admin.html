@@ -1,0 +1,138 @@
+<div class="dash">
+  <aside class="dash-sidebar">
+    <div class="dash-logo">
+      <img src="/images/logo-senegalimmo.jpg" alt="SénégalImmo" class="brand-logo-img" />
+      SénégalImmo
+      <small>Admin</small>
+    </div>
+    <ul class="dash-menu">
+      <li class="active" routerLink="/admin/dashboard">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+        Tableau de bord
+      </li>
+      <li routerLink="/admin/utilisateurs">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Utilisateurs
+      </li>
+      <li routerLink="/admin/annonces">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+        Annonces à modérer
+      </li>
+      <li routerLink="/admin/retraits">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        Demandes de retrait
+      </li>
+      <li routerLink="/admin/signalements">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Signalements
+      </li>
+      <li routerLink="/admin/categories">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+        Catégories de biens
+      </li>
+      <li routerLink="/profil">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Mon Profil
+      </li>
+    </ul>
+    <button class="dash-logout" (click)="logout()">Déconnexion</button>
+  </aside>
+
+  <main class="dash-main">
+    <div class="dash-header">
+      <div class="header-flex">
+        <div>
+          <h1>Tableau de bord administrateur</h1>
+          <p>Bienvenue, {{ user?.prenom }} {{ user?.nom }}</p>
+        </div>
+        <button
+          type="button"
+          class="btn-export"
+          [disabled]="exporting"
+          (click)="exporterStatistiques()"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          {{ exporting ? 'Génération PDF...' : 'Exporter les statistiques (PDF)' }}
+        </button>
+      </div>
+    </div>
+
+    @if (exportSuccess) {
+      <div class="alert alert-success">{{ exportSuccess }}</div>
+    }
+    @if (exportError) {
+      <div class="alert alert-error">{{ exportError }}</div>
+    }
+
+    <div class="dash-stats">
+      <div class="dash-card">
+        <div class="label">Utilisateurs inscrits</div>
+        <div class="value">{{ stats?.utilisateurs ?? 0 }}</div>
+      </div>
+      <div class="dash-card">
+        <div class="label">Annonces en attente</div>
+        <div class="value">{{ stats?.annonces_en_attente ?? 0 }}</div>
+      </div>
+      <div class="dash-card">
+        <div class="label">Retraits en attente</div>
+        <div class="value">{{ stats?.retraits_en_attente ?? 0 }}</div>
+      </div>
+      <div class="dash-card">
+        <div class="label">Volume de transactions</div>
+        <div class="value">{{ stats?.volume ?? 0 | number:'1.0-0' }} FCFA</div>
+      </div>
+      <div class="dash-card">
+        <div class="label">Comptes à vérifier</div>
+        <div class="value">{{ stats?.verifications_en_attente ?? 0 }}</div>
+      </div>
+    </div>
+
+    <div class="dash-actions-grid">
+      <div class="action-card" routerLink="/admin/utilisateurs">
+        <div class="action-icon icon-users">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div>
+          <h3>Utilisateurs & KYC</h3>
+          <p>Valider les pièces d'identité, vérifier les inscriptions et suspendre les comptes signalés.</p>
+          <span class="action-link">Accéder à la gestion →</span>
+        </div>
+      </div>
+      <div class="action-card" routerLink="/admin/annonces">
+        <div class="action-icon icon-annonces">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+        </div>
+        <div>
+          <h3>Annonces à modérer</h3>
+          <p>Examiner les annonces déposées, vérifier les informations et publier ou rejeter avec motif.</p>
+          <span class="action-link">Modérer les annonces →</span>
+        </div>
+      </div>
+      <div class="action-card" routerLink="/admin/retraits">
+        <div class="action-icon icon-retraits">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        </div>
+        <div>
+          <h3>Demandes de retrait</h3>
+          <p>Traiter les demandes de virement Wave / Orange Money des bailleurs et agents immobiliers.</p>
+          <span class="action-link">Gérer les retraits →</span>
+        </div>
+      </div>
+      <div class="action-card" routerLink="/admin/signalements">
+        <div class="action-icon icon-securite">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div>
+          <h3>Signalements & Sécurité</h3>
+          <p>Analyser les alertes d'annonces douteuses ou signalées par les utilisateurs.</p>
+          <span class="action-link">Voir les signalements →</span>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

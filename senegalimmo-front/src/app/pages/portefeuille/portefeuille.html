@@ -1,0 +1,121 @@
+<div class="lp-bg">
+  <header class="lp-nav">
+    <a class="lp-logo" routerLink="/"><img src="/images/logo-senegalimmo.jpg" alt="SénégalImmo" class="brand-logo-img" /> SénégalImmo</a>
+    <nav class="lp-nav-actions">
+      <a class="lp-link" [routerLink]="dashboardLink">Mon espace</a>
+    </nav>
+  </header>
+
+  <main class="lp-page">
+    <a class="lp-back" [routerLink]="dashboardLink">← Retour au tableau de bord</a>
+
+    <h1>Mon portefeuille</h1>
+    <p class="lp-sub">Les paiements reçus sont crédités ici. Demandez un retrait vers votre compte mobile money ou bancaire.</p>
+
+    @if (isLoading) {
+      <div class="lp-state">Chargement...</div>
+    } @else {
+      <div class="dash-stats">
+        <div class="dash-card">
+          <div class="label">Solde disponible</div>
+          <div class="value">{{ data.solde | number:'1.0-0' }} FCFA</div>
+        </div>
+        <div class="dash-card">
+          <div class="label">Retrait minimum</div>
+          <div class="value">{{ data.minimum | number:'1.0-0' }} FCFA</div>
+        </div>
+      </div>
+
+      <div class="lp-actions" style="margin-bottom:16px">
+        <button mat-raised-button color="primary" (click)="showForm = !showForm">
+          {{ showForm ? 'Fermer le formulaire' : 'Demander un retrait' }}
+        </button>
+      </div>
+
+      @if (showForm) {
+        <div class="lp-form" style="margin-bottom:20px">
+          <div class="lp-row">
+            <label class="lp-field">
+              <span>Montant (FCFA)</span>
+              <input type="number" min="1" [(ngModel)]="form.montant">
+            </label>
+            <label class="lp-field">
+              <span>Méthode</span>
+              <select [(ngModel)]="form.methode">
+                @for (m of methodes; track m.value) {
+                  <option [value]="m.value">{{ m.label }}</option>
+                }
+              </select>
+            </label>
+          </div>
+          <label class="lp-field">
+            <span>Numéro de téléphone (ou de compte pour un virement)</span>
+            <input type="text" [(ngModel)]="form.numero_telephone">
+          </label>
+          <p class="lp-sub">Le montant est bloqué dès la demande. Il vous est remboursé si la demande est rejetée.</p>
+          <div class="lp-actions">
+            <button mat-raised-button color="primary" [disabled]="saving" (click)="demander()">
+              {{ saving ? 'Envoi...' : 'Envoyer la demande' }}
+            </button>
+          </div>
+        </div>
+      }
+
+      <section class="lp-block">
+        <h2>Mes demandes de retrait</h2>
+
+        @if (data.retraits.length === 0) {
+          <p class="lp-sub">Aucune demande pour le moment.</p>
+        } @else {
+          @for (r of data.retraits; track r.id) {
+            <div class="pf-row">
+              <div>
+                <strong>{{ r.montant | number:'1.0-0' }} FCFA</strong>
+                · {{ methodeLabel(r.methode) }} · {{ r.numero_telephone }}
+                <br><small class="lp-sub">Demandé le {{ r.created_at | date:'d MMM y à HH:mm' }}</small>
+                @if (r.statut === 'rejetee' && r.motif_rejet) {
+                  <br><small class="lp-motif">Motif du rejet : {{ r.motif_rejet }}</small>
+                }
+                @if (r.reference_transfert) {
+                  <br><small class="lp-sub">Référence du transfert : {{ r.reference_transfert }}</small>
+                }
+              </div>
+              <div class="pf-side">
+                <span class="lp-badge" [class.lp-s-en_attente]="r.statut === 'en_attente'"
+                  [class.lp-s-signe]="r.statut === 'validee'" [class.lp-s-refusee]="r.statut === 'rejetee'">
+                  {{ statutLabel(r.statut) }}
+                </span>
+                @if (r.a_preuve) {
+                  <button mat-button color="primary" (click)="voirPreuve(r)">Voir la preuve</button>
+                }
+              </div>
+            </div>
+          }
+        }
+      </section>
+
+      <section class="lp-block">
+        <h2>Historique des mouvements</h2>
+
+        @if (data.mouvements.length === 0) {
+          <p class="lp-sub">Aucun mouvement pour le moment.</p>
+        } @else {
+          @for (m of data.mouvements; track m.id) {
+            <div class="pf-row">
+              <div>
+                {{ m.libelle }}
+                <br><small class="lp-sub">{{ m.created_at | date:'d MMM y à HH:mm' }}</small>
+              </div>
+              <div class="pf-side">
+                <strong [class.pf-credit]="m.type === 'credit'" [class.pf-debit]="m.type === 'debit'">
+                  {{ m.type === 'credit' ? '+' : '−' }} {{ m.montant | number:'1.0-0' }} FCFA
+                </strong>
+                <small class="lp-sub">Solde : {{ m.solde_apres | number:'1.0-0' }} FCFA</small>
+              </div>
+            </div>
+          }
+        }
+      </section>
+    }
+  </main>
+</div>

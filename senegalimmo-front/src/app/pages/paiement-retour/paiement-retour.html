@@ -1,0 +1,76 @@
+<div class="lp-bg">
+  <header class="lp-nav">
+    <a class="lp-logo" routerLink="/">
+      <img src="/images/logo-senegalimmo.jpg" alt="SénégalImmo" class="brand-logo-img" />
+      SénégalImmo
+    </a>
+  </header>
+
+  <main class="lp-page">
+    <div class="lp-state lp-center">
+      @if (introuvable) {
+        <div class="lp-big">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#6b7570" stroke-width="1.8">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <h2>Paiement introuvable</h2>
+        <p>Nous n'avons pas retrouvé ce paiement.</p>
+      } @else if (!paiement) {
+        <div class="lp-big">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--primary, #184e3b)" stroke-width="1.8">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <h2>Chargement...</h2>
+      } @else if (paiement.statut === 'confirme') {
+        <div class="lp-big">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="9 12 12 15 16 9"/>
+          </svg>
+        </div>
+        <h2>Paiement confirmé</h2>
+        <p>{{ paiement.montant | number:'1.0-0' }} FCFA ont bien été reçus.</p>
+        <p>Référence : <strong>{{ paiement.reference }}</strong></p>
+        <br>
+        <button mat-raised-button color="primary" (click)="openQuittance()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;">
+            <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          Télécharger la quittance
+        </button>
+      } @else if (paiement.statut === 'echoue' || annule) {
+        <div class="lp-big">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+        </div>
+        <h2>Paiement annulé ou échoué</h2>
+        <p>Aucun montant n'a été enregistré. Vous pouvez réessayer depuis votre bail.</p>
+      } @else {
+        <div class="lp-big">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--primary, #184e3b)" stroke-width="1.8">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <h2>Paiement en cours de confirmation</h2>
+        <p>Nous attendons la confirmation de PayTech. Cette page se met à jour automatiquement.</p>
+        @if (tentatives >= 10) {
+          <p>Toujours en attente ? Consultez « Paiements » dans quelques instants.</p>
+        }
+      }
+
+      <br>
+      <a mat-stroked-button color="primary" routerLink="/contrats">Retour à mon bail</a>
+      <a mat-button routerLink="/paiements">Voir mes paiements</a>
+    </div>
+  </main>
+</div>

@@ -1,0 +1,131 @@
+<div class="lp-bg">
+  <header class="lp-nav">
+    <a class="lp-logo" routerLink="/"><img src="/images/logo-senegalimmo.jpg" alt="SénégalImmo" class="brand-logo-img" /> SénégalImmo</a>
+    <nav class="lp-nav-actions">
+      <a class="lp-link" [routerLink]="dashboardLink">Mon espace</a>
+      <button class="lp-btn" (click)="logout()">Déconnexion</button>
+    </nav>
+  </header>
+
+  <main class="lp-page">
+    <a class="lp-back" [routerLink]="dashboardLink">← Retour au tableau de bord</a>
+
+    <h1>{{ isOwner ? 'Baux' : 'Mon bail' }}</h1>
+    <p class="lp-sub">Consultez le bail en PDF et signez-le électroniquement.</p>
+
+    @if (isLoading) {
+      <div class="lp-state">Chargement...</div>
+    } @else if (contrats.length === 0) {
+      <div class="lp-state">
+        Aucun bail pour le moment.
+        <br><br>
+        <a class="lp-btn" routerLink="/demandes">
+          {{ isOwner ? 'Voir les demandes de location' : 'Voir mes demandes' }}
+        </a>
+      </div>
+    } @else {
+      <div class="lp-list">
+        @for (c of contrats; track c.id) {
+          <article class="lp-item">
+            <a class="lp-photo" [routerLink]="['/biens', c.bien_id]">
+              @if (c.bien?.photos_urls?.length) {
+                <img [src]="c.bien.photos_urls[0]" [alt]="c.bien.titre">
+              } @else {
+                <span>Pas de photo</span>
+              }
+            </a>
+
+            <div class="lp-info">
+              <div class="lp-top">
+                <h3>{{ c.bien?.titre }}</h3>
+                <span class="lp-badge lp-s-{{ c.statut }}">{{ statutLabel(c.statut) }}</span>
+              </div>
+
+              <p class="lp-strong">{{ c.loyer_mensuel | number:'1.0-0' }} FCFA / mois</p>
+              <p><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Caution : {{ c.caution | number:'1.0-0' }} FCFA</p>
+              <p>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Du {{ c.date_debut | date:'d MMM y' }}
+                au {{ c.date_fin | date:'d MMM y' }}
+                ({{ c.duree_mois }} mois)
+              </p>
+              <p><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>{{ c.bien?.quartier }}, {{ c.bien?.ville }}</p>
+
+              @if (isOwner) {
+                <p><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Locataire : {{ c.locataire?.prenom }} {{ c.locataire?.nom }}</p>
+              } @else {
+                <p><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Propriétaire : {{ c.proprietaire?.prenom }} {{ c.proprietaire?.nom }}</p>
+              }
+
+              <div class="lp-sign">
+                <span [class]="c.signe_proprietaire ? 'ok' : 'wait'">
+                  Propriétaire :
+                  {{ c.signe_proprietaire ? '✓ signé le ' + (c.signe_proprietaire_le | date:'d MMM y') : 'en attente' }}
+                </span>
+                <span [class]="c.signe_locataire ? 'ok' : 'wait'">
+                  Locataire :
+                  {{ c.signe_locataire ? '✓ signé le ' + (c.signe_locataire_le | date:'d MMM y') : 'en attente' }}
+                </span>
+              </div>
+
+              <div class="lp-actions">
+                <button mat-stroked-button color="primary" (click)="openPdf(c)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>Voir le bail (PDF)</button>
+                 @if (c.statut === 'signe') {
+                  <a mat-stroked-button color="primary" [routerLink]="['/contrats', c.id, 'etats-des-lieux']">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                    États des lieux
+                  </a>
+                }
+                @if (canSign(c)) {
+                  <button mat-raised-button color="primary" (click)="sign(c)">Signer le bail</button>
+                }
+              </div>
+                            @if (!isOwner && c.statut === 'signe' && eche[c.id]) {
+                <div class="lp-pay">
+                  <h4><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>Paiements</h4>
+
+                  <div class="lp-methods">
+                    @for (m of methodes; track m.value) {
+                      <button type="button" class="lp-method"
+                        [class.active]="methode[c.id] === m.value"
+                        (click)="methode[c.id] = m.value">
+                        {{ m.label }}
+                      </button>
+                    }
+                  </div>
+
+                  @if (eche[c.id].caution_payee) {
+                    <p class="lp-paid">✓ Caution payée</p>
+                  } @else if (eche[c.id].caution_montant > 0) {
+                    <div class="lp-actions">
+                      <button mat-raised-button color="primary"
+                        [disabled]="paying === c.id + '-caution'"
+                        (click)="pay(c, 'caution')">
+                        {{ paying === c.id + '-caution' ? 'Redirection...' : 'Payer la caution (' + (eche[c.id].caution_montant | number:'1.0-0') + ' FCFA)' }}
+                      </button>
+                    </div>
+                  }
+
+                  <p class="lp-paid">
+                    Loyers payés : {{ eche[c.id].loyers_payes }} / {{ eche[c.id].loyers_total }}
+                  </p>
+
+                  @if (eche[c.id].prochaine_periode) {
+                    <div class="lp-actions">
+                      <button mat-raised-button color="primary"
+                        [disabled]="paying === c.id + '-loyer'"
+                        (click)="pay(c, 'loyer')">
+                        {{ paying === c.id + '-loyer' ? 'Redirection...' : 'Payer le loyer de ' + periodeLabel(eche[c.id].prochaine_periode) + ' (' + (eche[c.id].loyer_montant | number:'1.0-0') + ' FCFA)' }}
+                      </button>
+                    </div>
+                  } @else {
+                    <p class="lp-paid">✓ Tous les loyers sont payés</p>
+                  }
+                </div>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </main>
+</div>

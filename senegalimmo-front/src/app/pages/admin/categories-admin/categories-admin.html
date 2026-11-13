@@ -1,0 +1,120 @@
+<div class="dash">
+  <aside class="dash-sidebar">
+    <div class="dash-logo">
+      <img src="/images/logo-senegalimmo.jpg" alt="SénégalImmo" class="brand-logo-img" />
+      SénégalImmo
+      <small>Admin</small>
+    </div>
+    <ul class="dash-menu">
+      <li routerLink="/admin/dashboard">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+        Tableau de bord
+      </li>
+      <li routerLink="/admin/utilisateurs">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Gestion Utilisateurs
+      </li>
+      <li routerLink="/admin/annonces">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+        Annonces à modérer
+      </li>
+      <li routerLink="/admin/retraits">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        Demandes de retrait
+      </li>
+      <li routerLink="/admin/signalements">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Signalements
+      </li>
+      <li class="active" routerLink="/admin/categories">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+        Catégories de biens
+      </li>
+    </ul>
+    <button class="dash-logout" (click)="logout()">Déconnexion</button>
+  </aside>
+
+  <main class="dash-main">
+    <div class="dash-header">
+      <h1>Gestion des Catégories de Biens</h1>
+      <p>Configurez dynamiquement les types et catégories de logements disponibles sur la plateforme.</p>
+    </div>
+
+    @if (message) {
+      <div class="alert alert-success">{{ message }}</div>
+    }
+    @if (error) {
+      <div class="alert alert-danger">{{ error }}</div>
+    }
+
+    <div class="cat-grid">
+      <!-- Formulaire d'ajout -->
+      <div class="card add-card">
+        <h2>{{ editingCat ? 'Modifier la catégorie' : 'Ajouter une nouvelle catégorie' }}</h2>
+        <form [formGroup]="catForm" (ngSubmit)="saveCat()" class="form-body">
+          <div class="form-group">
+            <label>Nom de la catégorie *</label>
+            <input type="text" formControlName="nom" class="form-control" placeholder="Ex : Villa de luxe, Entrepôt...">
+          </div>
+          <div class="form-group">
+            <label>Identifiant d'icône</label>
+            <input type="text" formControlName="icone" class="form-control" placeholder="house, apartment, storefront...">
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <textarea formControlName="description" rows="3" class="form-control" placeholder="Brève description..."></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" [disabled]="catForm.invalid">
+              {{ editingCat ? 'Mettre à jour' : 'Créer la catégorie' }}
+            </button>
+            @if (editingCat) {
+              <button type="button" class="btn btn-secondary" (click)="cancelEdit()">
+                Annuler
+              </button>
+            }
+          </div>
+        </form>
+      </div>
+
+      <!-- Liste des catégories -->
+      <div class="table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Slug</th>
+              <th>Biens associés</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of categories; track c.id) {
+              <tr>
+                <td>
+                  <strong>{{ c.nom }}</strong>
+                  <br><small class="text-muted">{{ c.description || 'Pas de description' }}</small>
+                </td>
+                <td><code>{{ c.slug }}</code></td>
+                <td>
+                  <span class="badge badge-count">{{ c.biens_count || 0 }} bien(s)</span>
+                </td>
+                <td>
+                  <div class="btn-group">
+                    <button type="button" class="btn btn-xs btn-secondary" (click)="editCat(c)">
+                      Modifier
+                    </button>
+                    <button type="button" class="btn btn-xs btn-danger" (click)="deleteCat(c)">
+                      Supprimer
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>

@@ -1,0 +1,338 @@
+<div class="dash">
+  <aside class="dash-sidebar">
+    <div class="dash-logo"><img src="/images/logo-senegalimmo.jpg" alt="SénégalImmo" class="brand-logo-img" /> SénégalImmo</div>
+    <ul class="dash-menu">
+      <li routerLink="/proprietaire/dashboard">Tableau de bord</li>
+      <li [class.active]="!isAnnoncesPage" routerLink="/proprietaire/biens">Mes biens</li>
+      <li [class.active]="isAnnoncesPage" routerLink="/proprietaire/annonces">Mes annonces</li>
+      <li routerLink="/visites">Visites</li>
+      <li routerLink="/demandes">Demandes de location</li>
+      <li routerLink="/contrats">Contrats</li>
+      <li routerLink="/offres">Offres d'achat</li>
+      <li routerLink="/promesses">Promesses de vente</li>
+      <li routerLink="/paiements">Paiements</li>
+      <li routerLink="/quittances">Quittances émises</li>
+      <li routerLink="/messages">Messages</li>
+      <li [routerLink]="['/avis', user?.id]">Mes avis</li>
+      <li routerLink="/mandats">Mandats</li>
+      <li routerLink="/commissions">Commissions</li>
+      <li routerLink="/portefeuille">Portefeuille</li>
+      <li routerLink="/profil">Mon profil</li>
+    </ul>
+    <button class="dash-logout" (click)="logout()">Déconnexion</button>
+  </aside>
+
+  <main class="dash-main">
+    <div class="page-top">
+      <div class="dash-header">
+        <h1>{{ isAnnoncesPage ? 'Mes annonces' : 'Mes biens' }}</h1>
+        <p>{{ isAnnoncesPage ? 'Suivi et gestion de la publication de vos annonces' : (biens.length + ' bien(s) enregistré(s)') }}</p>
+      </div>
+      <button mat-raised-button color="primary" (click)="toggleForm()">
+        {{ showForm ? 'Fermer le formulaire' : '+ Ajouter un bien' }}
+      </button>
+    </div>
+
+    <div class="filter-tabs-bar">
+      <button type="button" class="tab-pill" [class.active]="filtreAnnonce === 'tous'" (click)="setFiltre('tous')">
+        Tous ({{ biens.length }})
+      </button>
+      <button type="button" class="tab-pill tab-publiee" [class.active]="filtreAnnonce === 'publiee'" (click)="setFiltre('publiee')">
+        ✓ Publiées ({{ countPubliees }})
+      </button>
+      <button type="button" class="tab-pill tab-attente" [class.active]="filtreAnnonce === 'en_attente'" (click)="setFiltre('en_attente')">
+        ⏳ En validation ({{ countEnAttente }})
+      </button>
+      <button type="button" class="tab-pill tab-rejetee" [class.active]="filtreAnnonce === 'rejetee'" (click)="setFiltre('rejetee')">
+        ✕ Rejetées ({{ countRejetees }})
+      </button>
+      <button type="button" class="tab-pill tab-nonpub" [class.active]="filtreAnnonce === 'non_publiee'" (click)="setFiltre('non_publiee')">
+        Non publiées ({{ countNonPubliees }})
+      </button>
+    </div>
+
+    @if (showForm) {
+      <div class="dash-section form-section">
+        <h2>{{ editingId ? 'Modifier le bien' : 'Nouveau bien' }}</h2>
+        <form [formGroup]="bienForm" (ngSubmit)="onSubmit()">
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Titre</mat-label>
+            <input matInput formControlName="titre" placeholder="Villa moderne aux Almadies">
+            <mat-error>Le titre est obligatoire</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Description</mat-label>
+            <textarea matInput rows="3" formControlName="description"></textarea>
+            <mat-error>La description est obligatoire</mat-error>
+          </mat-form-field>
+
+          <div class="grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Type de bien</mat-label>
+              <mat-select formControlName="type">
+                @for (t of types; track t.value) {
+                  <mat-option [value]="t.value">{{ t.label }}</mat-option>
+                }
+              </mat-select>
+              <mat-error>Obligatoire</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Transaction</mat-label>
+              <mat-select formControlName="transaction">
+                @for (t of transactions; track t.value) {
+                  <mat-option [value]="t.value">{{ t.label }}</mat-option>
+                }
+              </mat-select>
+              <mat-error>Obligatoire</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Prix (FCFA)</mat-label>
+              <input matInput type="number" formControlName="prix">
+              <mat-error>Prix invalide</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Surface (m²)</mat-label>
+              <input matInput type="number" formControlName="surface">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Chambres</mat-label>
+              <input matInput type="number" formControlName="chambres">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Salles de bain</mat-label>
+              <input matInput type="number" formControlName="salles_bain">
+            </mat-form-field>
+          </div>
+
+          <div class="grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Adresse</mat-label>
+              <input matInput formControlName="adresse">
+              <mat-error>Obligatoire</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Quartier</mat-label>
+              <input matInput formControlName="quartier" placeholder="Almadies">
+              <mat-error>Obligatoire</mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Ville</mat-label>
+              <input matInput formControlName="ville">
+              <mat-error>Obligatoire</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="geo-section">
+            <div class="geo-header">
+              <div>
+                <h3>Géolocalisation sur la carte (Mapbox)</h3>
+                <p>Cliquez sur la carte ou recherchez l'adresse pour positionner précisément votre bien.</p>
+              </div>
+              <div class="geo-actions">
+                <button mat-stroked-button type="button" (click)="locateFromAddress()" [disabled]="isLocating">
+                  Chercher l'adresse
+                </button>
+                <button mat-stroked-button type="button" (click)="useMyLocation()" [disabled]="isLocating">
+                  Ma position GPS
+                </button>
+                @if (bienForm.value.latitude !== null || bienForm.value.longitude !== null) {
+                  <button mat-button type="button" (click)="clearCoordinates()">Effacer</button>
+                }
+              </div>
+            </div>
+
+            <div class="grid geo-coords">
+              <mat-form-field appearance="outline">
+                <mat-label>Latitude</mat-label>
+                <input matInput type="number" step="0.000001" formControlName="latitude" placeholder="14.716677">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Longitude</mat-label>
+                <input matInput type="number" step="0.000001" formControlName="longitude" placeholder="-17.467686">
+              </mat-form-field>
+            </div>
+
+            <app-mapbox-map
+              mode="picker"
+              [latitude]="bienForm.value.latitude"
+              [longitude]="bienForm.value.longitude"
+              height="290px"
+              (coordinatesChange)="onCoordinatesChange($event)"
+            />
+          </div>
+
+          @if (!editingId) {
+            <div class="photos-block">
+              <label class="upload-zone" for="photos-input">
+                <span class="upload-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                </span>
+                <span>Ajouter des photos ({{ selectedFiles.length }}/{{ maxPhotos }})</span>
+                <small>JPG, PNG ou WebP, 4 Mo maximum par photo</small>
+              </label>
+              <input id="photos-input" type="file" accept="image/*" multiple
+                (change)="onFilesSelected($event)" hidden>
+
+              @if (previews.length > 0) {
+                <div class="previews">
+                  @for (src of previews; track src; let i = $index) {
+                    <div class="preview">
+                      <img [src]="src" alt="Aperçu">
+                      <button type="button" class="preview-remove" (click)="removeFile(i)">×</button>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+            
+          } @else if (editingBien) {
+            <div class="photos-block">
+              <p class="photos-title">
+                Photos du bien ({{ editingBien.photos?.length || 0 }}/{{ maxPhotos }})
+              </p>
+
+              @if (editingBien.photos_urls?.length) {
+                <div class="previews">
+                  @for (src of editingBien.photos_urls; track src; let i = $index) {
+                    <div class="preview">
+                      <img [src]="src" alt="Photo {{ i + 1 }}">
+                      <button type="button" class="preview-remove"
+                        (click)="removeExistingPhoto(i)">×</button>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="edit-note">Aucune photo pour le moment.</p>
+              }
+
+              @if ((editingBien.photos?.length || 0) < maxPhotos) {
+                <label class="upload-zone upload-small" for="photos-edit-input">
+                  <span>{{ uploading ? 'Envoi en cours...' : 'Ajouter des photos' }}</span>
+                  <small>JPG, PNG ou WebP, 4 Mo maximum par photo</small>
+                </label>
+                <input id="photos-edit-input" type="file" accept="image/*" multiple
+                  (change)="addPhotosToBien($event)" hidden>
+              }
+
+              <p class="edit-note">Les ajouts et suppressions de photos sont enregistrés immédiatement.</p>
+            </div>
+          }
+
+          <div class="form-actions">
+            <button mat-raised-button color="primary" type="submit"
+              [disabled]="bienForm.invalid || isLoading">
+              {{ isLoading ? 'Enregistrement...' : (editingId ? 'Enregistrer les modifications' : 'Enregistrer le bien') }}
+            </button>
+            <button mat-button type="button" (click)="closeForm()">Annuler</button>
+          </div>
+        </form>
+      </div>
+    }
+
+    @if (biens.length === 0) {
+      <div class="dash-section">
+        <div class="dash-empty">Vous n'avez encore aucun bien. Cliquez sur « Ajouter un bien ».</div>
+      </div>
+    } @else if (biensAffiches.length === 0) {
+      <div class="dash-section">
+        <div class="dash-empty">
+          Aucun bien ne correspond au filtre actif.
+          <button type="button" class="btn-clear-filter" (click)="setFiltre('tous')">Réinitialiser le filtre</button>
+        </div>
+      </div>
+    } @else {
+      <div class="biens-grid">
+        @for (b of biensAffiches; track b.id) {
+          <div class="bien-card">
+            @if (b.photos_urls?.length) {
+              <div class="bien-photo">
+                <img [src]="b.photos_urls[0]" [alt]="b.titre">
+                @if (b.photos_urls.length > 1) {
+                  <span class="photo-count"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>{{ b.photos_urls.length }}</span>
+                }
+              </div>
+            } @else {
+              <div class="bien-photo bien-photo-empty">Pas de photo</div>
+            }
+
+            <div class="bien-body">
+              <div class="bien-badges">
+                <span class="badge">{{ b.transaction === 'location' ? 'Location' : 'Vente' }}</span>
+                <span class="badge badge-type">{{ b.type }}</span>
+                @if (b.est_verifie) {
+                  <span class="badge badge-ok">✓ Vérifié</span>
+                }
+                @if (b.latitude !== null && b.longitude !== null) {
+                  <span class="badge badge-geo">Géolocalisé</span>
+                }
+                 @if (b.statut === 'loue') {
+                  <span class="badge badge-loue"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg> Loué</span>
+                }
+                @if (b.statut === 'vendu') {
+                  <span class="badge badge-loue">Vendu</span>
+                }
+              </div>
+              <h3>{{ b.titre }}</h3>
+              <p class="lieu"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>{{ b.quartier }}, {{ b.ville }}</p>
+              <p class="prix">
+                {{ b.prix | number:'1.0-0' }} FCFA
+                @if (b.transaction === 'location') { <small>/ mois</small> }
+              </p>
+              <p class="details">
+                @if (b.surface) { <span>{{ b.surface }} m²</span> }
+                @if (b.chambres) { <span>{{ b.chambres }} ch.</span> }
+                @if (b.salles_bain) { <span>{{ b.salles_bain }} sdb</span> }
+              </p>
+
+              <div class="annonce-box">
+                @switch (annonceStatut(b)) {
+                  @case ('publiee') {
+                    <span class="a-badge a-ok">✓ Annonce publiée</span>
+                  }
+                  @case ('en_attente') {
+                    <span class="a-badge a-wait"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg> En attente de validation</span>
+                  }
+                  @case ('rejetee') {
+                    <span class="a-badge a-ko">✗ Annonce rejetée</span>
+                    <p class="a-motif">Motif : {{ annonceMotif(b) }}</p>
+                  }
+                        @case ('expiree') {
+                    <span class="a-badge a-none">Annonce expirée</span>
+                  }
+                  @default {
+                    <span class="a-badge a-none">Non publié</span>
+                  }
+                }
+              </div>
+
+             <div class="bien-footer">
+                <div class="footer-left">
+                  @if (peutPublier(b)) {
+                    <button class="btn-publish" (click)="publier(b)">
+                      {{ annonceStatut(b) === 'rejetee' ? 'Republier' : 'Publier' }}
+                    </button>
+                  }
+                  @if (annonceStatut(b) === 'en_attente' || annonceStatut(b) === 'publiee') {
+                    <button class="btn-withdraw" (click)="retirer(b)">Retirer</button>
+                  }
+                  <button class="btn-edit" (click)="startEdit(b)">Modifier</button>
+                </div>
+                <button class="btn-delete" (click)="deleteBien(b)">Supprimer</button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </main>
+</div>

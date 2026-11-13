@@ -1,0 +1,114 @@
+<div class="dash">
+  <aside class="dash-sidebar">
+    <div class="dash-logo">
+      <img src="/images/logo-senegalimmo.jpg" alt="SénégalImmo" class="brand-logo-img" />
+      SénégalImmo
+      <small>Admin</small>
+    </div>
+    <ul class="dash-menu">
+      <li routerLink="/admin/dashboard">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+        Tableau de bord
+      </li>
+      <li routerLink="/admin/utilisateurs">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Gestion Utilisateurs
+      </li>
+      <li routerLink="/admin/annonces">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+        Annonces à modérer
+      </li>
+      <li class="active" routerLink="/admin/retraits">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        Demandes de retrait
+      </li>
+      <li routerLink="/admin/signalements">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Signalements
+      </li>
+      <li routerLink="/admin/categories">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+        Catégories de biens
+      </li>
+    </ul>
+    <button class="dash-logout" (click)="logout()">Déconnexion</button>
+  </aside>
+
+  <main class="dash-main">
+    <div class="dash-header">
+      <h1>Demandes de Retrait de Portefeuille</h1>
+      <p>Traitez les demandes de virement Wave et Orange Money des propriétaires et agents immobiliers.</p>
+    </div>
+
+    @if (message) {
+      <div class="alert alert-success">{{ message }}</div>
+    }
+    @if (error) {
+      <div class="alert alert-danger">{{ error }}</div>
+    }
+
+    @if (isLoading) {
+      <div class="state">Chargement des demandes de retrait...</div>
+    } @else if (retraits.length === 0) {
+      <div class="empty-box">Aucune demande de retrait enregistrée pour le moment.</div>
+    } @else {
+      <div class="table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Demandeur</th>
+              <th>Montant</th>
+              <th>Moyen de retrait</th>
+              <th>Numéro de réception</th>
+              <th>Date de demande</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of retraits; track r.id) {
+              <tr>
+                <td>
+                  <strong>{{ r.user?.prenom }} {{ r.user?.nom }}</strong>
+                  <br><small class="text-muted">Solde disponible : {{ r.user?.solde_portefeuille | number:'1.0-0' }} FCFA</small>
+                </td>
+                <td>
+                  <strong class="text-amount">{{ r.montant | number:'1.0-0' }} FCFA</strong>
+                </td>
+                <td>
+                  <span class="badge badge-method">{{ r.methode }}</span>
+                </td>
+                <td>
+                  <span class="phone-item">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    {{ r.numero_telephone }}
+                  </span>
+                </td>
+                <td>{{ r.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td>
+                  <span class="badge" [class.badge-pending]="r.statut === 'en_attente'" [class.badge-ok]="r.statut === 'validee'" [class.badge-ko]="r.statut === 'rejetee'">
+                    {{ r.statut }}
+                  </span>
+                </td>
+                <td>
+                  @if (r.statut === 'en_attente') {
+                    <div class="btn-group">
+                      <button type="button" class="btn btn-xs btn-success" (click)="traiter(r, 'valider')">
+                        Approuver
+                      </button>
+                      <button type="button" class="btn btn-xs btn-danger" (click)="traiter(r, 'rejeter')">
+                        Rejeter
+                      </button>
+                    </div>
+                  } @else {
+                    <small class="text-muted">Traitée le {{ r.traitee_le | date:'dd/MM/yyyy' }}</small>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </main>
+</div>

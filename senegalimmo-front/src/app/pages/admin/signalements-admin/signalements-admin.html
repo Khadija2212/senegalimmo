@@ -1,0 +1,126 @@
+<div class="dash">
+  <aside class="dash-sidebar">
+    <div class="dash-logo">
+      <img src="/images/logo-senegalimmo.jpg" alt="SénégalImmo" class="brand-logo-img" />
+      SénégalImmo
+      <small>Admin</small>
+    </div>
+    <ul class="dash-menu">
+      <li routerLink="/admin/dashboard">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+        Tableau de bord
+      </li>
+      <li routerLink="/admin/utilisateurs">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Gestion Utilisateurs
+      </li>
+      <li routerLink="/admin/annonces">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+        Annonces à modérer
+      </li>
+      <li routerLink="/admin/retraits">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        Demandes de retrait
+      </li>
+      <li class="active" routerLink="/admin/signalements">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Signalements
+      </li>
+      <li routerLink="/admin/categories">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+        Catégories de biens
+      </li>
+    </ul>
+    <button class="dash-logout" (click)="logout()">Déconnexion</button>
+  </aside>
+
+  <main class="dash-main">
+    <div class="dash-header">
+      <h1>Signalements & Modération de Sécurité</h1>
+      <p>Examinez les alertes soumises par la communauté sur des annonces suspectes ou litigieuses.</p>
+    </div>
+
+    @if (message) {
+      <div class="alert alert-success">{{ message }}</div>
+    }
+    @if (error) {
+      <div class="alert alert-danger">{{ error }}</div>
+    }
+
+    @if (isLoading) {
+      <div class="state">Chargement des signalements...</div>
+    } @else if (signalements.length === 0) {
+      <div class="empty-box">Aucun signalement en attente. Tout est sécurisé !</div>
+    } @else {
+      <div class="table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Bien signalé</th>
+              <th>Propriétaire</th>
+              <th>Signalé par</th>
+              <th>Motif & Détails</th>
+              <th>Date</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (s of signalements; track s.id) {
+              <tr>
+                <td>
+                  <strong>{{ s.bien?.titre || 'Bien supprimé' }}</strong>
+                  <br>
+                  <a [routerLink]="['/biens', s.bien_id]" target="_blank" class="link-prop">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    Examiner le bien
+                  </a>
+                </td>
+                <td>
+                  {{ s.bien?.proprietaire?.prenom }} {{ s.bien?.proprietaire?.nom }}
+                  <br>
+                  <small class="coord-muted">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    {{ s.bien?.proprietaire?.telephone }}
+                  </small>
+                </td>
+                <td>
+                  {{ s.user?.prenom }} {{ s.user?.nom }}
+                  <br>
+                  <small class="coord-muted">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                    {{ s.user?.email }}
+                  </small>
+                </td>
+                <td>
+                  <strong class="text-motif">{{ s.motif }}</strong>
+                  <p class="desc-text">{{ s.description || 'Aucun commentaire' }}</p>
+                </td>
+                <td>{{ s.created_at | date:'dd/MM/yyyy' }}</td>
+                <td>
+                  <span class="badge" [class.badge-pending]="s.statut === 'en_attente'" [class.badge-ok]="s.statut === 'traite'" [class.badge-ko]="s.statut === 'rejete'">
+                    {{ s.statut }}
+                  </span>
+                </td>
+                <td>
+                  @if (s.statut === 'en_attente') {
+                    <div class="btn-group">
+                      <button type="button" class="btn btn-xs btn-primary" (click)="traiter(s, 'traite')">
+                        Traiter
+                      </button>
+                      <button type="button" class="btn btn-xs btn-secondary" (click)="traiter(s, 'rejete')">
+                        Rejeter
+                      </button>
+                    </div>
+                  } @else {
+                    <small class="text-muted">{{ s.reponse_admin || 'Clôturé' }}</small>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </main>
+</div>

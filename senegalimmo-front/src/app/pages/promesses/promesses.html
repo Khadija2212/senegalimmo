@@ -1,0 +1,133 @@
+<div class="lp-bg">
+  <header class="lp-nav">
+    <a class="lp-logo" routerLink="/"><img src="/images/logo-senegalimmo.jpg" alt="SénégalImmo" class="brand-logo-img" /> SénégalImmo</a>
+    <nav class="lp-nav-actions">
+      <a class="lp-link" [routerLink]="dashboardLink">Mon espace</a>
+      <button class="lp-btn" (click)="logout()">Déconnexion</button>
+    </nav>
+  </header>
+
+  <main class="lp-page">
+    <a class="lp-back" [routerLink]="dashboardLink">← Retour au tableau de bord</a>
+
+    <h1>Promesses de vente</h1>
+    <p class="lp-sub">Consultez la promesse en PDF, signez-la électroniquement et réglez l'indemnité d'immobilisation.</p>
+
+    @if (isLoading) {
+      <div class="lp-state">Chargement...</div>
+    } @else if (promesses.length === 0) {
+      <div class="lp-state">
+        Aucune promesse de vente pour le moment.
+        <br><br>
+        <a class="lp-btn" routerLink="/offres">Voir les offres d'achat</a>
+      </div>
+    } @else {
+      <div class="lp-list">
+        @for (p of promesses; track p.id) {
+          <article class="lp-item">
+            <a class="lp-photo" [routerLink]="['/biens', p.bien_id]">
+              @if (p.bien?.photos_urls?.length) {
+                <img [src]="p.bien.photos_urls[0]" [alt]="p.bien.titre">
+              } @else {
+                <span>Pas de photo</span>
+              }
+            </a>
+
+            <div class="lp-info">
+              <div class="lp-top">
+                <h3>{{ p.bien?.titre }}</h3>
+                <span class="lp-badge" [class.lp-s-signe]="p.statut === 'signee'"
+                  [class.lp-s-en_attente]="p.statut === 'en_attente'"
+                  [class.lp-s-annulee]="p.statut === 'annulee'">
+                  {{ statutLabel(p.statut) }}
+                </span>
+              </div>
+
+              <p class="lp-strong">{{ p.prix_convenu | number:'1.0-0' }} FCFA</p>
+              <p><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>{{ p.bien?.quartier }}, {{ p.bien?.ville }}</p>
+              <p><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Indemnité d'immobilisation : <strong>{{ p.indemnite_immobilisation | number:'1.0-0' }} FCFA</strong></p>
+              <p><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Vente chez le notaire avant le {{ p.date_limite | date:'d MMMM y' }}</p>
+
+              @if (isOwner) {
+                <p><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Acquéreur : {{ p.acheteur?.prenom }} {{ p.acheteur?.nom }}</p>
+              } @else {
+                <p><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Vendeur : {{ p.vendeur?.prenom }} {{ p.vendeur?.nom }}</p>
+              }
+
+              @if (p.conditions) {
+                <p class="lp-quote">Conditions : {{ p.conditions }}</p>
+              }
+
+              <div class="lp-sign">
+                <span [class]="p.signe_vendeur ? 'ok' : 'wait'">
+                  Vendeur :
+                  {{ p.signe_vendeur ? '✓ signé le ' + (p.signe_vendeur_le | date:'d MMM y') : 'en attente' }}
+                </span>
+                <span [class]="p.signe_acheteur ? 'ok' : 'wait'">
+                  Acquéreur :
+                  {{ p.signe_acheteur ? '✓ signé le ' + (p.signe_acheteur_le | date:'d MMM y') : 'en attente' }}
+                </span>
+              </div>
+
+              @if (p.statut === 'signee') {
+                <p class="lp-paid">✓ Bien réservé. La promesse est synallagmatique et engage les deux parties.</p>
+              }
+
+              <!-- Section Paiement pour l'acquéreur -->
+              @if (isBuyer && p.indemnite_immobilisation > 0) {
+                @if (getPaiement(p); as pay) {
+                  <div class="payment-confirmed-box">
+                    <span>✓ Indemnité payée (Réf : {{ pay.reference }})</span>
+                    <button mat-stroked-button color="accent" (click)="downloadReceipt(pay)">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Télécharger le Reçu de paiement (PDF)
+                    </button>
+                  </div>
+                } @else {
+                  @if (payingPromesseId === p.id) {
+                    <div class="pay-box">
+                      <h4>Payer l'indemnité d'immobilisation ({{ p.indemnite_immobilisation | number:'1.0-0' }} FCFA)</h4>
+                      <p>Sélectionnez votre moyen de paiement sécurisé :</p>
+                      <div class="method-select">
+                        <label>
+                          <input type="radio" name="methode_{{p.id}}" value="wave" [(ngModel)]="selectedMethode">
+                          Wave
+                        </label>
+                        <label>
+                          <input type="radio" name="methode_{{p.id}}" value="orange_money" [(ngModel)]="selectedMethode">
+                          Orange Money
+                        </label>
+                        <label>
+                          <input type="radio" name="methode_{{p.id}}" value="free_money" [(ngModel)]="selectedMethode">
+                          Free Money
+                        </label>
+                      </div>
+                      <div class="pay-actions">
+                        <button mat-raised-button color="accent" (click)="submitPayment(p)" [disabled]="isInitiatingPayment">
+                          {{ isInitiatingPayment ? 'Redirection...' : 'Confirmer et Payer' }}
+                        </button>
+                        <button mat-button (click)="cancelPayment()">Annuler</button>
+                      </div>
+                    </div>
+                  } @else {
+                    <div class="pay-cta">
+                      <button mat-raised-button color="accent" (click)="startPayment(p)">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>Régler l'indemnité d'immobilisation (Wave / OM)
+                      </button>
+                    </div>
+                  }
+                }
+              }
+
+              <div class="lp-actions">
+                <button mat-stroked-button color="primary" (click)="openPdf(p)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>Voir la promesse (PDF)</button>
+                @if (canSign(p)) {
+                  <button mat-raised-button color="primary" (click)="sign(p)">Signer la promesse</button>
+                }
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </main>
+</div>
