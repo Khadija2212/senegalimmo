@@ -14,13 +14,10 @@ export class PortefeuilleService {
     return this.http.get<any>(`${this.api}/portefeuille`);
   }
 
-  demander(data: { montant: number; methode: string; numero_telephone: string }): Observable<any> {
+  demander(data: { montant: number; methode: string; numero_beneficiaire: string }): Observable<any> {
     return this.http.post(`${this.api}/retraits`, data);
   }
 
-  preuve(id: number): Observable<Blob> {
-    return this.http.get(`${this.api}/retraits/${id}/preuve`, { responseType: 'blob' });
-  }
 
   adminRetraits(statut: string): Observable<any[]> {
     let params = new HttpParams();
@@ -28,7 +25,7 @@ export class PortefeuilleService {
     return this.http.get<any[]>(`${this.api}/admin/retraits`, { params });
   }
 
-  traiter(id: number, data: FormData): Observable<any> {
+  traiter(id: number, data: { decision: 'approuver' | 'rejeter'; motif?: string }): Observable<any> {
     return this.http.post(`${this.api}/admin/retraits/${id}/traiter`, data);
   }
 

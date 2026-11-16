@@ -10,7 +10,7 @@
     <a class="lp-back" [routerLink]="dashboardLink">← Retour au tableau de bord</a>
 
     <h1>Mon portefeuille</h1>
-    <p class="lp-sub">Les paiements reçus sont crédités ici. Demandez un retrait vers votre compte mobile money ou bancaire.</p>
+    <p class="lp-sub">Les paiements reçus sont crédités ici. Demandez un retrait vers Wave, Orange Money ou Free Money.</p>
 
     @if (isLoading) {
       <div class="lp-state">Chargement...</div>
@@ -18,7 +18,10 @@
       <div class="dash-stats">
         <div class="dash-card">
           <div class="label">Solde disponible</div>
-          <div class="value">{{ data.solde | number:'1.0-0' }} FCFA</div>
+          <div class="value">{{ data.solde_disponible | number:'1.0-0' }} FCFA</div>
+          @if (data.solde_en_attente > 0) {
+            <small class="lp-sub">{{ data.solde_en_attente | number:'1.0-0' }} FCFA en attente de versement</small>
+          }
         </div>
         <div class="dash-card">
           <div class="label">Retrait minimum</div>
@@ -71,23 +74,20 @@
             <div class="pf-row">
               <div>
                 <strong>{{ r.montant | number:'1.0-0' }} FCFA</strong>
-                · {{ methodeLabel(r.methode) }} · {{ r.numero_telephone }}
-                <br><small class="lp-sub">Demandé le {{ r.created_at | date:'d MMM y à HH:mm' }}</small>
-                @if (r.statut === 'rejetee' && r.motif_rejet) {
+                · {{ methodeLabel(r.methode) }}, {{ r.numero_beneficiaire }}
+                <br><small class="lp-sub">Demandé le {{ r.demande_le | date:'d MMM y à HH:mm' }}</small>
+                @if (r.statut === 'rejete' && r.motif_rejet) {
                   <br><small class="lp-motif">Motif du rejet : {{ r.motif_rejet }}</small>
                 }
-                @if (r.reference_transfert) {
-                  <br><small class="lp-sub">Référence du transfert : {{ r.reference_transfert }}</small>
+                @if (r.reference_paytech) {
+                  <br><small class="lp-sub">Référence du versement : {{ r.reference_paytech }}</small>
                 }
               </div>
               <div class="pf-side">
-                <span class="lp-badge" [class.lp-s-en_attente]="r.statut === 'en_attente'"
-                  [class.lp-s-signe]="r.statut === 'validee'" [class.lp-s-refusee]="r.statut === 'rejetee'">
+                <span class="lp-badge" [class.lp-s-en_attente]="r.statut === 'demande' || r.statut === 'approuve'"
+                  [class.lp-s-signe]="r.statut === 'verse'" [class.lp-s-refusee]="r.statut === 'rejete'">
                   {{ statutLabel(r.statut) }}
                 </span>
-                @if (r.a_preuve) {
-                  <button mat-button color="primary" (click)="voirPreuve(r)">Voir la preuve</button>
-                }
               </div>
             </div>
           }
@@ -97,18 +97,18 @@
       <section class="lp-block">
         <h2>Historique des mouvements</h2>
 
-        @if (data.mouvements.length === 0) {
+        @if (data.ecritures.length === 0) {
           <p class="lp-sub">Aucun mouvement pour le moment.</p>
         } @else {
-          @for (m of data.mouvements; track m.id) {
+          @for (m of data.ecritures; track m.id) {
             <div class="pf-row">
               <div>
                 {{ m.libelle }}
-                <br><small class="lp-sub">{{ m.created_at | date:'d MMM y à HH:mm' }}</small>
+                <br><small class="lp-sub">{{ m.date | date:'d MMM y à HH:mm' }}</small>
               </div>
               <div class="pf-side">
-                <strong [class.pf-credit]="m.type === 'credit'" [class.pf-debit]="m.type === 'debit'">
-                  {{ m.type === 'credit' ? '+' : '−' }} {{ m.montant | number:'1.0-0' }} FCFA
+                <strong [class.pf-credit]="m.montant > 0" [class.pf-debit]="m.montant < 0">
+                  {{ m.montant > 0 ? '+' : '-' }} {{ (m.montant < 0 ? -m.montant : m.montant) | number:'1.0-0' }} FCFA
                 </strong>
                 <small class="lp-sub">Solde : {{ m.solde_apres | number:'1.0-0' }} FCFA</small>
               </div>

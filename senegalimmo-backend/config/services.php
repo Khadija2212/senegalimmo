@@ -40,6 +40,12 @@ return [
         'env'       => env('PAYTECH_ENV', 'test'),
         'ipn_url'   => env('PAYTECH_IPN_URL'),
         'front_url' => env('FRONTEND_URL', 'http://localhost:4200'),
+        'base_url'  => env('PAYTECH_BASE_URL', 'https://paytech.sn/api'),
+    ],
+    // Implémentation de PasserellePaiement : « paytech » ou « simulation » (jamais en production)
+    'paiement' => [
+        'passerelle'        => env('PAIEMENT_PASSERELLE', 'paytech'),
+        'simulation_secret' => env('PAIEMENT_SIMULATION_SECRET', 'secret-local-de-simulation'),
     ],
         'change' => [
         // Valeur de secours si le service de taux est indisponible (à ajuster)

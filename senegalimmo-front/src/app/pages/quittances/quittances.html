@@ -81,8 +81,8 @@
               <div class="lp-info">
                 <div class="lp-top">
                   <h3>{{ objet(p) }}</h3>
-                  <span class="lp-badge" [class.lp-s-signe]="p.statut === 'confirme'" [class.lp-s-en_attente]="p.statut === 'en_attente'">
-                    {{ p.statut === 'confirme' ? 'Payée' : 'En attente' }}
+                  <span class="lp-badge" [class.lp-s-signe]="p.statut === 'reussi'" [class.lp-s-en_attente]="p.statut === 'en_attente'">
+                    {{ p.statut === 'reussi' ? 'Payée' : 'En attente' }}
                   </span>
                 </div>
 
@@ -118,7 +118,7 @@
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;">
                     <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
                   </svg>
-                  Règlement le {{ (p.date_paiement || p.created_at) | date:'d MMM y à HH:mm' }}
+                  Règlement le {{ (p.confirme_le || p.created_at) | date:'d MMM y à HH:mm' }}
                   · {{ methodeLabel(p.methode) }} · Réf. {{ p.reference }}
                 </p>
 

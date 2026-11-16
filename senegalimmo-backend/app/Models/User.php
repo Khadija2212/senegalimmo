@@ -21,7 +21,6 @@ class User extends Authenticatable
         'role',
         'photo',
         'est_verifie',
-        'solde_portefeuille',
         'devise',
         'mode_diaspora',
         'statut',
@@ -52,7 +51,6 @@ class User extends Authenticatable
         'est_verifie' => 'boolean',
         'est_premium' => 'boolean',
         'mode_diaspora' => 'boolean',
-        'solde_portefeuille' => 'decimal:2',
         'budget_min' => 'decimal:2',
         'budget_max' => 'decimal:2',
         'revenu_mensuel' => 'decimal:2',
@@ -104,9 +102,10 @@ class User extends Authenticatable
         return $this->belongsToMany(Bien::class, 'favoris', 'user_id', 'bien_id');
     }
 
-    public function demandesRetrait()
+    /** Association « détient » du diagramme : 0..1 portefeuille, propriétaire ou agent seulement. */
+    public function portefeuille()
     {
-        return $this->hasMany(DemandeRetrait::class);
+        return $this->hasOne(Portefeuille::class);
     }
 
     public function signalements()

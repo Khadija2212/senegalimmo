@@ -15,7 +15,6 @@ use App\Http\Controllers\ChangeController;
 use App\Http\Controllers\CommissionController;
 use App\Http\Controllers\ContratController;
 use App\Http\Controllers\DemandeLocationController;
-use App\Http\Controllers\DemandeRetraitController;
 use App\Http\Controllers\EtatDesLieuxController;
 use App\Http\Controllers\FavoriController;
 use App\Http\Controllers\MandatController;
@@ -23,6 +22,7 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\NotationController;
 use App\Http\Controllers\OffreAchatController;
 use App\Http\Controllers\PaiementController;
+use App\Http\Controllers\NotificationPaiementController;
 use App\Http\Controllers\PromesseVenteController;
 use App\Http\Controllers\SignalementController;
 use App\Http\Controllers\StatsController;
@@ -40,8 +40,10 @@ Route::get('/categories', [CategorieController::class, 'index']);
 Route::get('/proprietaires/{id}/avis', [NotationController::class, 'avis'])->whereNumber('id');
 Route::get('/taux-change', [ChangeController::class, 'index']);
 
-// Appelée par PayTech (authentifiée par signature, pas par jeton)
-Route::post('/paiements/ipn', [PaiementController::class, 'ipn']);
+// Appelée par la passerelle de paiement (authentifiée par signature, pas par jeton)
+Route::post('/paiements/ipn', [NotificationPaiementController::class, 'ipn']);
+// Page de paiement de la passerelle simulée (développement local uniquement)
+Route::get('/paiements/simulation/{reference}/{jeton}', [NotificationPaiementController::class, 'simulation']);
 
 // ===== Routes protégées =====
 Route::middleware('auth:sanctum')->group(function () {
@@ -89,7 +91,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/paiements', [PaiementController::class, 'index']);
     Route::post('/paiements/initier', [PaiementController::class, 'initier']);
     Route::get('/paiements/ref/{reference}', [PaiementController::class, 'showByReference']);
-    Route::post('/paiements/{paiement}/verifier', [PaiementController::class, 'verifier']);
     Route::get('/paiements/{paiement}/quittance', [PaiementController::class, 'quittance']);
 
     // Vente
@@ -108,9 +109,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/signalements/{signalement}', [SignalementController::class, 'update']);
 
     // Demandes de retrait
-    Route::get('/demandes-retrait', [DemandeRetraitController::class, 'index']);
-    Route::post('/demandes-retrait', [DemandeRetraitController::class, 'store']);
-    Route::put('/demandes-retrait/{demande}/traiter', [DemandeRetraitController::class, 'traiter']);
 
     // Catégories (admin CRUD)
     Route::post('/categories', [CategorieController::class, 'store']);
@@ -168,7 +166,6 @@ Route::middleware('auth:sanctum')->group(function () {
         // Portefeuille et retraits
     Route::get('/portefeuille', [PortefeuilleController::class, 'show']);
     Route::post('/retraits', [RetraitController::class, 'demander']);
-    Route::get('/retraits/{retrait}/preuve', [RetraitController::class, 'preuve']);
     Route::get('/admin/retraits', [RetraitController::class, 'adminIndex']);
     Route::post('/admin/retraits/{retrait}/traiter', [RetraitController::class, 'traiter']);
 

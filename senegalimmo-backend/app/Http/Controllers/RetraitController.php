@@ -2,155 +2,78 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\DemandeRetrait;
-use App\Services\Portefeuille;
+use App\Enums\MethodePaiement;
+use App\Enums\StatutRetrait;
+use App\Models\Retrait;
+use App\Services\Paiement\GestionRetraits;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\Response;
 
 class RetraitController extends Controller
 {
-    private function refus(string $message = 'Accès refusé.', int $code = 403)
+    private const ADMIN = 'administrateur';
+    private const LIMITE_ADMIN = 200;
+    private const DECISION_APPROUVER = 'approuver';
+    private const DECISION_REJETER = 'rejeter';
+
+    public function __construct(private readonly GestionRetraits $retraits)
     {
-        return response()->json(['message' => $message], $code);
     }
 
-    // Le propriétaire ou l'agence demande un retrait : le montant est bloqué tout de suite
-    public function demander(Request $request)
+    /** Cas « Demander un retrait » : le montant est bloqué tout de suite. */
+    public function demander(Request $request): JsonResponse
     {
-        $user = $request->user();
-
-        if (!in_array($user->role, ['proprietaire', 'agence', 'agent'], true)) {
-            return $this->refus();
-        }
-
-        $minimum = (int) config('services.retrait.minimum');
-
         $data = $request->validate([
-            'montant'          => 'required|numeric|min:1',
-            'methode'          => 'required|in:wave,orange_money,virement',
-            'numero_telephone' => 'required|string|max:30',
-        ]);
+            'montant' => ['required', 'integer', 'min:1'],
+            'methode' => ['required', Rule::in([MethodePaiement::WAVE->value, MethodePaiement::ORANGE_MONEY->value, MethodePaiement::FREE_MONEY->value])],
+            'numero_beneficiaire' => ['required', 'string', 'regex:/^[0-9+ ]{7,20}$/'],
+        ], ['numero_beneficiaire.regex' => 'Le numéro doit contenir 7 à 20 chiffres.']);
 
-        if ((float) $data['montant'] < $minimum) {
-            return $this->refus('Le montant minimum d\'un retrait est de ' . number_format($minimum, 0, ',', ' ') . ' FCFA.', 422);
-        }
+        $retrait = $this->retraits->demander(
+            $request->user(),
+            (int) $data['montant'],
+            MethodePaiement::from($data['methode']),
+            str_replace(' ', '', $data['numero_beneficiaire']),
+        );
 
-        try {
-            $retrait = DB::transaction(function () use ($user, $data) {
-                $retrait = DemandeRetrait::create([
-                    'user_id'          => $user->id,
-                    'montant'          => $data['montant'],
-                    'methode'          => $data['methode'],
-                    'numero_telephone' => $data['numero_telephone'],
-                    'statut'           => 'en_attente',
-                ]);
-
-                $ok = Portefeuille::debiter(
-                    $user->id,
-                    (float) $data['montant'],
-                    'Demande de retrait n°' . $retrait->id . ' (en attente de traitement)'
-                );
-
-                if (!$ok) {
-                    throw new \RuntimeException('solde');
-                }
-
-                return $retrait;
-            });
-        } catch (\RuntimeException $e) {
-            return $this->refus('Solde insuffisant.', 422);
-        }
-
-        return response()->json($retrait, 201);
+        return response()->json($retrait, Response::HTTP_CREATED);
     }
 
-    // Preuve de transfert : visible par le demandeur et par l'administrateur
-    public function preuve(Request $request, DemandeRetrait $retrait)
+    /** Liste de l'administrateur : les demandes à traiter d'abord. */
+    public function adminIndex(Request $request): JsonResponse
     {
-        $user = $request->user();
+        abort_unless($request->user()->role === self::ADMIN, Response::HTTP_FORBIDDEN, 'Accès refusé.');
 
-        if ($user->role !== 'administrateur' && $retrait->user_id !== $user->id) {
-            return $this->refus();
-        }
-
-        $chemin = $retrait->getRawOriginal('preuve');
-
-        if (!$chemin || !Storage::disk('local')->exists($chemin)) {
-            return $this->refus('Aucune preuve disponible.', 404);
-        }
-
-        return Storage::disk('local')->response($chemin);
-    }
-
-    public function adminIndex(Request $request)
-    {
-        if ($request->user()->role !== 'administrateur') {
-            return $this->refus();
-        }
-
-        $query = DemandeRetrait::with('user:id,nom,prenom,role,telephone')
-            ->orderByRaw("case when statut = 'en_attente' then 0 else 1 end")
+        $requete = Retrait::with(['portefeuille.user:id,nom,prenom,role,telephone', 'validateur:id,nom,prenom'])
+            ->orderByRaw('case when statut = ? then 0 else 1 end', [StatutRetrait::DEMANDE->value])
             ->orderByDesc('id')
-            ->limit(200);
-
+            ->limit(self::LIMITE_ADMIN);
         if ($request->filled('statut')) {
-            $query->where('statut', $request->statut);
+            $requete->where('statut', (string) $request->input('statut'));
         }
 
-        $retraits = $query->get();
-        $retraits->each(fn ($r) => $r->setAttribute('a_preuve', !empty($r->getRawOriginal('preuve'))));
-
-        return response()->json($retraits);
+        return response()->json($requete->get());
     }
 
-    // L'administrateur valide (après transfert manuel) ou rejette (remboursement)
-    public function traiter(Request $request, DemandeRetrait $retrait)
+    /** Cas « Valider les retraits », étendu par « Verser les fonds ». */
+    public function traiter(Request $request, Retrait $retrait): JsonResponse
     {
-        if ($request->user()->role !== 'administrateur') {
-            return $this->refus();
-        }
-
-        if ($retrait->statut !== 'en_attente') {
-            return $this->refus('Cette demande a déjà été traitée.', 422);
-        }
+        $admin = $request->user();
+        abort_unless($admin->role === self::ADMIN, Response::HTTP_FORBIDDEN, 'Accès refusé.');
 
         $data = $request->validate([
-            'decision'  => 'required|in:validee,rejetee',
-            'motif'     => 'required_if:decision,rejetee|nullable|string|max:500',
-            'reference' => 'nullable|string|max:80',
-            'preuve'    => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
-        ], [
-            'motif.required_if' => 'Indiquez le motif du rejet.',
-        ]);
+            'decision' => ['required', Rule::in([self::DECISION_APPROUVER, self::DECISION_REJETER])],
+            'motif' => ['required_if:decision,' . self::DECISION_REJETER, 'nullable', 'string', 'max:500'],
+        ], ['motif.required_if' => 'Indiquez le motif du rejet.']);
 
-        DB::transaction(function () use ($retrait, $data, $request) {
-            if ($data['decision'] === 'validee') {
-                $chemin = $request->hasFile('preuve')
-                    ? $request->file('preuve')->store('preuves-retrait', 'local')
-                    : null;
+        if ($data['decision'] === self::DECISION_REJETER) {
+            $retrait->rejeter($data['motif'], $admin);
+        } else {
+            $this->retraits->valider($retrait, $admin);
+        }
 
-                $retrait->update([
-                    'statut'              => 'validee',
-                    'traitee_le'          => now(),
-                    'preuve'              => $chemin,
-                    'reference_transfert' => $data['reference'] ?? null,
-                ]);
-            } else {
-                $retrait->update([
-                    'statut'      => 'rejetee',
-                    'traitee_le'  => now(),
-                    'motif_rejet' => $data['motif'],
-                ]);
-
-                Portefeuille::crediter(
-                    $retrait->user_id,
-                    (float) $retrait->montant,
-                    'Retrait n°' . $retrait->id . ' rejeté : remboursement'
-                );
-            }
-        });
-
-        return response()->json($retrait->fresh());
+        return response()->json($retrait->fresh(['validateur:id,nom,prenom']));
     }
 }

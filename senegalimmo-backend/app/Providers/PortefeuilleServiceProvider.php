@@ -3,10 +3,8 @@
 namespace App\Providers;
 
 use App\Models\Commission;
-use App\Models\DemandeRetrait;
-use App\Models\MouvementPortefeuille;
-use App\Models\Paiement;
-use App\Models\User;
+use App\Enums\StatutRetrait;
+use App\Models\Retrait;
 use App\Services\Notifier;
 use Illuminate\Support\ServiceProvider;
 
@@ -23,8 +21,8 @@ class PortefeuilleServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        DemandeRetrait::created(function (DemandeRetrait $r) {
-            $u = $r->user;
+        Retrait::created(function (Retrait $r) {
+            $u = $r->portefeuille?->user;
             Notifier::admins(
                 'Demande de retrait',
                 trim($u?->prenom . ' ' . $u?->nom) . ' demande ' . self::fcfa($r->montant) . '.',
@@ -32,41 +30,20 @@ class PortefeuilleServiceProvider extends ServiceProvider
             );
         });
 
-        DemandeRetrait::updated(function (DemandeRetrait $r) {
-            if (!$r->wasChanged('statut')) {
+        Retrait::updated(function (Retrait $r) {
+            if (!$r->wasChanged('statut') || ($userId = $r->portefeuille?->user_id) === null) {
                 return;
             }
-
-            if ($r->statut === 'validee') {
-                Notifier::envoyer($r->user_id, 'Retrait effectué',
-                    'Votre retrait de ' . self::fcfa($r->montant) . ' a été effectué.', '/portefeuille');
+            if ($r->statut === StatutRetrait::VERSE) {
+                Notifier::envoyer($userId, 'Retrait versé',
+                    'Votre retrait de ' . self::fcfa($r->montant) . ' est versé sur ' . $r->methode->libelle() . '.', '/portefeuille');
             }
-
-            if ($r->statut === 'rejetee') {
-                Notifier::envoyer($r->user_id, 'Retrait rejeté',
+            if ($r->statut === StatutRetrait::REJETE) {
+                Notifier::envoyer($userId, 'Retrait rejeté',
                     'Votre retrait de ' . self::fcfa($r->montant) . ' est rejeté'
-                    . ($r->motif_rejet ? ' : ' . $r->motif_rejet : '.') . ' Le montant est remboursé sur votre portefeuille.',
+                    . ($r->motif_rejet ? ' : ' . $r->motif_rejet : '.') . ' Le montant est de nouveau disponible.',
                     '/portefeuille');
             }
-        });
-
-        // Historique : chaque paiement confirmé crédite le portefeuille du bénéficiaire.
-        // L'événement part avant l'incrément du solde, d'où « solde actuel + montant ».
-        Paiement::updated(function (Paiement $p) {
-            if (!$p->wasChanged('statut') || $p->statut !== 'confirme') {
-                return;
-            }
-
-            $solde = (float) User::whereKey($p->beneficiaire_id)->value('solde_portefeuille');
-            $libelle = $p->type === 'caution' ? 'Caution reçue' : 'Loyer reçu' . ($p->periode ? ' (' . $p->periode . ')' : '');
-
-            MouvementPortefeuille::create([
-                'user_id'     => $p->beneficiaire_id,
-                'type'        => 'credit',
-                'montant'     => $p->montant,
-                'solde_apres' => $solde + (float) $p->montant,
-                'libelle'     => $libelle . ' - ' . $p->reference,
-            ]);
         });
 
         Commission::updated(function (Commission $c) {

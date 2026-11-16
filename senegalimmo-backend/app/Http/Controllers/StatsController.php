@@ -7,12 +7,14 @@ use App\Models\Bien;
 use App\Models\Commission;
 use App\Models\Contrat;
 use App\Models\DemandeLocation;
-use App\Models\DemandeRetrait;
+use App\Models\Retrait;
 use App\Models\Favori;
 use App\Models\Mandat;
 use App\Models\Message;
 use App\Models\Notation;
 use App\Models\OffreAchat;
+use App\Enums\StatutPaiement;
+use App\Enums\StatutRetrait;
 use App\Models\Paiement;
 use App\Models\PromesseVente;
 use App\Models\User;
@@ -54,7 +56,7 @@ class StatsController extends Controller
                 'nb_avis'             => Notation::where('note_id', $user->id)->count(),
                 'note_moyenne'        => round((float) Notation::where('note_id', $user->id)->avg('note'), 1),
                 'messages_non_lus'    => Message::where('destinataire_id', $user->id)->where('lu', false)->count(),
-                'solde'               => (float) $user->solde_portefeuille,
+                'solde'               => (int) ($user->portefeuille?->solde_disponible ?? 0),
             ],
             'client', 'locataire' => $clientStats,
             'acheteur' => [
@@ -77,12 +79,13 @@ class StatsController extends Controller
                 'commissions'        => (float) Commission::where(fn ($q) => $q->where('agent_id', $user->id)->orWhere('agence_id', $user->id))->sum('montant'),
                 'commissions_dues'   => (float) Commission::where(fn ($q) => $q->where('agent_id', $user->id)->orWhere('agence_id', $user->id))
                     ->where('statut', 'due')->sum('montant'),
-                'solde'              => (float) $user->solde_portefeuille,
+                'solde'              => (int) ($user->portefeuille?->solde_disponible ?? 0),
             ],
             'administrateur' => [
                 'utilisateurs'        => User::where('role', '!=', 'administrateur')->count(),
                 'annonces_en_attente' => Annonce::where('statut', 'en_attente')->count(),
-                'retraits_en_attente' => DemandeRetrait::where('statut', 'en_attente')->count(),                'volume'              => (float) Paiement::where('statut', 'confirme')->sum('montant'),
+                'retraits_en_attente' => Retrait::where('statut', StatutRetrait::DEMANDE)->count(),
+                'volume'              => (int) Paiement::tous()->where('statut', StatutPaiement::REUSSI)->sum('montant'),
                  'verifications_en_attente' => User::where('verification', 'en_attente')->count(),
             ],
             default => [],

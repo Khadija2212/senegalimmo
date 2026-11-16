@@ -18,16 +18,12 @@ export class PaiementService {
     return this.http.get<any>(`${this.apiUrl}/contrats/${contratId}/echeancier`);
   }
 
-  initier(data: { contrat_id?: number; promesse_id?: number; type: string; methode: string }): Observable<any> {
+  initier(data: { bail_id?: number; promesse_id?: number; type: string; methode: string }): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/paiements/initier`, data);
   }
 
   getByReference(reference: string): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/paiements/ref/${reference}`);
-  }
-
-  verifier(id: number): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/paiements/${id}/verifier`, {});
   }
 
   quittance(id: number): Observable<Blob> {

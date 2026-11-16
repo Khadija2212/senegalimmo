@@ -15,7 +15,7 @@ import { PortefeuilleService } from '../../services/portefeuille';
   styleUrl: './portefeuille.css'
 })
 export class Portefeuille implements OnInit {
-  data: any = { solde: 0, minimum: 0, mouvements: [], retraits: [] };
+  data: any = { solde_disponible: 0, solde_en_attente: 0, minimum: 0, ecritures: [], retraits: [] };
   user: any;
   isLoading = true;
   showForm = false;
@@ -25,7 +25,7 @@ export class Portefeuille implements OnInit {
   methodes = [
     { value: 'wave', label: 'Wave' },
     { value: 'orange_money', label: 'Orange Money' },
-    { value: 'virement', label: 'Virement bancaire' },
+    { value: 'free_money', label: 'Free Money' },
   ];
 
   constructor(
@@ -55,7 +55,7 @@ export class Portefeuille implements OnInit {
   }
 
   statutLabel(s: string): string {
-    const labels: Record<string, string> = { en_attente: 'En attente', validee: 'Effectué', rejetee: 'Rejeté' };
+    const labels: Record<string, string> = { demande: 'Demandé', approuve: 'Versement en cours', verse: 'Versé', rejete: 'Rejeté' };
     return labels[s] ?? s;
   }
 
@@ -90,7 +90,7 @@ export class Portefeuille implements OnInit {
     this.service.demander({
       montant: this.form.montant,
       methode: this.form.methode,
-      numero_telephone: this.form.numero_telephone.trim(),
+      numero_beneficiaire: this.form.numero_telephone.trim(),
     }).subscribe({
       next: () => {
         this.saving = false;
@@ -104,13 +104,6 @@ export class Portefeuille implements OnInit {
         this.snackBar.open(this.message(err, 'Demande impossible'), 'Fermer', { duration: 6000 });
         this.cdr.detectChanges();
       }
-    });
-  }
-
-  voirPreuve(r: any) {
-    this.service.preuve(r.id).subscribe({
-      next: (blob) => window.open(URL.createObjectURL(blob), '_blank'),
-      error: () => this.snackBar.open('Preuve introuvable', 'Fermer', { duration: 3000 })
     });
   }
 }

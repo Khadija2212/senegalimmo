@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Annonce;
 use App\Models\Bien;
-use App\Models\DemandeRetrait;
+use App\Models\Retrait;
+use App\Enums\StatutPaiement;
+use App\Enums\StatutRetrait;
 use App\Models\Paiement;
 use App\Models\User;
 use Dompdf\Dompdf;
@@ -158,11 +160,11 @@ class AdminUserController extends Controller
             'total_annonces'              => Annonce::count(),
             'annonces_publiees'           => Annonce::where('statut', 'publiee')->count(),
             'annonces_en_attente'         => Annonce::where('statut', 'en_attente')->count(),
-            'volume_transactions_fcfa'    => (float) Paiement::where('statut', 'confirme')->sum('montant'),
-            'nb_paiements_confirmes'      => Paiement::where('statut', 'confirme')->count(),
-            'retraits_en_attente'         => DemandeRetrait::where('statut', 'en_attente')->count(),
-            'retraits_valides'            => DemandeRetrait::where('statut', 'validee')->count(),
-            'montant_retraits_valides_fcfa' => (float) DemandeRetrait::where('statut', 'validee')->sum('montant'),
+            'volume_transactions_fcfa'    => (int) Paiement::tous()->where('statut', StatutPaiement::REUSSI)->sum('montant'),
+            'nb_paiements_confirmes'      => Paiement::tous()->where('statut', StatutPaiement::REUSSI)->count(),
+            'retraits_en_attente'         => Retrait::where('statut', StatutRetrait::DEMANDE)->count(),
+            'retraits_valides'            => Retrait::where('statut', StatutRetrait::VERSE)->count(),
+            'montant_retraits_valides_fcfa' => (int) Retrait::where('statut', StatutRetrait::VERSE)->sum('montant'),
         ];
 
         $format = strtolower((string) $request->query('format', 'pdf'));

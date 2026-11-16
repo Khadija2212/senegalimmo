@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\Portefeuille;
+use App\Exceptions\OperationRefusee;
+use App\Models\Portefeuille;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use App\Models\Commission;
 use Illuminate\Http\Request;
@@ -73,19 +75,13 @@ class CommissionController extends Controller
         $titre = $commission->bien?->titre;
         $beneficiaireId = $commission->agent_id ?: $commission->agence_id;
 
+        $agent = User::findOrFail($beneficiaireId);
         try {
-            DB::transaction(function () use ($commission, $user, $titre, $beneficiaireId) {
-                $ok = Portefeuille::debiter($user->id, (float) $commission->montant, 'Commission payée - ' . $titre);
-
-                if (!$ok) {
-                    throw new \RuntimeException('solde');
-                }
-
-                Portefeuille::crediter($beneficiaireId, (float) $commission->montant, 'Commission reçue - ' . $titre);
-
+            DB::transaction(function () use ($commission, $user, $agent, $titre) {
+                Portefeuille::de($user)->verserCommission(Portefeuille::de($agent), (int) round((float) $commission->montant), (string) $titre);
                 $commission->update(['statut' => 'reglee', 'reglee_le' => now()]);
             });
-        } catch (\RuntimeException $e) {
+        } catch (OperationRefusee $e) {
             return response()->json(['message' => 'Solde insuffisant pour régler cette commission.'], 422);
         }
 

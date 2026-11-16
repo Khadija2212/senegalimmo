@@ -70,7 +70,7 @@ export class Promesses implements OnInit {
   }
 
   getPaiement(p: any): any | undefined {
-    return this.paiements.find(pay => pay.promesse_id === p.id && pay.statut === 'confirme');
+    return this.paiements.find(pay => pay.promesse_id === p.id && pay.statut === 'reussi');
   }
 
   load() {

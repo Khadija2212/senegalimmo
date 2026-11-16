@@ -10,6 +10,7 @@ use App\Models\EtatDesLieux;
 use App\Models\Mandat;
 use App\Models\Notation;
 use App\Models\OffreAchat;
+use App\Enums\StatutPaiement;
 use App\Models\Paiement;
 use App\Models\PromesseVente;
 use App\Models\User;
@@ -277,12 +278,20 @@ class AlerteServiceProvider extends ServiceProvider
             }
         });
 
-        Paiement::updated(function (Paiement $p) {
-            if ($p->wasChanged('statut') && $p->statut === 'confirme') {
-                Notifier::envoyer($p->beneficiaire_id, 'Paiement reçu', 'Vous avez reçu ' . self::fcfa($p->montant) . '.', '/paiements');
-                Notifier::envoyer($p->payeur_id, 'Paiement confirmé', 'Votre paiement de ' . self::fcfa($p->montant) . ' est confirmé.', '/paiements');
-            }
-        });
+        // Paiement est abstrait : l'écoute se pose sur chaque sous-classe.
+        foreach (Paiement::SOUS_CLASSES as $classe) {
+            $classe::updated(function (Paiement $p) {
+                if (!$p->wasChanged('statut') || $p->statut !== StatutPaiement::REUSSI) {
+                    return;
+                }
+                if ($b = $p->beneficiaire()) {
+                    Notifier::envoyer($b->id, 'Paiement reçu', 'Vous avez reçu ' . self::fcfa($p->montantNet()) . ' : ' . $p->libelle() . '.', '/paiements');
+                }
+                if ($c = $p->payeur()) {
+                    Notifier::envoyer($c->id, 'Paiement confirmé', 'Votre paiement de ' . self::fcfa($p->montant) . ' est confirmé, le reçu est disponible.', '/paiements');
+                }
+            });
+        }
 
         Notation::created(fn (Notation $n) => Notifier::envoyer(
             $n->note_id,
