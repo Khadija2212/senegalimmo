@@ -2,28 +2,30 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\DemandeRetrait;
-use App\Models\MouvementPortefeuille;
+use App\Models\Portefeuille;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/** Cas « Consulter portefeuille » (propriétaire, agent). */
 class PortefeuilleController extends Controller
 {
-    public function show(Request $request)
+    private const NB_ECRITURES = 50;
+
+    private const NB_RETRAITS = 30;
+
+    /** Cas « Consulter portefeuille » : les deux soldes, l'historique et les retraits. */
+    public function show(Request $request): JsonResponse
     {
-        $user = $request->user();
-
-        if (!in_array($user->role, ['proprietaire', 'agence', 'agent'], true)) {
-            return response()->json(['message' => 'Le portefeuille est réservé aux propriétaires et aux agents immobiliers.'], 403);
-        }
-
-        $retraits = DemandeRetrait::where('user_id', $user->id)->orderByDesc('id')->limit(30)->get();
-        $retraits->each(fn ($r) => $r->setAttribute('a_preuve', !empty($r->getRawOriginal('preuve'))));
+        $p = Portefeuille::de($request->user());
 
         return response()->json([
-            'solde'      => (float) $user->solde_portefeuille,
-            'minimum'    => (int) config('services.retrait.minimum'),
-            'mouvements' => MouvementPortefeuille::where('user_id', $user->id)->orderByDesc('id')->limit(50)->get(),
-            'retraits'   => $retraits,
+            'solde' => $p->solde_disponible,
+            'solde_disponible' => $p->solde_disponible,
+            'solde_en_attente' => $p->solde_en_attente,
+            'mis_a_jour_le' => $p->mis_a_jour_le,
+            'minimum' => (int) config('services.retrait.minimum'),
+            'ecritures' => $p->ecritures()->latest('date')->latest('id')->limit(self::NB_ECRITURES)->get(),
+            'retraits' => $p->retraits()->latest('id')->limit(self::NB_RETRAITS)->get(),
         ]);
     }
 }

@@ -33,7 +33,7 @@ export class Agents implements OnInit {
   }
 
   ngOnInit() {
-    if (!this.authService.isLoggedIn() || this.user?.role !== 'agence') {
+    if (!this.authService.isLoggedIn() || this.user?.role !== 'agent') {
       this.router.navigate(['/login']);
       return;
     }

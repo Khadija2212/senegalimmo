@@ -69,8 +69,8 @@
             @for (r of retraits; track r.id) {
               <tr>
                 <td>
-                  <strong>{{ r.user?.prenom }} {{ r.user?.nom }}</strong>
-                  <br><small class="text-muted">Solde disponible : {{ r.user?.solde_portefeuille | number:'1.0-0' }} FCFA</small>
+                  <strong>{{ r.portefeuille?.user?.prenom }} {{ r.portefeuille?.user?.nom }}</strong>
+                  <br><small class="text-muted">Solde disponible : {{ r.portefeuille?.solde_disponible | number:'1.0-0' }} FCFA</small>
                 </td>
                 <td>
                   <strong class="text-amount">{{ r.montant | number:'1.0-0' }} FCFA</strong>
@@ -81,17 +81,17 @@
                 <td>
                   <span class="phone-item">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                    {{ r.numero_telephone }}
+                    {{ r.numero_beneficiaire }}
                   </span>
                 </td>
-                <td>{{ r.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td>{{ r.demande_le | date:'dd/MM/yyyy HH:mm' }}</td>
                 <td>
-                  <span class="badge" [class.badge-pending]="r.statut === 'en_attente'" [class.badge-ok]="r.statut === 'validee'" [class.badge-ko]="r.statut === 'rejetee'">
+                  <span class="badge" [class.badge-pending]="r.statut === 'demande' || r.statut === 'approuve'" [class.badge-ok]="r.statut === 'verse'" [class.badge-ko]="r.statut === 'rejete'">
                     {{ r.statut }}
                   </span>
                 </td>
                 <td>
-                  @if (r.statut === 'en_attente') {
+                  @if (r.statut === 'demande') {
                     <div class="btn-group">
                       <button type="button" class="btn btn-xs btn-success" (click)="traiter(r, 'valider')">
                         Approuver

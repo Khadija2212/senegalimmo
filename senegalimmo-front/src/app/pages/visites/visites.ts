@@ -46,7 +46,7 @@ export class Visites implements OnInit {
   }
 
   get isOwner(): boolean {
-    return ['proprietaire', 'agence', 'agent'].includes(this.user?.role);
+    return ['proprietaire', 'agent'].includes(this.user?.role);
   }
   get dashboardLink(): string {
     return this.authService.getDashboardRoute(this.user?.role);

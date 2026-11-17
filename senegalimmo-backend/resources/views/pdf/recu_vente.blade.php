@@ -17,19 +17,16 @@
 <body>
 
 @php
-    $fcfa = number_format((float) $paiement->montant, 0, ',', ' ') . ' FCFA';
-    $labels = ['orange_money' => 'Orange Money', 'wave' => 'Wave', 'free_money' => 'Free Money'];
-    $date = $paiement->date_paiement
-        ? $paiement->date_paiement->copy()->locale('fr')->translatedFormat('d F Y à H:i')
-        : ($paiement->created_at ? $paiement->created_at->format('d/m/Y à H:i') : now()->format('d/m/Y à H:i'));
-    $objet = $paiement->type === 'indemnite' ? 'Indemnité d\'immobilisation (Promesse de vente)' : 'Acompte / Tranche d\'acquisition';
-    $bien = $paiement->promesse ? $paiement->promesse->bien : ($paiement->contrat ? $paiement->contrat->bien : null);
-    $beneficiaire = $paiement->beneficiaire;
-    $payeur = $paiement->payeur;
+    $fcfa = number_format($paiement->montant, 0, ',', ' ') . ' FCFA';
+    $date = ($paiement->confirme_le ?? $paiement->created_at)->copy()->locale('fr')->translatedFormat('d F Y à H:i');
+    $objet = "Indemnité d'immobilisation (promesse de vente)";
+    $bien = $paiement->bien();
+    $beneficiaire = $paiement->beneficiaire();
+    $payeur = $paiement->payeur();
 @endphp
 
 <h1>REÇU DE PAIEMENT ACQUÉREUR</h1>
-<div class="sub">N° {{ $paiement->reference }} · {{ $date }}</div>
+<div class="sub">Reçu {{ $recu->numero }}, le {{ $date }}</div>
 
 <table>
     <tr><td class="l">Bénéficiaire / Vendeur</td><td>{{ $beneficiaire ? $beneficiaire->prenom . ' ' . $beneficiaire->nom : 'N/A' }}</td></tr>
@@ -39,18 +36,18 @@
     @endif
     <tr><td class="l">Objet du versement</td><td>{{ $objet }}</td></tr>
     @if ($paiement->promesse_id)
-    <tr><td class="l">Dossier de vente</td><td>PROMESSE-{{ str_pad($paiement->promesse_id, 4, '0', STR_PAD_LEFT) }}</td></tr>
+    <tr><td class="l">Dossier de vente</td><td>{{ $paiement->promesse->reference }}</td></tr>
     @endif
-    <tr><td class="l">Mode de règlement</td><td>{{ $labels[$paiement->methode] ?? $paiement->methode }} (via PayTech)</td></tr>
+    <tr><td class="l">Mode de règlement</td><td>{{ $paiement->methode->libelle() }} (via PayTech)</td></tr>
 </table>
 
 <div class="total">Montant reçu : {{ $fcfa }}</div>
 
 <p style="margin-top:14px; text-align:justify;">
-    Le vendeur confirme la réception du versement ci-dessus au titre de l'indemnité d'immobilisation ou tranche convenue dans le cadre de la promesse synallagmatique de vente.
+    Le vendeur confirme la réception du versement ci-dessus au titre de l'indemnité d'immobilisation convenue dans le cadre de la promesse synallagmatique de vente.
 </p>
 
-<div class="footer">Document officiel généré par SénégalImmo · Transaction sécurisée et tracée.</div>
+<div class="footer">Document généré par SénégalImmo. Référence du paiement : {{ $paiement->reference }}.</div>
 
 </body>
 </html>

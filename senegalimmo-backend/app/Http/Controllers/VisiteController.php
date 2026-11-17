@@ -2,176 +2,84 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Bien;
-use App\Models\Mandat;
-use App\Models\User;
+use App\Enums\NiveauInteret;
+use App\Models\Annonce;
+use App\Models\Client;
 use App\Models\Visite;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Cas « Demander une visite » (client) et « Gérer les visites » (propriétaire, agent),
+ * étendu par « Confirmer ou refuser une visite » ; « Créer compte-rendu de visite » (agent).
+ */
 class VisiteController extends Controller
 {
-    // Transitions autorisées : statut actuel => statuts possibles
-    private const TRANSITIONS = [
-        'en_attente' => ['confirme', 'annule'],
-        'confirme'   => ['effectue', 'annule'],
-        'effectue'   => ['effectue'],
-    ];
-
-    // Biens confiés à l'agence, ou assignés à l'agent, sous mandat actif
-    private function biensGeres(User $user): array
+    public function index(Request $request): JsonResponse
     {
-        $query = Mandat::where('statut', 'actif')->whereDate('date_fin', '>=', today());
+        $compte = $request->user();
+        $requete = $compte instanceof Client
+            ? $compte->visites()
+            : Visite::whereHas('annonce', fn (Builder $q) => $q->whereIn('bien_id', $this->biensGeres($compte)));
 
-        if (in_array($user->role, ['agent', 'agence'], true)) {
-            $query->where(fn ($q) => $q->where('agent_id', $user->id)->orWhere('agence_id', $user->id));
-        } else {
-            return [];
-        }
-
-        return $query->pluck('bien_id')->all();
+        return response()->json($requete->with(['annonce.bien', 'client:id,prenom,nom,telephone', 'compteRendu'])->orderBy('date_heure')->get());
     }
 
-    // Propriétaire : visites reçues. Agence / agent : visites de leurs biens. Autres : leurs demandes.
-    public function index(Request $request)
+    public function store(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $d = $request->validate(['annonce_id' => ['required', 'uuid', 'exists:annonces,id'], 'date_heure' => ['required', 'date']]);
+        $visite = $request->user()->demanderVisite(Annonce::findOrFail($d['annonce_id']), Carbon::parse($d['date_heure']));
 
-        $query = Visite::with([
-            'bien:id,titre,quartier,ville,photos',
-            'demandeur:id,nom,prenom,telephone',
-            'proprietaire:id,nom,prenom',
-            'agent:id,nom,prenom,telephone',
-        ])->orderByDesc('created_at');
-
-        if ($user->role === 'proprietaire') {
-            $query->where('proprietaire_id', $user->id);
-        } elseif (in_array($user->role, ['agent', 'agence'], true)) {
-            $query->where(fn ($q) => $q->where('agent_id', $user->id)->orWhereIn('bien_id', $this->biensGeres($user)));
-        } else {
-            $query->where('demandeur_id', $user->id);
-        }
-
-        return response()->json($query->get());
+        return response()->json($visite, Response::HTTP_CREATED);
     }
 
-    public function store(Request $request)
+    public function confirmer(Request $request, Visite $visite): JsonResponse
     {
-        $user = $request->user();
-
-        if (!in_array($user->role, ['locataire', 'acheteur', 'client'])) {
-            return response()->json(
-                ['message' => 'Seuls les clients, locataires et acheteurs peuvent demander une visite.'],
-                403
-            );
-        }
-
-        $data = $request->validate([
-            'bien_id'     => 'required|exists:biens,id',
-            'date_visite' => 'required|date|after:now',
-            'commentaire' => 'nullable|string|max:500',
-        ], [
-            'date_visite.after' => 'La date de visite doit être dans le futur.',
-        ]);
-
-        $bien = Bien::findOrFail($data['bien_id']);
-
-        if ($bien->statut !== 'disponible') {
-            return response()->json(['message' => 'Ce bien n\'est plus disponible.'], 422);
-        }
-
-        $dejaDemandee = Visite::where('bien_id', $bien->id)
-            ->where('demandeur_id', $user->id)
-            ->where('statut', 'en_attente')
-            ->exists();
-
-        if ($dejaDemandee) {
-            return response()->json(
-                ['message' => 'Vous avez déjà une demande de visite en attente pour ce bien.'],
-                422
-            );
-        }
-
-        // Trouver si un agent est assigné au bien via un mandat actif
-        $mandat = Mandat::where('bien_id', $bien->id)
-            ->where('statut', 'actif')
-            ->whereDate('date_fin', '>=', today())
-            ->first();
-
-        $visite = Visite::create([
-            'bien_id'         => $bien->id,
-            'demandeur_id'    => $user->id,
-            'proprietaire_id' => $bien->proprietaire_id,
-            'agent_id'        => $mandat?->agent_id ?: $mandat?->agence_id,
-            'date_visite'     => $data['date_visite'],
-            'commentaire'     => $data['commentaire'] ?? null,
-        ]);
-
-        return response()->json($visite, 201);
-    }
-
-    public function show(Request $request, Visite $visite)
-    {
-        $user = $request->user();
-
-        $autorise = $visite->demandeur_id === $user->id
-            || $visite->proprietaire_id === $user->id
-            || $visite->agent_id === $user->id
-            || in_array($visite->bien_id, $this->biensGeres($user));
-
-        if (!$autorise) {
-            return response()->json(['message' => 'Accès refusé.'], 403);
-        }
-
-        return response()->json($visite->load(['bien', 'demandeur:id,nom,prenom,telephone', 'agent:id,nom,prenom']));
-    }
-
-    // Changement de statut et rédaction de compte-rendu
-    public function update(Request $request, Visite $visite)
-    {
-        $user = $request->user();
-
-        $data = $request->validate([
-            'statut'       => 'nullable|in:confirme,annule,effectue',
-            'compte_rendu' => 'nullable|string|max:2000',
-            'agent_id'     => 'nullable|exists:users,id',
-        ]);
-
-        $estGestionnaire = $visite->proprietaire_id === $user->id
-            || $visite->agent_id === $user->id
-            || in_array($visite->bien_id, $this->biensGeres($user));
-        $estDemandeur = $visite->demandeur_id === $user->id;
-
-        if (!$estGestionnaire && !$estDemandeur) {
-            return response()->json(['message' => 'Accès refusé.'], 403);
-        }
-
-        if (!$estGestionnaire && isset($data['statut']) && $data['statut'] !== 'annule') {
-            return response()->json(['message' => 'Action non autorisée.'], 403);
-        }
-
-        if (isset($data['statut'])) {
-            $autorises = self::TRANSITIONS[$visite->statut] ?? [];
-            if (!in_array($data['statut'], $autorises)) {
-                return response()->json(['message' => 'Cette visite ne peut plus être modifiée.'], 422);
-            }
-            $visite->statut = $data['statut'];
-        }
-
-        if (isset($data['compte_rendu']) && $estGestionnaire) {
-            $visite->compte_rendu = $data['compte_rendu'];
-        }
-
-        if (isset($data['agent_id']) && in_array($user->role, ['agent', 'agence'], true)) {
-            $visite->agent_id = $data['agent_id'];
-        }
-
-        $visite->save();
+        $this->exigerGestion($visite->annonce->bien, $request->user());
+        $visite->confirmer();
 
         return response()->json($visite);
     }
 
-    public function destroy()
+    public function refuser(Request $request, Visite $visite): JsonResponse
     {
-        return response()->json(['message' => 'Suppression non autorisée.'], 405);
+        $this->exigerGestion($visite->annonce->bien, $request->user());
+        $visite->refuser($request->validate(['motif' => ['required', 'string', 'max:1000']])['motif']);
+
+        return response()->json($visite);
+    }
+
+    public function annuler(Request $request, Visite $visite): JsonResponse
+    {
+        $this->exigerPartie($visite, $request);
+        $visite->annuler();
+
+        return response()->json($visite);
+    }
+
+    public function reprogrammer(Request $request, Visite $visite): JsonResponse
+    {
+        $this->exigerPartie($visite, $request);
+        $visite->reprogrammer(Carbon::parse($request->validate(['date_heure' => ['required', 'date']])['date_heure']));
+
+        return response()->json($visite);
+    }
+
+    public function compteRendu(Request $request, Visite $visite): JsonResponse
+    {
+        $d = $request->validate(['contenu' => ['required', 'string', 'max:5000'], 'interet_client' => ['required', Rule::enum(NiveauInteret::class)]]);
+        $cr = $request->user()->creerCompteRendu($visite, $d['contenu'], NiveauInteret::from($d['interet_client']));
+
+        return response()->json($cr, Response::HTTP_CREATED);
+    }
+
+    private function exigerPartie(Visite $visite, Request $request): void
+    {
+        $compte = $request->user();
+        $this->exigerQue($visite->client_id === $compte->id || $visite->annonce->bien->estGerePar($compte));
     }
 }

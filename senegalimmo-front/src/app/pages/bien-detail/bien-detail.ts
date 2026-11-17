@@ -156,15 +156,15 @@ export class BienDetail implements OnInit {
   }
 
   get canRequestVisit(): boolean {
-    return ['locataire', 'acheteur', 'client'].includes(this.userRole ?? '');
+    return this.userRole === 'client';
   }
 
   get canRequestRental(): boolean {
-    return (this.userRole === 'locataire' || this.userRole === 'client') && this.bien?.transaction === 'location';
+    return this.userRole === 'client' && this.bien?.transaction === 'location';
   }
 
   get canMakeOffer(): boolean {
-    return (this.userRole === 'acheteur' || this.userRole === 'client') && this.bien?.transaction === 'vente';
+    return this.userRole === 'client' && this.bien?.transaction === 'vente';
   }
 
   checkFavoriStatus(): void {

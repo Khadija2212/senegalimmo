@@ -58,7 +58,7 @@ export class RetraitsAdmin implements OnInit {
       if (!input) return;
       motif = input;
     } else {
-      if (!confirm(`Confirmez-vous le virement de ${r.montant} FCFA à ${r.user?.prenom} ${r.user?.nom} ?`)) {
+      if (!confirm(`Confirmez-vous le virement de ${r.montant} FCFA à ${r.portefeuille?.user?.prenom} ${r.portefeuille?.user?.nom} ?`)) {
         return;
       }
     }
@@ -66,11 +66,11 @@ export class RetraitsAdmin implements OnInit {
     this.message = '';
     this.error = '';
 
-    this.retraitService.traiter(r.id, { action, motif }).subscribe({
+    this.retraitService.traiter(r.id, { decision: action === 'valider' ? 'approuver' : 'rejeter', motif }).subscribe({
       next: (res) => {
-        this.message = res.message;
-        r.statut = res.demande.statut;
-        r.traitee_le = res.demande.traitee_le;
+        this.message = res.statut === 'rejete' ? 'Retrait rejeté, le montant est de nouveau disponible.' : 'Retrait approuvé, versement demandé.';
+        r.statut = res.statut;
+        r.traite_le = res.traite_le;
         this.cdr.detectChanges();
       },
       error: (err) => {

@@ -40,7 +40,7 @@ export class BiensGeres implements OnInit {
   }
 
   get isAgence(): boolean {
-    return ['agence', 'agent'].includes(this.user?.role);
+    return this.user?.role === 'agent';
   }
 
   get dashboardLink(): string {

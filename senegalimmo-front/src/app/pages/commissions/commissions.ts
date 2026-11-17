@@ -37,7 +37,7 @@ export class Commissions implements OnInit {
   }
 
   get isAgence(): boolean {
-    return ['agence', 'agent'].includes(this.user?.role);
+    return this.user?.role === 'agent';
   }
 
   get isOwner(): boolean {

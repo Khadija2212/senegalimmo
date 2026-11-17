@@ -58,7 +58,7 @@ export class Paiements implements OnInit {
 
   get totalConfirme(): number {
     return this.paiements
-      .filter((p) => p.statut === 'confirme')
+      .filter((p) => p.statut === 'reussi')
       .reduce((sum, p) => sum + Number(p.montant), 0);
   }
 
@@ -81,10 +81,7 @@ export class Paiements implements OnInit {
   }
 
   objet(p: any): string {
-    if (p.type === 'caution') return 'Caution';
-    if (!p.periode) return 'Loyer';
-    const [y, m] = p.periode.split('-').map(Number);
-    return 'Loyer de ' + new Date(y, m - 1, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    return p.libelle;
   }
 
   openQuittance(p: any) {

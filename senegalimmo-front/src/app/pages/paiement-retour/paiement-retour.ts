@@ -48,17 +48,6 @@ export class PaiementRetour implements OnInit, OnDestroy {
       next: (p) => {
         this.paiement = p;
 
-        // Secours si l'IPN n'est pas arrivé : on interroge PayTech une fois
-        if (p.statut === 'en_attente' && this.tentatives === 3 && !this.annule) {
-          this.paiementService.verifier(p.id).subscribe({
-            next: (maj) => {
-              this.paiement = maj;
-              this.cdr.detectChanges();
-            },
-            error: () => {}
-          });
-        }
-
         if (p.statut !== 'en_attente' || this.tentatives >= 10) {
           clearInterval(this.timer);
         }

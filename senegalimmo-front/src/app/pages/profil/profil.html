@@ -43,7 +43,7 @@
             <input type="text" [(ngModel)]="form.numero_cni"></label>
         }
 
-        @if (user.role === 'locataire' || user.role === 'client') {
+        @if (user.role === 'client') {
           <div class="lp-row">
             <label class="lp-field"><span>Profession</span><input type="text" [(ngModel)]="form.profession"></label>
             <label class="lp-field"><span>Revenu mensuel (FCFA)</span>
@@ -51,7 +51,7 @@
           </div>
         }
 
-        @if (user.role === 'acheteur' || user.role === 'client') {
+        @if (user.role === 'client') {
           <div class="lp-row">
             <label class="lp-field"><span>Budget minimum (FCFA)</span>
               <input type="number" min="0" [(ngModel)]="form.budget_min"></label>
@@ -60,7 +60,7 @@
           </div>
         }
 
-        @if (user.role === 'agent' || user.role === 'agence') {
+        @if (user.role === 'agent') {
           <div class="lp-row">
             <label class="lp-field"><span>Nom du cabinet / agence (optionnel)</span>
               <input type="text" [(ngModel)]="form.nom_agence"></label>

@@ -17,25 +17,17 @@
 <body>
 
 @php
-    $fcfa = number_format((float) $paiement->montant, 0, ',', ' ') . ' FCFA';
-    $labels = ['orange_money' => 'Orange Money', 'wave' => 'Wave', 'free_money' => 'Free Money'];
-    $date = $paiement->date_paiement
-        ? $paiement->date_paiement->copy()->locale('fr')->translatedFormat('d F Y à H:i')
-        : ($paiement->created_at ? $paiement->created_at->format('d/m/Y à H:i') : now()->format('d/m/Y à H:i'));
-
-    $objet = $paiement->type === 'caution'
-        ? 'Dépôt de garantie (caution)'
-        : ($paiement->periode
-            ? 'Loyer du mois de ' . \Illuminate\Support\Carbon::createFromFormat('Y-m', $paiement->periode)->locale('fr')->translatedFormat('F Y')
-            : 'Règlement de loyer');
-
-    $bien = $paiement->contrat?->bien ?? $paiement->promesse?->bien;
-    $beneficiaire = $paiement->beneficiaire;
-    $payeur = $paiement->payeur;
+    $fcfa = number_format($paiement->montant, 0, ',', ' ') . ' FCFA';
+    $date = ($paiement->confirme_le ?? $paiement->created_at)->copy()->locale('fr')->translatedFormat('d F Y à H:i');
+    $estCaution = $paiement instanceof \App\Models\PaiementCaution;
+    $objet = $estCaution ? 'Dépôt de garantie (caution)' : $paiement->libelle();
+    $bien = $paiement->bien();
+    $beneficiaire = $paiement->beneficiaire();
+    $payeur = $paiement->payeur();
 @endphp
 
-<h1>{{ $paiement->type === 'caution' ? 'REÇU DE CAUTION' : 'QUITTANCE DE LOYER' }}</h1>
-<div class="sub">N° {{ $paiement->reference }} · {{ $date }}</div>
+<h1>{{ $estCaution ? 'Reçu de caution' : 'Quittance de loyer' }}</h1>
+<div class="sub">Reçu {{ $recu->numero }}, le {{ $date }}</div>
 
 <table>
     <tr><td class="l">Bailleur / Propriétaire</td><td>{{ $beneficiaire ? $beneficiaire->prenom . ' ' . $beneficiaire->nom : 'N/A' }}</td></tr>
@@ -44,10 +36,10 @@
     <tr><td class="l">Bien loué</td><td>{{ $bien->titre }}<br>{{ $bien->adresse }}, {{ $bien->quartier }}, {{ $bien->ville }}</td></tr>
     @endif
     <tr><td class="l">Objet</td><td>{{ $objet }}</td></tr>
-    @if ($paiement->contrat_id)
-    <tr><td class="l">Bail</td><td>BAIL-{{ str_pad($paiement->contrat_id, 4, '0', STR_PAD_LEFT) }}</td></tr>
+    @if ($paiement->bail_id)
+    <tr><td class="l">Bail</td><td>{{ $paiement->bail->reference }}</td></tr>
     @endif
-    <tr><td class="l">Mode de paiement</td><td>{{ $labels[$paiement->methode] ?? $paiement->methode }} (via PayTech)</td></tr>
+    <tr><td class="l">Mode de paiement</td><td>{{ $paiement->methode->libelle() }} (via PayTech)</td></tr>
 </table>
 
 <div class="total">Montant reçu : {{ $fcfa }}</div>
@@ -57,7 +49,7 @@
     au titre de l'objet mentionné, et lui en donne quittance sous réserve d'encaissement définitif.
 </p>
 
-<div class="footer">Document officiel généré par SénégalImmo · Transaction sécurisée et tracée.</div>
+<div class="footer">Document généré par SénégalImmo. Référence du paiement : {{ $paiement->reference }}.</div>
 
 </body>
 </html>

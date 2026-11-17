@@ -108,15 +108,10 @@ export class AuthService {
     switch (role) {
       case 'administrateur':
         return '/admin/dashboard';
-      case 'agence':
       case 'agent':
         return '/agent/dashboard';
       case 'proprietaire':
         return '/proprietaire/dashboard';
-      case 'locataire':
-        return '/locataire/dashboard';
-      case 'acheteur':
-        return '/acheteur/dashboard';
       case 'client':
         return '/client/dashboard';
       default:

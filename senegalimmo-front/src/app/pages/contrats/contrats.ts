@@ -150,7 +150,7 @@ export class Contrats implements OnInit {
     this.paying = `${c.id}-${type}`;
 
     this.paiementService.initier({
-      contrat_id: c.id,
+      bail_id: c.id,
       type,
       methode: this.methode[c.id] ?? 'orange_money',
     }).subscribe({

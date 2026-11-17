@@ -11,14 +11,14 @@ export class RetraitService {
   constructor(private http: HttpClient) {}
 
   getAll(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/demandes-retrait`);
+    return this.http.get<any[]>(`${this.apiUrl}/admin/retraits`);
   }
 
-  demander(data: { montant: number; methode: string; numero_telephone: string }): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/demandes-retrait`, data);
+  demander(data: { montant: number; methode: string; numero_beneficiaire: string }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/retraits`, data);
   }
 
-  traiter(id: number, data: { action: string; motif?: string }): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/demandes-retrait/${id}/traiter`, data);
+  traiter(id: number, data: { decision: 'approuver' | 'rejeter'; motif?: string }): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/admin/retraits/${id}/traiter`, data);
   }
 }

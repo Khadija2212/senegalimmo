@@ -36,7 +36,7 @@ export class Quittances implements OnInit {
       return;
     }
 
-    const allowed = ['locataire', 'proprietaire', 'acheteur', 'client', 'administrateur'];
+    const allowed = ['proprietaire', 'client', 'administrateur'];
     if (!allowed.includes(this.user?.role)) {
       this.router.navigate([`/${this.user?.role ?? 'login'}/dashboard`]);
       return;
@@ -65,14 +65,14 @@ export class Quittances implements OnInit {
   }
 
   private annee(p: any): number {
-    return new Date(p.date_paiement ?? p.created_at).getFullYear();
+    return new Date(p.confirme_le ?? p.created_at).getFullYear();
   }
 
   get quittances(): any[] {
     return this.paiements
-      .filter((p) => p.statut === 'confirme' || p.statut === 'en_attente')
+      .filter((p) => p.statut === 'reussi' || p.statut === 'en_attente')
       .sort((a, b) =>
-        new Date(b.date_paiement ?? b.created_at).getTime() - new Date(a.date_paiement ?? a.created_at).getTime()
+        new Date(b.confirme_le ?? b.created_at).getTime() - new Date(a.confirme_le ?? a.created_at).getTime()
       );
   }
 
@@ -109,17 +109,11 @@ export class Quittances implements OnInit {
   }
 
   objet(p: any): string {
-    if (p.type === 'caution') return 'Caution (dépôt de garantie)';
-    if (p.type === 'indemnite') return 'Indemnité d\'immobilisation (Vente)';
-    if (p.type === 'tranche') return 'Tranche d\'acquisition (Vente)';
-    if (!p.periode) return 'Règlement de loyer';
-
-    const [y, m] = p.periode.split('-').map(Number);
-    return 'Loyer de ' + new Date(y, m - 1, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    return p.libelle;
   }
 
   methodeLabel(m: string): string {
-    const labels: Record<string, string> = { orange_money: 'Orange Money', wave: 'Wave', free_money: 'Free Money' };
+    const labels: Record<string, string> = { orange_money: 'Orange Money', wave: 'Wave', free_money: 'Free Money', carte_bancaire: 'Carte bancaire' };
     return labels[m] ?? m;
   }
 
