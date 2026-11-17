@@ -42,3 +42,10 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Cache de la CLI Spartan (Nx)
+.nx/
+
+# Secrets et fichier généré à partir de .env
+.env
+/src/app/core/config/jetons.ts

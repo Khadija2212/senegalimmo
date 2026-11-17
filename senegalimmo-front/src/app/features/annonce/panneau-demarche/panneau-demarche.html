@@ -1,0 +1,62 @@
+<p
+  class="text-[2rem] leading-none font-bold tabular-nums [font-variation-settings:'wdth'_82]"
+  id="t-prix"
+>
+  {{ prix() }}
+  @if (location()) {
+    <small class="text-encre-3 ml-1.5 text-[0.95rem] font-normal">{{ textes.parMois }}</small>
+  }
+</p>
+<p class="text-encre-2 mt-2 text-[0.88rem]">{{ sousPrix() }}</p>
+
+@if (envoi.confirmation(); as c) {
+  <div class="pt-5" role="status">
+    <ng-icon name="siSceau" size="32" class="text-bleu" />
+    <h3 class="font-display mt-3 text-[1.35rem] leading-tight font-semibold">{{ c.titre }}</h3>
+    <p class="text-encre-2 mt-2 text-[0.9rem]">{{ c.texte }}</p>
+    <a
+      class="text-bleu-vif mt-3.5 inline-block text-[0.9rem] font-semibold underline underline-offset-4"
+      [routerLink]="c.lien"
+      >{{ c.libelleLien }}</a
+    >
+  </div>
+} @else {
+  <div hlmTabs tab="visite" class="mt-[22px]">
+    <div hlmTabsList class="grid h-auto w-full grid-cols-2 border-b border-border p-0">
+      <button hlmTabsTrigger="visite" class="onglet">{{ textesDemarche.visiter }}</button>
+      <button hlmTabsTrigger="demande" class="onglet">
+        {{ location() ? textesDemarche.demanderLocation : textesDemarche.faireOffre }}
+      </button>
+    </div>
+    <div hlmTabsContent="visite" class="pt-[18px]"><si-onglet-visite [annonce]="annonce()" /></div>
+    <div hlmTabsContent="demande" class="pt-[18px]">
+      @if (location()) {
+        <si-onglet-location [annonce]="annonce()" />
+      } @else {
+        <si-onglet-offre [annonce]="annonce()" />
+      }
+    </div>
+  </div>
+}
+
+<div class="mt-[18px] flex gap-1 border-t border-border pt-3.5">
+  <button
+    type="button"
+    class="action"
+    [attr.aria-pressed]="selection.estGardee(annonce().id)"
+    (click)="garder()"
+  >
+    <ng-icon name="siGarder" size="18" />{{ textesDemarche.garder }}
+  </button>
+  <button
+    type="button"
+    class="action"
+    [attr.aria-pressed]="selection.estComparee(annonce().id)"
+    (click)="selection.basculerComparaison(annonce().id)"
+  >
+    <ng-icon name="siComparer" size="18" />{{ textesDemarche.comparer }}
+  </button>
+  <button type="button" class="action" (click)="ecrire()">
+    <ng-icon name="siMessage" size="18" />{{ textesDemarche.ecrire }}
+  </button>
+</div>

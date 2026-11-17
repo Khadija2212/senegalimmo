@@ -1,0 +1,129 @@
+<form
+  class="bg-brume mt-11 rounded-cadre border border-ciel px-4 pt-1.5 sm:px-9 sm:pt-7"
+  (submit)="$event.preventDefault(); voir.emit()"
+  autocomplete="off"
+>
+  <div
+    class="font-display text-foreground flex flex-col text-base leading-snug sm:block sm:text-[2.1rem] sm:leading-[1.65] sm:font-medium"
+  >
+    <label for="f-tx" class="text-encre-3 mt-3 font-sans text-[0.8rem] font-medium sm:hidden">{{
+      textes.libelleTransaction
+    }}</label>
+    <span class="hidden sm:inline">{{ textes.jeVeux }} </span>
+    <hlm-select
+      class="inline-block max-sm:w-full"
+      [value]="c().type_transaction"
+      [itemToString]="libelleTransaction"
+      (valueChange)="$event && recherche.changerTransaction($event)"
+    >
+      <hlm-select-trigger
+        buttonId="f-tx"
+        [class]="'inline-flex w-auto gap-0 py-0 dark:bg-transparent [&_ng-icon]:hidden font-display text-bleu h-auto rounded-none border-0 border-b-[1.5px] border-bleu-vif bg-transparent px-[3px] pb-[3px] text-[2.1rem] leading-tight font-semibold tabular-nums shadow-none hover:border-ring hover:text-bleu-vif focus-visible:ring-0 focus-visible:border-b-2 md:text-[2.1rem] max-sm:w-full max-sm:text-[1.55rem]'"
+        ><hlm-select-value
+      /></hlm-select-trigger>
+      <hlm-select-content *hlmSelectPortal>
+        <hlm-select-item value="location">{{ textes.louer }}</hlm-select-item>
+        <hlm-select-item value="vente">{{ textes.acheter }}</hlm-select-item>
+      </hlm-select-content>
+    </hlm-select>
+
+    <label for="f-type" class="text-encre-3 mt-3 font-sans text-[0.8rem] font-medium sm:hidden">{{
+      textes.libelleType
+    }}</label>
+    <span class="hidden sm:inline"> {{ type().article }} </span>
+    <hlm-select
+      class="inline-block max-sm:w-full"
+      [value]="c().type"
+      [itemToString]="libelleTypeBien"
+      (valueChange)="$event && recherche.modifier({ type: $event })"
+    >
+      <hlm-select-trigger
+        buttonId="f-type"
+        [class]="'inline-flex w-auto gap-0 py-0 dark:bg-transparent [&_ng-icon]:hidden font-display text-bleu h-auto rounded-none border-0 border-b-[1.5px] border-bleu-vif bg-transparent px-[3px] pb-[3px] text-[2.1rem] leading-tight font-semibold tabular-nums shadow-none hover:border-ring hover:text-bleu-vif focus-visible:ring-0 focus-visible:border-b-2 md:text-[2.1rem] max-sm:w-full max-sm:text-[1.55rem]'"
+        ><hlm-select-value
+      /></hlm-select-trigger>
+      <hlm-select-content *hlmSelectPortal>
+        @for (t of types; track t.valeur) {
+          <hlm-select-item [value]="t.valeur">{{ t.singulier }}</hlm-select-item>
+        }
+      </hlm-select-content>
+    </hlm-select>
+
+    <label for="f-lieu" class="text-encre-3 mt-3 font-sans text-[0.8rem] font-medium sm:hidden">{{
+      textes.libelleLieu
+    }}</label>
+    <span class="hidden sm:inline"> {{ preposition() }} </span>
+    <si-champ-lieu
+      identifiant="f-lieu"
+      [valeur]="lieu()"
+      (choisi)="changerLieu($event)"
+      (saisi)="saisirLieu($event)"
+    />
+
+    <label for="f-prix" class="text-encre-3 mt-3 font-sans text-[0.8rem] font-medium sm:hidden">
+      {{ enVente() ? textes.libelleBudgetVente : textes.libelleBudgetLocation }}
+    </label>
+    <span class="hidden sm:inline"> {{ textes.pour }} </span>
+    <input
+      hlmInput
+      id="f-prix"
+      inputmode="numeric"
+      [size]="budget().length + 1"
+      class="w-auto font-display text-bleu h-auto rounded-none border-0 border-b-[1.5px] border-bleu-vif bg-transparent px-[3px] pb-[3px] text-[2.1rem] leading-tight font-semibold tabular-nums shadow-none hover:border-ring hover:text-bleu-vif focus-visible:ring-0 focus-visible:border-b-2 md:text-[2.1rem] max-sm:w-full max-sm:text-[1.55rem]"
+      [value]="budget()"
+      (input)="saisirBudget($any($event.target))"
+    />
+    <span class="hidden sm:inline"> {{ enVente() ? textes.finVente : textes.finLocation }}</span>
+  </div>
+
+  <div
+    class="mt-2 flex flex-col gap-2.5 py-3.5 sm:mt-6 sm:flex-row sm:flex-wrap sm:items-center sm:gap-5 sm:border-t sm:border-border sm:pb-[18px]"
+  >
+    <div class="order-3 flex gap-5 sm:order-none">
+      <button
+        type="button"
+        class="text-encre-2 hover:text-foreground inline-flex items-center gap-2 py-2 text-[0.9rem] font-medium"
+        [attr.aria-expanded]="plusOuvert()"
+        (click)="plusOuvert.set(!plusOuvert())"
+      >
+        <ng-icon name="siReglages" size="18" />{{
+          plusOuvert() ? textes.moinsDeCriteres : textes.plusDeCriteres
+        }}
+      </button>
+      <button
+        type="button"
+        class="text-encre-2 hover:text-foreground inline-flex items-center gap-2 py-2 text-[0.9rem] font-medium"
+        (click)="autourDeMoi()"
+      >
+        <ng-icon name="siAutour" size="18" />{{ textes.autourDeMoi }}
+      </button>
+    </div>
+    <p
+      class="text-encre-2 order-1 text-[0.9rem] sm:order-none sm:ml-auto sm:text-right"
+      aria-live="polite"
+    >
+      @if (positionRefusee()) {
+        {{ textes.positionRefusee }}
+      } @else if (apercu(); as a) {
+        <b class="text-foreground font-semibold">{{ a.verifiees }}</b> {{ a.mot }} {{ textes.sur }}
+        {{ a.total }}, {{ textes.aPartirDe }}
+        <b class="text-foreground font-semibold">{{ a.prix }}</b
+        >{{ a.parMois ? ' ' + textes.parMois : '' }}
+      } @else if (recherche.etat() === 'pret') {
+        {{ textes.aucuneApercu }}
+      }
+    </p>
+    <button
+      hlmBtn
+      size="grand"
+      type="submit"
+      class="order-2 h-[52px] px-6 text-base max-sm:w-full sm:order-none"
+    >
+      <ng-icon name="siChercher" />{{ boutonTexte() }}
+    </button>
+  </div>
+
+  @if (plusOuvert()) {
+    <si-criteres-plus class="block border-t border-border py-5" />
+  }
+</form>
