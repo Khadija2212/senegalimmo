@@ -1,0 +1,73 @@
+<main class="mx-auto max-w-[1240px] px-4 sm:px-7 lg:px-10">
+  @if (annonce.value(); as a) {
+    <si-fil-annonce [annonce]="a" />
+    <si-galerie [medias]="a.bien.medias" [titre]="a.bien.titre" />
+
+    <div
+      class="grid items-start gap-0 pt-[22px] sm:pt-9 md:grid-cols-[minmax(0,1fr)_340px] md:gap-8 lg:grid-cols-[7fr_4fr] lg:gap-14"
+    >
+      <article>
+        <si-titre-annonce [annonce]="a" />
+        <si-faits-bien [bien]="a.bien" />
+
+        <section class="mt-9 sm:mt-11" aria-labelledby="t-desc">
+          <h2 id="t-desc" class="font-display mb-3.5 text-[1.6rem] leading-[1.1] font-semibold">
+            {{ textes.leBien }}
+          </h2>
+          @for (p of a.bien.description.split('\n\n'); track $index) {
+            <p class="text-encre-2 max-w-[64ch] [&+p]:mt-3">{{ p }}</p>
+          }
+        </section>
+
+        <section class="mt-9 sm:mt-11" aria-labelledby="t-cout">
+          <h2 id="t-cout" class="font-display mb-3.5 text-[1.6rem] leading-[1.1] font-semibold">
+            {{ textes.ceQueVousPayez }}
+          </h2>
+          <si-couts-annonce [annonce]="a" />
+        </section>
+
+        <si-lieu-bien [bien]="a.bien" />
+
+        <section class="mt-9 sm:mt-11" aria-labelledby="t-gens">
+          <h2 id="t-gens" class="font-display mb-3.5 text-[1.6rem] leading-[1.1] font-semibold">
+            {{ textes.quiVousRepond }}
+          </h2>
+          <si-interlocuteurs [annonce]="a" />
+        </section>
+
+        <si-signaler [annonceId]="a.id" />
+      </article>
+
+      <si-panneau-demarche
+        id="panneau"
+        [annonce]="a"
+        aria-labelledby="t-prix"
+        class="mt-9 scroll-mt-[72px] md:sticky md:top-24 md:mt-0"
+      />
+    </div>
+
+    <si-barre-basse [annonce]="a" />
+  } @else if (annonce.isLoading()) {
+    <div class="animate-pulse pt-6" aria-hidden="true">
+      <div class="bg-brume h-4 w-48 rounded"></div>
+      <div class="bg-brume mt-5 h-[280px] rounded-media sm:h-[470px]"></div>
+      <div class="bg-brume mt-9 h-10 w-2/3 rounded"></div>
+    </div>
+  } @else {
+    <div class="bg-brume mt-10 rounded-cadre p-8" role="alert">
+      <p class="font-display text-2xl font-semibold">
+        {{ introuvable() ? textes.introuvableTitre : textes.erreurTitre }}
+      </p>
+      <p class="text-encre-2 mt-2">
+        {{ introuvable() ? textes.introuvableTexte : textes.erreurTexte }}
+      </p>
+      @if (introuvable()) {
+        <a hlmBtn size="grand" class="mt-5" routerLink="/">{{ textes.retourRecherche }}</a>
+      } @else {
+        <button hlmBtn size="grand" class="mt-5" (click)="annonce.reload()">
+          {{ textes.reessayer }}
+        </button>
+      }
+    </div>
+  }
+</main>

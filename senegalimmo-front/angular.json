@@ -28,7 +28,7 @@
               }
             ],
             "styles": [
-              "node_modules/mapbox-gl/dist/mapbox-gl.css",
+              { "input": "node_modules/mapbox-gl/dist/mapbox-gl.css", "bundleName": "mapbox", "inject": false },
               "src/material-theme.scss",
               "src/styles.css"
             ]

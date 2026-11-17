@@ -1,0 +1,89 @@
+<article class="grid gap-[22px] sm:grid-cols-[240px_1fr] max-sm:gap-3.5">
+  <a
+    [routerLink]="lien()"
+    class="bg-glace block aspect-[4/3] overflow-hidden rounded-media"
+    tabindex="-1"
+  >
+    @if (photo(); as p) {
+      <img
+        [src]="p"
+        [alt]="textes.photoDe + bien().titre"
+        loading="lazy"
+        class="size-full object-cover"
+      />
+    } @else {
+      <span class="text-ciel grid size-full place-items-center"
+        ><ng-icon name="siImmeuble" size="40"
+      /></span>
+    }
+  </a>
+
+  <div class="flex min-w-0 flex-col">
+    <span class="text-encre-2 flex items-center gap-1.5 text-[0.9rem]">
+      <ng-icon name="siBorne" size="18" />{{ bien().quartier }}, {{ bien().ville }}
+    </span>
+    <h3 class="mt-1.5 text-[1.2rem] leading-tight font-bold [font-variation-settings:'wdth'_90]">
+      <a [routerLink]="lien()" class="hover:underline hover:underline-offset-[3px]">{{
+        bien().titre
+      }}</a>
+    </h3>
+    <p
+      class="mt-2.5 text-[1.45rem] leading-none font-bold tabular-nums [font-variation-settings:'wdth'_85]"
+    >
+      {{ annonce().prix + annonce().charges | fcfa }}
+      @if (annonce().type_transaction === 'location') {
+        <small class="text-encre-3 ml-1.5 text-[0.9rem] font-normal">{{ textes.parMois }}</small>
+      }
+    </p>
+    <div class="text-encre-2 mt-3.5 flex flex-wrap gap-[18px] text-[0.9rem]">
+      <span class="inline-flex items-center gap-1.5"
+        ><ng-icon name="siSurface" size="18" /><span class="tabular-nums"
+          >{{ bien().surface }} {{ textes.surface }}</span
+        ></span
+      >
+      <span class="inline-flex items-center gap-1.5"
+        ><ng-icon name="siChambre" size="18" />{{
+          pluriel(bien().nombre_chambres, textes.chambre, textes.chambres)
+        }}</span
+      >
+      <span class="inline-flex items-center gap-1.5"
+        ><ng-icon name="siPieces" size="18" />{{
+          pluriel(bien().nombre_pieces, textes.piece, textes.pieces)
+        }}</span
+      >
+    </div>
+
+    <div class="mt-auto flex flex-wrap items-center gap-[18px] pt-3.5">
+      @if (annonce().badge_verifie) {
+        <span class="inline-flex items-center gap-1.5 text-[0.85rem]"
+          ><ng-icon name="siSceau" size="18" class="text-bleu-vif" />{{
+            textes.annonceVerifiee
+          }}</span
+        >
+      }
+      <span class="text-encre-3 font-mono text-xs tracking-[0.02em]">{{
+        annonce().reference
+      }}</span>
+      <div
+        class="flex gap-1 sm:ml-auto max-sm:w-full max-sm:justify-between max-sm:border-t max-sm:border-border max-sm:pt-2"
+      >
+        <button
+          type="button"
+          class="action"
+          [attr.aria-pressed]="selection.estGardee(annonce().id)"
+          (click)="garder()"
+        >
+          <ng-icon name="siGarder" size="18" />{{ textes.garder }}
+        </button>
+        <button
+          type="button"
+          class="action"
+          [attr.aria-pressed]="selection.estComparee(annonce().id)"
+          (click)="selection.basculerComparaison(annonce().id)"
+        >
+          <ng-icon name="siComparer" size="18" />{{ textes.comparer }}
+        </button>
+      </div>
+    </div>
+  </div>
+</article>
