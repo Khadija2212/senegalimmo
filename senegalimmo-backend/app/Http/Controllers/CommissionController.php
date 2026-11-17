@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Compte;
 use App\Exceptions\OperationRefusee;
 use App\Models\Portefeuille;
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use App\Models\Commission;
 use Illuminate\Http\Request;
@@ -22,7 +22,7 @@ class CommissionController extends Controller
             'proprietaire:id,nom,prenom',
         ])->latest();
 
-        if (in_array($user->role, ['agent', 'agence'], true)) {
+        if ($user->role === 'agent') {
             $query->where(fn ($q) => $q->where('agent_id', $user->id)->orWhere('agence_id', $user->id));
         } elseif ($user->role === 'proprietaire') {
             $query->where('proprietaire_id', $user->id);
@@ -44,7 +44,7 @@ class CommissionController extends Controller
     public function regler(Request $request, Commission $commission)
     {
         $user = $request->user();
-        $estMandataire = in_array($user->role, ['agence', 'agent'], true)
+        $estMandataire = $user->role === 'agent'
             && ($commission->agence_id === $user->id || $commission->agent_id === $user->id);
 
         if (!$estMandataire) {
@@ -75,7 +75,7 @@ class CommissionController extends Controller
         $titre = $commission->bien?->titre;
         $beneficiaireId = $commission->agent_id ?: $commission->agence_id;
 
-        $agent = User::findOrFail($beneficiaireId);
+        $agent = Compte::tous()->findOrFail($beneficiaireId);
         try {
             DB::transaction(function () use ($commission, $user, $agent, $titre) {
                 Portefeuille::de($user)->verserCommission(Portefeuille::de($agent), (int) round((float) $commission->montant), (string) $titre);

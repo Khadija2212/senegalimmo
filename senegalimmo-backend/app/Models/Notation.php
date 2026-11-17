@@ -22,12 +22,12 @@ class Notation extends Model
 
     public function noteur()
     {
-        return $this->belongsTo(User::class, 'noteur_id');
+        return $this->belongsTo(Client::class, 'noteur_id')->withoutGlobalScope('role');
     }
 
     public function evalue()
     {
-        return $this->belongsTo(User::class, 'note_id');
+        return $this->belongsTo(Client::class, 'note_id')->withoutGlobalScope('role');
     }
 
     public function bien()

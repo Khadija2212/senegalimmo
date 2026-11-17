@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Administrateur;
+use App\Models\Agent;
+use App\Models\Proprietaire;
+use App\Models\Client;
+use App\Models\Compte;
 use App\Models\Annonce;
 use App\Models\Bien;
 use App\Models\Retrait;
 use App\Enums\StatutPaiement;
 use App\Enums\StatutRetrait;
 use App\Models\Paiement;
-use App\Models\User;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Illuminate\Http\Request;
@@ -22,12 +26,13 @@ class AdminUserController extends Controller
             return response()->json(['message' => 'Accès réservé à l\'administrateur.'], 403);
         }
 
-        $query = User::withCount(['biens', 'annonces'])->latest();
+        $query = Compte::tous()->addSelect(['users.*',
+            'biens_count' => Bien::selectRaw('count(*)')->whereColumn('proprietaire_id', 'users.id'),
+            'annonces_count' => Annonce::selectRaw('count(*)')->whereColumn('auteur_id', 'users.id'),
+        ])->latest();
 
         if ($request->filled('role')) {
-            $request->role === 'agent'
-                ? $query->whereIn('role', ['agent', 'agence'])
-                : $query->where('role', $request->role);
+            $query->where('role', $request->role);
         }
 
         if ($request->filled('statut')) {
@@ -53,7 +58,7 @@ class AdminUserController extends Controller
     }
 
     // Admin : suspendre ou réactiver un utilisateur
-    public function toggleStatut(Request $request, User $user)
+    public function toggleStatut(Request $request, Compte $user)
     {
         if ($request->user()->role !== 'administrateur') {
             return response()->json(['message' => 'Accès réservé à l\'administrateur.'], 403);
@@ -73,7 +78,7 @@ class AdminUserController extends Controller
     }
 
     // Admin : valider ou révoquer la vérification d'un utilisateur
-    public function validerDocument(Request $request, User $user)
+    public function validerDocument(Request $request, Compte $user)
     {
         if ($request->user()->role !== 'administrateur') {
             return response()->json(['message' => 'Accès réservé à l\'administrateur.'], 403);
@@ -105,7 +110,7 @@ class AdminUserController extends Controller
     }
 
     // Admin : télécharger ou afficher la pièce d'identité d'un utilisateur
-    public function document(Request $request, User $user)
+    public function document(Request $request, Compte $user)
     {
         if ($request->user()->role !== 'administrateur') {
             return response()->json(['message' => 'Accès réservé à l\'administrateur.'], 403);
@@ -144,14 +149,14 @@ class AdminUserController extends Controller
 
         $stats = [
             'date_generation'          => now()->format('d/m/Y H:i'),
-            'total_utilisateurs'       => User::count(),
-            'utilisateurs_verifies'    => User::where('est_verifie', true)->count(),
-            'verifications_en_attente' => User::where('verification', 'en_attente')->count(),
+            'total_utilisateurs'       => Compte::tous()->count(),
+            'utilisateurs_verifies'    => Compte::tous()->where('est_verifie', true)->count(),
+            'verifications_en_attente' => Compte::tous()->where('verification', 'en_attente')->count(),
             'utilisateurs_par_role'    => [
-                'clients'         => User::whereIn('role', ['client', 'locataire', 'acheteur'])->count(),
-                'proprietaires'   => User::where('role', 'proprietaire')->count(),
-                'agents'          => User::whereIn('role', ['agent', 'agence'])->count(),
-                'administrateurs' => User::where('role', 'administrateur')->count(),
+                'clients'         => Client::count(),
+                'proprietaires'   => Proprietaire::count(),
+                'agents'          => Agent::count(),
+                'administrateurs' => Administrateur::count(),
             ],
             'total_biens'                 => Bien::count(),
             'biens_disponibles'           => Bien::where('statut', 'disponible')->count(),

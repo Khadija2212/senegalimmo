@@ -38,17 +38,17 @@ class Retrait extends Model
     /** Association « Administrateur valide Retrait » (0..1). */
     public function validateur(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'validateur_id');
+        return $this->belongsTo(Administrateur::class, 'validateur_id');
     }
 
-    public function approuver(User $administrateur): void
+    public function approuver(Administrateur $administrateur): void
     {
         $this->exigerStatut(StatutRetrait::DEMANDE);
         $this->update(['statut' => StatutRetrait::APPROUVE, 'validateur_id' => $administrateur->id, 'traite_le' => now()]);
     }
 
     /** Rejeté avant ou pendant le versement : le montant bloqué redevient disponible. */
-    public function rejeter(string $motif, ?User $administrateur = null): void
+    public function rejeter(string $motif, ?Administrateur $administrateur = null): void
     {
         DB::transaction(function () use ($motif, $administrateur): void {
             $r = self::lockForUpdate()->findOrFail($this->id);

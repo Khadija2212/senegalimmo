@@ -15,8 +15,8 @@ use Illuminate\Support\Facades\DB;
  */
 class Portefeuille extends Model
 {
-    /** Rôles qui détiennent un portefeuille (« agence » est l'ancien nom d'agent). */
-    public const ROLES = ['proprietaire', 'agent', 'agence'];
+    /** Rôles qui détiennent un portefeuille (association « détient » du diagramme). */
+    public const ROLES = ['proprietaire', 'agent'];
 
     protected $table = 'portefeuilles';
 
@@ -29,7 +29,7 @@ class Portefeuille extends Model
     ];
 
     /** Le portefeuille de ce compte, créé à la première utilisation. */
-    public static function de(User $u): self
+    public static function de(Compte $u): self
     {
         if (!in_array($u->role, self::ROLES, true)) {
             throw new OperationRefusee('Le portefeuille est réservé aux propriétaires et aux agents immobiliers.', OperationRefusee::INTERDIT);
@@ -40,7 +40,7 @@ class Portefeuille extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Client::class, 'user_id')->withoutGlobalScope('role');
     }
 
     public function ecritures(): HasMany

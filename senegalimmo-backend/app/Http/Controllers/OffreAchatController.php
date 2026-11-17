@@ -27,7 +27,7 @@ class OffreAchatController extends Controller
 
         if ($user->role === 'proprietaire') {
             $query->where('proprietaire_id', $user->id);
-        } elseif (in_array($user->role, ['acheteur', 'client'])) {
+        } elseif ($user->role === 'client') {
             $query->where('acheteur_id', $user->id);
         } else {
             return $this->refus('Accès refusé.', 403);
@@ -40,7 +40,7 @@ class OffreAchatController extends Controller
     {
         $user = $request->user();
 
-        if (!in_array($user->role, ['acheteur', 'client'])) {
+        if (!$user->role === 'client') {
             return $this->refus('Seuls les acheteurs et clients peuvent faire une offre.', 403);
         }
 

@@ -41,12 +41,12 @@ class PromesseVente extends Model
 
     public function vendeur()
     {
-        return $this->belongsTo(User::class, 'vendeur_id');
+        return $this->belongsTo(Proprietaire::class, 'vendeur_id');
     }
 
     public function acheteur()
     {
-        return $this->belongsTo(User::class, 'acheteur_id');
+        return $this->belongsTo(Client::class, 'acheteur_id');
     }
 
     public function offre()

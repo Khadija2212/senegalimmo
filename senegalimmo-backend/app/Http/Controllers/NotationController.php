@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Proprietaire;
 use App\Models\Bien;
 use App\Models\Contrat;
 use App\Models\Notation;
 use App\Models\PromesseVente;
-use App\Models\User;
 use Illuminate\Http\Request;
 
 class NotationController extends Controller
@@ -16,7 +16,7 @@ class NotationController extends Controller
     {
         $user = $request->user();
 
-        if ($user->role === 'locataire') {
+        if ($user->role === 'client') {
             $items = Contrat::with(['bien:id,titre,quartier,ville', 'proprietaire:id,nom,prenom'])
                 ->where('locataire_id', $user->id)
                 ->where('statut', 'signe')
@@ -28,8 +28,7 @@ class NotationController extends Controller
                     'proprietaire' => $c->proprietaire,
                     'type'         => 'location',
                 ]);
-        } elseif ($user->role === 'acheteur') {
-            $items = PromesseVente::with(['bien:id,titre,quartier,ville', 'vendeur:id,nom,prenom'])
+            $items = $items->concat(PromesseVente::with(['bien:id,titre,quartier,ville', 'vendeur:id,nom,prenom'])
                 ->where('acheteur_id', $user->id)
                 ->where('statut', 'signee')
                 ->get()
@@ -39,7 +38,7 @@ class NotationController extends Controller
                     'lieu'         => $p->bien->quartier . ', ' . $p->bien->ville,
                     'proprietaire' => $p->vendeur,
                     'type'         => 'vente',
-                ]);
+                ]));
         } else {
             return response()->json(['message' => 'Accès refusé.'], 403);
         }
@@ -63,8 +62,8 @@ class NotationController extends Controller
     {
         $user = $request->user();
 
-        if (!in_array($user->role, ['locataire', 'acheteur'], true)) {
-            return response()->json(['message' => 'Seuls les locataires et acheteurs peuvent noter.'], 403);
+        if ($user->role !== 'client') {
+            return response()->json(['message' => 'Seuls les clients (locataires ou acheteurs) peuvent noter.'], 403);
         }
 
         $data = $request->validate([
@@ -78,9 +77,8 @@ class NotationController extends Controller
         $bien = Bien::findOrFail($data['bien_id']);
 
         // On ne note qu'après une transaction réellement conclue
-        $eligible = $user->role === 'locataire'
-            ? Contrat::where('bien_id', $bien->id)->where('locataire_id', $user->id)->where('statut', 'signe')->exists()
-            : PromesseVente::where('bien_id', $bien->id)->where('acheteur_id', $user->id)->where('statut', 'signee')->exists();
+        $eligible = Contrat::where('bien_id', $bien->id)->where('locataire_id', $user->id)->where('statut', 'signe')->exists()
+            || PromesseVente::where('bien_id', $bien->id)->where('acheteur_id', $user->id)->where('statut', 'signee')->exists();
 
         if (!$eligible) {
             return response()->json(
@@ -109,9 +107,7 @@ class NotationController extends Controller
     // Avis publics sur un propriétaire
     public function avis(int $id)
     {
-        $proprietaire = User::where('id', $id)
-            ->where('role', 'proprietaire')
-            ->first(['id', 'nom', 'prenom']);
+        $proprietaire = Proprietaire::where('id', $id)->first(['id', 'nom', 'prenom', 'role']);
 
         if (!$proprietaire) {
             return response()->json(['message' => 'Propriétaire introuvable.'], 404);

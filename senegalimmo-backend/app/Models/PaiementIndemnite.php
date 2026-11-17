@@ -19,12 +19,12 @@ class PaiementIndemnite extends Paiement
         return "Indemnité d'immobilisation";
     }
 
-    public function payeur(): ?User
+    public function payeur(): ?Client
     {
         return $this->promesse?->acheteur;
     }
 
-    public function beneficiaire(): ?User
+    public function beneficiaire(): ?Proprietaire
     {
         return $this->promesse?->vendeur;
     }

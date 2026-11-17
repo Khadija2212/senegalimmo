@@ -37,6 +37,6 @@ class Annonce extends Model
 
     public function auteur()
     {
-        return $this->belongsTo(User::class, 'auteur_id');
+        return $this->belongsTo(Client::class, 'auteur_id')->withoutGlobalScope('role');
     }
 }

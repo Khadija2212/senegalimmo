@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Models\Administrateur;
+use App\Models\Compte;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -19,11 +20,11 @@ class AdminUtilisateurController extends Controller
             return $this->refus();
         }
 
-        $query = User::where('role', '!=', 'administrateur');
+        $query = Compte::tous()->where('role', '!=', Administrateur::ROLE);
 
         if ($request->filled('role')) {
             $request->role === 'agent'
-                ? $query->whereIn('role', ['agent', 'agence'])
+                ? $query->where('role', 'agent')
                 : $query->where('role', $request->role);
         }
 
@@ -58,7 +59,7 @@ class AdminUtilisateurController extends Controller
     }
 
     // Suspendre ou réactiver un compte
-    public function statut(Request $request, User $user)
+    public function statut(Request $request, Compte $user)
     {
         if ($request->user()->role !== 'administrateur') {
             return $this->refus();
@@ -81,7 +82,7 @@ class AdminUtilisateurController extends Controller
     }
 
     // Valider ou refuser la vérification d'identité
-    public function verification(Request $request, User $user)
+    public function verification(Request $request, Compte $user)
     {
         if ($request->user()->role !== 'administrateur') {
             return $this->refus();
@@ -101,7 +102,7 @@ class AdminUtilisateurController extends Controller
         return response()->json($user->only(['id', 'verification', 'est_verifie']));
     }
 
-    public function document(Request $request, User $user)
+    public function document(Request $request, Compte $user)
     {
         if ($request->user()->role !== 'administrateur') {
             return $this->refus();

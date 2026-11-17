@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Agent;
 use App\Models\Bien;
 use App\Models\Mandat;
-use App\Models\User;
 use Illuminate\Http\Request;
 
 class MandatController extends Controller
@@ -28,7 +28,7 @@ class MandatController extends Controller
         }
 
         return response()->json(
-            User::whereIn('role', ['agent', 'agence'])->where('statut', 'actif')->orderBy('prenom')
+            Agent::where('statut', 'actif')->orderBy('prenom')
                 ->get(['id', 'nom', 'prenom', 'telephone', 'role'])
         );
     }
@@ -47,11 +47,11 @@ class MandatController extends Controller
 
         match ($user->role) {
             'proprietaire'    => $query->where('proprietaire_id', $user->id),
-            'agent', 'agence' => $query->where(fn ($q) => $q->where('agent_id', $user->id)->orWhere('agence_id', $user->id)),
+            'agent' => $query->where(fn ($q) => $q->where('agent_id', $user->id)->orWhere('agence_id', $user->id)),
             default           => null,
         };
 
-        if (!in_array($user->role, ['proprietaire', 'agence', 'agent'], true)) {
+        if (!in_array($user->role, ['proprietaire', 'agent'], true)) {
             return $this->refus('Accès refusé.', 403);
         }
 
@@ -64,7 +64,7 @@ class MandatController extends Controller
         $this->expirer();
         $user = $request->user();
 
-        if (!in_array($user->role, ['agence', 'agent'], true)) {
+        if (!$user->role === 'agent') {
             return $this->refus('Accès refusé.', 403);
         }
 
@@ -112,8 +112,7 @@ class MandatController extends Controller
             return $this->refus('Ce bien n\'est plus disponible.');
         }
 
-        $agence = User::where('id', $data['agence_id'])
-            ->whereIn('role', ['agent', 'agence'])
+        $agence = Agent::where('id', $data['agence_id'])
             ->where('statut', 'actif')
             ->first();
 
@@ -202,7 +201,7 @@ class MandatController extends Controller
     {
         $user = $request->user();
 
-        if ($user->role !== 'agence' || $mandat->agence_id !== $user->id) {
+        if ($user->role !== 'agent' || $mandat->agence_id !== $user->id) {
             return $this->refus('Accès refusé.', 403);
         }
 
@@ -213,8 +212,7 @@ class MandatController extends Controller
         $data = $request->validate(['agent_id' => 'nullable|exists:users,id']);
 
         if (!empty($data['agent_id'])) {
-            $agent = User::where('id', $data['agent_id'])
-                ->where('role', 'agent')
+            $agent = Agent::where('id', $data['agent_id'])
                 ->where('agence_id', $user->id)
                 ->where('statut', 'actif')
                 ->first();

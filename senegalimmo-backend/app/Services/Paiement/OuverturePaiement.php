@@ -2,6 +2,7 @@
 
 namespace App\Services\Paiement;
 
+use App\Models\Compte;
 use App\Enums\MethodePaiement;
 use App\Enums\StatutPaiement;
 use App\Enums\TypeTransaction;
@@ -13,7 +14,6 @@ use App\Models\PaiementIndemnite;
 use App\Models\PaiementLoyer;
 use App\Models\PromesseVente;
 use App\Models\RegleCommission;
-use App\Models\User;
 
 /**
  * Crée le bon Paiement en vérifiant les règles du cas « Effectuer un paiement »
@@ -27,7 +27,7 @@ class OuverturePaiement
     {
     }
 
-    public function loyer(Contrat $bail, User $client, MethodePaiement $m): PaiementLoyer
+    public function loyer(Contrat $bail, Compte $client, MethodePaiement $m): PaiementLoyer
     {
         $this->verifierBail($bail, $client);
         $mois = $this->echeancier->prochainMois($bail);
@@ -41,7 +41,7 @@ class OuverturePaiement
         ]);
     }
 
-    public function caution(Contrat $bail, User $client, MethodePaiement $m): PaiementCaution
+    public function caution(Contrat $bail, Compte $client, MethodePaiement $m): PaiementCaution
     {
         $this->verifierBail($bail, $client);
         if ($this->echeancier->cautionPayee($bail)) {
@@ -53,7 +53,7 @@ class OuverturePaiement
         ]);
     }
 
-    public function indemnite(PromesseVente $promesse, User $client, MethodePaiement $m): PaiementIndemnite
+    public function indemnite(PromesseVente $promesse, Compte $client, MethodePaiement $m): PaiementIndemnite
     {
         if ($promesse->acheteur_id !== $client->id) {
             throw new OperationRefusee('Cette promesse de vente ne vous concerne pas.', OperationRefusee::INTERDIT);
@@ -70,7 +70,7 @@ class OuverturePaiement
         ]);
     }
 
-    private function verifierBail(Contrat $bail, User $client): void
+    private function verifierBail(Contrat $bail, Compte $client): void
     {
         if ($bail->locataire_id !== $client->id) {
             throw new OperationRefusee('Ce bail ne vous concerne pas.', OperationRefusee::INTERDIT);

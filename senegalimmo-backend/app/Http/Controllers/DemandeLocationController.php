@@ -22,7 +22,7 @@ class DemandeLocationController extends Controller
 
         if ($user->role === 'proprietaire') {
             $query->where('proprietaire_id', $user->id);
-        } elseif (in_array($user->role, ['locataire', 'client'])) {
+        } elseif ($user->role === 'client') {
             $query->where('locataire_id', $user->id);
         } else {
             return response()->json(['message' => 'Accès refusé.'], 403);
@@ -35,7 +35,7 @@ class DemandeLocationController extends Controller
     {
         $user = $request->user();
 
-        if (!in_array($user->role, ['locataire', 'client'])) {
+        if (!$user->role === 'client') {
             return response()->json(
                 ['message' => 'Seuls les locataires et clients peuvent faire une demande de location.'],
                 403

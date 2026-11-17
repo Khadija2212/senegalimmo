@@ -20,9 +20,7 @@ class ProfilController extends Controller
                 'budget_min'     => 'nullable|numeric|min:0',
                 'budget_max'     => 'nullable|numeric|min:0',
             ],
-            'locataire'       => ['profession' => 'nullable|string|max:100', 'revenu_mensuel' => 'nullable|numeric|min:0'],
-            'acheteur'        => ['budget_min' => 'nullable|numeric|min:0', 'budget_max' => 'nullable|numeric|min:0'],
-            'agent', 'agence' => ['nom_agence' => 'nullable|string|max:120', 'numero_licence' => 'nullable|string|max:60'],
+            'agent'           => ['nom_agence' => 'nullable|string|max:120', 'numero_licence' => 'nullable|string|max:60'],
             default           => [],
         };
     }
@@ -48,7 +46,7 @@ class ProfilController extends Controller
             'adresse'   => 'nullable|string|max:255',
         ] + $this->champsRole($user->role));
 
-        if ($user->role === 'acheteur'
+        if ($user->role === 'client'
             && isset($data['budget_min'], $data['budget_max'])
             && (float) $data['budget_max'] < (float) $data['budget_min']) {
             return response()->json(['message' => 'Le budget maximum doit être supérieur au budget minimum.'], 422);

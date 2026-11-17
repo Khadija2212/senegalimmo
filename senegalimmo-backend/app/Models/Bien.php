@@ -49,7 +49,7 @@ class Bien extends Model
 
     public function proprietaire()
     {
-        return $this->belongsTo(User::class, 'proprietaire_id');
+        return $this->belongsTo(Proprietaire::class, 'proprietaire_id');
     }
 
     public function categorie()

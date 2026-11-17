@@ -48,7 +48,7 @@ export class Promesses implements OnInit {
   }
 
   get isBuyer(): boolean {
-    return this.user?.role === 'acheteur' || this.user?.role === 'client';
+    return this.user?.role === 'client';
   }
 
   get dashboardLink(): string {

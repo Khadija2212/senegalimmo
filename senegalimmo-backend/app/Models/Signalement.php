@@ -19,7 +19,7 @@ class Signalement extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Client::class, 'user_id')->withoutGlobalScope('role');
     }
 
     public function bien()

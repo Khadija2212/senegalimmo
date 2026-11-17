@@ -36,7 +36,7 @@ export class Quittances implements OnInit {
       return;
     }
 
-    const allowed = ['locataire', 'proprietaire', 'acheteur', 'client', 'administrateur'];
+    const allowed = ['proprietaire', 'client', 'administrateur'];
     if (!allowed.includes(this.user?.role)) {
       this.router.navigate([`/${this.user?.role ?? 'login'}/dashboard`]);
       return;

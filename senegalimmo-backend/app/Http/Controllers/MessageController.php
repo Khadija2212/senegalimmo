@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Compte;
 use App\Models\Bien;
 use App\Models\Contrat;
 use App\Models\DemandeLocation;
 use App\Models\Message;
 use App\Models\OffreAchat;
-use App\Models\User;
 use App\Models\Visite;
 use Illuminate\Http\Request;
 
@@ -26,7 +26,7 @@ class MessageController extends Controller
         return $this->lies(Message::class, 'expediteur_id', 'destinataire_id', $a, $b);
     }
 
-    private function peutEcrire(User $moi, User $dest, ?int $bienId): bool
+    private function peutEcrire(Compte $moi, Compte $dest, ?int $bienId): bool
     {
         if ($moi->id === $dest->id) {
             return false;
@@ -67,7 +67,7 @@ class MessageController extends Controller
             fn ($m) => $m->expediteur_id === $id ? $m->destinataire_id : $m->expediteur_id
         );
 
-        $users = User::whereIn('id', $groupes->keys())
+        $users = Compte::tous()->whereIn('id', $groupes->keys())
             ->get(['id', 'nom', 'prenom', 'role'])
             ->keyBy('id');
 
@@ -102,7 +102,7 @@ class MessageController extends Controller
             'bien' => 'nullable|integer',
         ]);
 
-        $dest = User::findOrFail($data['avec']);
+        $dest = Compte::tous()->findOrFail($data['avec']);
 
         if (!$this->peutEcrire($moi, $dest, isset($data['bien']) ? (int) $data['bien'] : null)) {
             return response()->json(['message' => 'Conversation impossible avec cet utilisateur.'], 403);
@@ -139,7 +139,7 @@ class MessageController extends Controller
             'bien_id'         => 'nullable|exists:biens,id',
         ]);
 
-        $dest = User::findOrFail($data['destinataire_id']);
+        $dest = Compte::tous()->findOrFail($data['destinataire_id']);
 
         if (!$this->peutEcrire($moi, $dest, $data['bien_id'] ?? null)) {
             return response()->json(['message' => 'Vous ne pouvez pas écrire à cet utilisateur.'], 403);

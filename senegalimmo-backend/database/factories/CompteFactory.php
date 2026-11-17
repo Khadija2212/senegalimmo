@@ -2,26 +2,19 @@
 
 namespace Database\Factories;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
- * @extends Factory<User>
+ * Données communes à toutes les classes concrètes de Compte.
+ * Chaque sous-classe (ClientFactory, ProprietaireFactory...) fixe son modèle.
  */
-class UserFactory extends Factory
+abstract class CompteFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
     protected static ?string $password;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public function definition(): array
     {
         return [
@@ -30,13 +23,7 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'telephone' => '77' . fake()->numerify('#######'),
             'password' => static::$password ??= Hash::make('password'),
-            'role' => 'client',
             'remember_token' => Str::random(10),
         ];
-    }
-
-    public function role(string $role): static
-    {
-        return $this->state(fn (array $attributes) => ['role' => $role]);
     }
 }

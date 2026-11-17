@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Administrateur;
 use App\Models\Alerte;
-use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
 class Notifier
@@ -29,7 +29,7 @@ class Notifier
 
     public static function admins(string $titre, string $message, ?string $lien = null): void
     {
-        User::where('role', 'administrateur')->pluck('id')
+        Administrateur::pluck('id')
             ->each(fn ($id) => self::envoyer($id, $titre, $message, $lien));
     }
 }

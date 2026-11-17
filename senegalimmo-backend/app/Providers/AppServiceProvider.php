@@ -2,13 +2,18 @@
 
 namespace App\Providers;
 
+use App\Auth\FournisseurComptes;
 use App\Contracts\PasserellePaiement;
+use App\Models\JetonAcces;
+use App\Models\Compte;
 use App\Models\Paiement;
 use App\Services\Paiement\GestionRetraits;
 use App\Services\Paiement\PasserelleSimulee;
 use App\Services\Paiement\PayTechPasserelle;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Sanctum\Sanctum;
 use LogicException;
 
 class AppServiceProvider extends ServiceProvider
@@ -40,7 +45,10 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Paiement est abstrait : la liaison de route charge la bonne sous-classe.
+        // Paiement et Compte sont abstraits : les liaisons de route chargent la bonne sous-classe.
         Route::bind('paiement', fn (string $id): Paiement => Paiement::tous()->findOrFail($id));
+        Route::bind('user', fn (string $id): Compte => Compte::tous()->findOrFail($id));
+        Auth::provider('comptes', fn ($app, array $config) => new FournisseurComptes($app['hash'], $config['model']));
+        Sanctum::usePersonalAccessTokenModel(JetonAcces::class);
     }
 }

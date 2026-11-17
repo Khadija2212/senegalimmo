@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Compte;
 use App\Models\Bien;
 use App\Models\Mandat;
-use App\Models\User;
 use App\Models\Visite;
 use Illuminate\Http\Request;
 
@@ -18,11 +18,11 @@ class VisiteController extends Controller
     ];
 
     // Biens confiés à l'agence, ou assignés à l'agent, sous mandat actif
-    private function biensGeres(User $user): array
+    private function biensGeres(Compte $user): array
     {
         $query = Mandat::where('statut', 'actif')->whereDate('date_fin', '>=', today());
 
-        if (in_array($user->role, ['agent', 'agence'], true)) {
+        if ($user->role === 'agent') {
             $query->where(fn ($q) => $q->where('agent_id', $user->id)->orWhere('agence_id', $user->id));
         } else {
             return [];
@@ -45,7 +45,7 @@ class VisiteController extends Controller
 
         if ($user->role === 'proprietaire') {
             $query->where('proprietaire_id', $user->id);
-        } elseif (in_array($user->role, ['agent', 'agence'], true)) {
+        } elseif ($user->role === 'agent') {
             $query->where(fn ($q) => $q->where('agent_id', $user->id)->orWhereIn('bien_id', $this->biensGeres($user)));
         } else {
             $query->where('demandeur_id', $user->id);
@@ -58,7 +58,7 @@ class VisiteController extends Controller
     {
         $user = $request->user();
 
-        if (!in_array($user->role, ['locataire', 'acheteur', 'client'])) {
+        if (!$user->role === 'client') {
             return response()->json(
                 ['message' => 'Seuls les clients, locataires et acheteurs peuvent demander une visite.'],
                 403
@@ -161,7 +161,7 @@ class VisiteController extends Controller
             $visite->compte_rendu = $data['compte_rendu'];
         }
 
-        if (isset($data['agent_id']) && in_array($user->role, ['agent', 'agence'], true)) {
+        if (isset($data['agent_id']) && $user->role === 'agent') {
             $visite->agent_id = $data['agent_id'];
         }
 

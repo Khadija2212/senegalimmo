@@ -27,11 +27,11 @@ class Message extends Model
 
     public function expediteur()
     {
-        return $this->belongsTo(User::class, 'expediteur_id');
+        return $this->belongsTo(Client::class, 'expediteur_id')->withoutGlobalScope('role');
     }
 
     public function destinataire()
     {
-        return $this->belongsTo(User::class, 'destinataire_id');
+        return $this->belongsTo(Client::class, 'destinataire_id')->withoutGlobalScope('role');
     }
 }

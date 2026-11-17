@@ -52,10 +52,10 @@ abstract class Paiement extends Model
     abstract public function libelle(): string;
 
     /** Qui paie, déduit de l'objet réglé (pas d'association directe, voir le diagramme). */
-    abstract public function payeur(): ?User;
+    abstract public function payeur(): ?Utilisateur;
 
     /** Qui reçoit l'argent, déduit de l'objet réglé. */
-    abstract public function beneficiaire(): ?User;
+    abstract public function beneficiaire(): ?Utilisateur;
 
     /** Le bien concerné, pour les reçus et les listes. */
     abstract public function bien(): ?Bien;
@@ -112,7 +112,7 @@ abstract class Paiement extends Model
         return $this->hasOne(Recu::class, 'paiement_id');
     }
 
-    public function estPartie(User $u): bool
+    public function estPartie(Compte $u): bool
     {
         return $u->role === 'administrateur' || $this->payeur()?->is($u) || $this->beneficiaire()?->is($u);
     }

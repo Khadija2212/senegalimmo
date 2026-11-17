@@ -33,12 +33,12 @@ class OffreAchat extends Model
 
     public function acheteur()
     {
-        return $this->belongsTo(User::class, 'acheteur_id');
+        return $this->belongsTo(Client::class, 'acheteur_id');
     }
 
     public function proprietaire()
     {
-        return $this->belongsTo(User::class, 'proprietaire_id');
+        return $this->belongsTo(Proprietaire::class, 'proprietaire_id');
     }
 
     public function promesse()

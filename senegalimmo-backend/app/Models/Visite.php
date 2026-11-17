@@ -30,16 +30,16 @@ class Visite extends Model
 
     public function demandeur()
     {
-        return $this->belongsTo(User::class, 'demandeur_id');
+        return $this->belongsTo(Client::class, 'demandeur_id')->withoutGlobalScope('role');
     }
 
     public function proprietaire()
     {
-        return $this->belongsTo(User::class, 'proprietaire_id');
+        return $this->belongsTo(Proprietaire::class, 'proprietaire_id');
     }
 
     public function agent()
     {
-        return $this->belongsTo(User::class, 'agent_id');
+        return $this->belongsTo(Agent::class, 'agent_id');
     }
 }

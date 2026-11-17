@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Enums\Role;
+use App\Models\Compte;
+use App\Models\Utilisateur;
+use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -19,16 +22,17 @@ class AuthController extends Controller
             'email'     => 'required|string|email|unique:users',
             'telephone' => 'required|string|max:20',
             'password'  => 'required|string|min:6|confirmed',
-            'role'      => 'required|in:client,proprietaire,locataire,acheteur,agent',
+            'role'      => ['required', Rule::in(Role::inscriptibles())],
         ]);
 
-        $user = User::create([
+        // La classe concrète (Client, Proprietaire, Agent) fixe elle-même le rôle.
+        $classe = Compte::classePour($request->role);
+        $user = $classe::create([
             'nom'       => $request->nom,
             'prenom'    => $request->prenom,
             'email'     => $request->email,
             'telephone' => $request->telephone,
             'password'  => Hash::make($request->password),
-            'role'      => $request->role,
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -54,14 +58,17 @@ class AuthController extends Controller
             ]);
         }
 
-        $user  = User::where('email', $request->email)->firstOrFail();
+        $user  = Compte::tous()->where('email', $request->email)->firstOrFail();
 
-        if ($user->statut === 'suspendu') {
+        if ($user->estSuspendu()) {
             return response()->json([
                 'message' => 'Votre compte a été suspendu. Contactez l\'administrateur.',
             ], 403);
         }
 
+        if ($user instanceof Utilisateur) {
+            $user->update(['derniere_connexion' => now()]);
+        }
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([

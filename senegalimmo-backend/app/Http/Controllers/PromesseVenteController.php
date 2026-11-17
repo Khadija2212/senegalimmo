@@ -30,7 +30,7 @@ class PromesseVenteController extends Controller
 
         if ($user->role === 'proprietaire') {
             $query->where('vendeur_id', $user->id);
-        } elseif (in_array($user->role, ['acheteur', 'client'])) {
+        } elseif ($user->role === 'client') {
             $query->where('acheteur_id', $user->id);
         } else {
             return response()->json(['message' => 'Accès refusé.'], 403);

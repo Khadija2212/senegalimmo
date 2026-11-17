@@ -21,12 +21,12 @@ class PaiementCaution extends Paiement
         return 'Caution du bail';
     }
 
-    public function payeur(): ?User
+    public function payeur(): ?Client
     {
         return $this->bail?->locataire;
     }
 
-    public function beneficiaire(): ?User
+    public function beneficiaire(): ?Proprietaire
     {
         return $this->bail?->proprietaire;
     }

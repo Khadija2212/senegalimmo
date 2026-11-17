@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Compte;
 use App\Models\Annonce;
 use App\Models\Bien;
 use Illuminate\Http\Request;
 use App\Models\Mandat;
-use App\Models\User;
 
 class AnnonceController extends Controller
 {
@@ -40,7 +40,7 @@ class AnnonceController extends Controller
     {
         $user = $request->user();
 
-        if (!in_array($user->role, ['proprietaire', 'agence', 'agent'], true)) {
+        if (!in_array($user->role, ['proprietaire', 'agent'], true)) {
             return $this->refuser('Action non autorisée.');
         }
 
@@ -85,7 +85,7 @@ class AnnonceController extends Controller
     }
 
     // Retourne un message de refus, ou null si la publication est autorisée
-    private function refusPublication(User $user, Bien $bien): ?string
+    private function refusPublication(Compte $user, Bien $bien): ?string
     {
         $mandat = Mandat::where('bien_id', $bien->id)
             ->where('statut', 'actif')
@@ -108,7 +108,7 @@ class AnnonceController extends Controller
             return 'Ce bien n\'est pas sous mandat actif.';
         }
 
-        if (in_array($user->role, ['agent', 'agence'], true)) {
+        if ($user->role === 'agent') {
             return ($mandat->agent_id === $user->id || $mandat->agence_id === $user->id)
                 ? null
                 : 'Ce bien ne vous est pas confié par mandat.';

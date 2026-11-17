@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Compte;
 use App\Models\Annonce;
 use App\Models\Commission;
 use App\Models\Contrat;
@@ -13,7 +14,6 @@ use App\Models\OffreAchat;
 use App\Enums\StatutPaiement;
 use App\Models\Paiement;
 use App\Models\PromesseVente;
-use App\Models\User;
 use App\Models\Visite;
 use App\Services\Notifier;
 use Illuminate\Support\ServiceProvider;
@@ -34,7 +34,7 @@ class AlerteServiceProvider extends ServiceProvider
         return number_format((float) $n, 0, ',', ' ') . ' FCFA';
     }
 
-    private static function nom(?User $u): string
+    private static function nom(?Compte $u): string
     {
         return $u ? trim($u->prenom . ' ' . $u->nom) : 'Un utilisateur';
     }
@@ -309,28 +309,30 @@ class AlerteServiceProvider extends ServiceProvider
             Notifier::envoyer($c->proprietaire_id, 'Commission due à l\'agent immobilier', $texte, '/commissions');
         });
 
-        User::created(function (User $u) {
-            if ($u->role === 'administrateur') {
-                return;
-            }
+        foreach (Compte::CLASSES as $classe) {
+            $classe::created(function (Compte $u) {
+                if ($u->role === 'administrateur') {
+                    return;
+                }
 
-            Notifier::admins('Nouvelle inscription', self::nom($u) . ' (' . $u->role . ') vient de s\'inscrire.', '/admin/utilisateurs');
-        });
+                Notifier::admins('Nouvelle inscription', self::nom($u) . ' (' . $u->role . ') vient de s\'inscrire.', '/admin/utilisateurs');
+            });
 
-        User::updated(function (User $u) {
-            if (!$u->wasChanged('verification')) {
-                return;
-            }
+            $classe::updated(function (Compte $u) {
+                if (!$u->wasChanged('verification')) {
+                    return;
+                }
 
-            match ($u->verification) {
-                'en_attente' => Notifier::admins('Document à vérifier',
-                    self::nom($u) . ' a envoyé un document d\'identité.', '/admin/utilisateurs'),
-                'verifie' => Notifier::envoyer($u->id, 'Compte vérifié', 'Votre identité a été vérifiée. Merci !', '/profil'),
-                'refuse' => Notifier::envoyer($u->id, 'Vérification refusée',
-                    'Votre document a été refusé' . ($u->verification_motif ? ' : ' . $u->verification_motif : '.')
-                    . ' Vous pouvez en envoyer un autre.', '/profil'),
-                default => null,
-            };
-        });
+                match ($u->verification) {
+                    'en_attente' => Notifier::admins('Document à vérifier',
+                        self::nom($u) . ' a envoyé un document d\'identité.', '/admin/utilisateurs'),
+                    'verifie' => Notifier::envoyer($u->id, 'Compte vérifié', 'Votre identité a été vérifiée. Merci !', '/profil'),
+                    'refuse' => Notifier::envoyer($u->id, 'Vérification refusée',
+                        'Votre document a été refusé' . ($u->verification_motif ? ' : ' . $u->verification_motif : '.')
+                        . ' Vous pouvez en envoyer un autre.', '/profil'),
+                    default => null,
+                };
+            });
+        }
     }
 }

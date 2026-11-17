@@ -46,11 +46,11 @@ class Contrat extends Model
 
     public function proprietaire()
     {
-        return $this->belongsTo(User::class, 'proprietaire_id');
+        return $this->belongsTo(Proprietaire::class, 'proprietaire_id');
     }
 
     public function locataire()
     {
-        return $this->belongsTo(User::class, 'locataire_id');
+        return $this->belongsTo(Client::class, 'locataire_id');
     }
 }

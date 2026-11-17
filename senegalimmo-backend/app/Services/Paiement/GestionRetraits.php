@@ -2,6 +2,8 @@
 
 namespace App\Services\Paiement;
 
+use App\Models\Administrateur;
+use App\Models\Compte;
 use App\Contracts\PasserellePaiement;
 use App\Enums\MethodePaiement;
 use App\Enums\StatutRetrait;
@@ -9,7 +11,6 @@ use App\Exceptions\OperationRefusee;
 use App\Exceptions\PasserelleIndisponible;
 use App\Models\Portefeuille;
 use App\Models\Retrait;
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -22,7 +23,7 @@ class GestionRetraits
     {
     }
 
-    public function demander(User $u, int $montant, MethodePaiement $m, string $numero): Retrait
+    public function demander(Compte $u, int $montant, MethodePaiement $m, string $numero): Retrait
     {
         if ($m->serviceTransfert() === null) {
             throw new OperationRefusee('Un retrait se fait vers Wave, Orange Money ou Free Money.');
@@ -50,7 +51,7 @@ class GestionRetraits
      * Opération validerRetrait() de l'Administrateur : approuve puis demande le versement.
      * PayTech confirme ensuite par notification ; la passerelle simulée verse tout de suite.
      */
-    public function valider(Retrait $retrait, User $administrateur): Retrait
+    public function valider(Retrait $retrait, Administrateur $administrateur): Retrait
     {
         $retrait->approuver($administrateur);
 

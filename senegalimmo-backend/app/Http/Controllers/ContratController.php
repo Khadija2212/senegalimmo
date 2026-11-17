@@ -31,7 +31,7 @@ class ContratController extends Controller
 
         if ($user->role === 'proprietaire') {
             $query->where('proprietaire_id', $user->id);
-        } elseif (in_array($user->role, ['locataire', 'client'])) {
+        } elseif ($user->role === 'client') {
             $query->where('locataire_id', $user->id);
         } else {
             return response()->json(['message' => 'Accès refusé.'], 403);

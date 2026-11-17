@@ -34,16 +34,16 @@ class Mandat extends Model
 
     public function proprietaire()
     {
-        return $this->belongsTo(User::class, 'proprietaire_id');
+        return $this->belongsTo(Proprietaire::class, 'proprietaire_id');
     }
 
     public function agence()
     {
-        return $this->belongsTo(User::class, 'agence_id');
+        return $this->belongsTo(Agent::class, 'agence_id');
     }
 
     public function agent()
     {
-        return $this->belongsTo(User::class, 'agent_id');
+        return $this->belongsTo(Agent::class, 'agent_id');
     }
 }

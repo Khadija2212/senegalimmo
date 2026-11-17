@@ -75,13 +75,6 @@ export class Login {
       case 'client':
         this.router.navigate(['/client/dashboard']);
         break;
-      case 'locataire':
-        this.router.navigate(['/locataire/dashboard']);
-        break;
-      case 'acheteur':
-        this.router.navigate(['/acheteur/dashboard']);
-        break;
-      case 'agence':
       case 'agent':
         this.router.navigate(['/agent/dashboard']);
         break;
