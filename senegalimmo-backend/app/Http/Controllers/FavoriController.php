@@ -2,60 +2,29 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Bien;
-use App\Models\Favori;
+use App\Models\Annonce;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/** Cas « Sauvegarder en favoris » (association Client 0..* Annonce 0..*). */
 class FavoriController extends Controller
 {
-    // Liste des biens favoris de l'utilisateur connecté
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $user = $request->user();
-
-        $favoris = Favori::with('bien.proprietaire:id,nom,prenom')
-            ->where('user_id', $user->id)
-            ->latest()
-            ->get()
-            ->pluck('bien')
-            ->filter();
-
-        return response()->json($favoris->values());
+        return response()->json($request->user()->favoris()->with('bien.medias')->get());
     }
 
-    // Récupérer uniquement la liste des IDs des biens favoris
-    public function ids(Request $request)
+    public function store(Request $request, Annonce $annonce): JsonResponse
     {
-        $ids = Favori::where('user_id', $request->user()->id)
-            ->pluck('bien_id')
-            ->map(fn ($id) => (int) $id)
-            ->values();
+        $request->user()->ajouterFavori($annonce);
 
-        return response()->json($ids);
+        return response()->json(['message' => 'Annonce ajoutée aux favoris.']);
     }
 
-    // Ajouter ou retirer un bien des favoris (toggle)
-    public function toggle(Request $request)
+    public function destroy(Request $request, Annonce $annonce): JsonResponse
     {
-        $data = $request->validate([
-            'bien_id' => 'required|exists:biens,id',
-        ]);
+        $request->user()->retirerFavori($annonce);
 
-        $user = $request->user();
-        $favori = Favori::where('user_id', $user->id)
-            ->where('bien_id', $data['bien_id'])
-            ->first();
-
-        if ($favori) {
-            $favori->delete();
-            return response()->json(['message' => 'Retiré des favoris', 'est_favori' => false]);
-        }
-
-        Favori::create([
-            'user_id' => $user->id,
-            'bien_id' => $data['bien_id'],
-        ]);
-
-        return response()->json(['message' => 'Ajouté aux favoris', 'est_favori' => true]);
+        return response()->json(['message' => 'Annonce retirée des favoris.']);
     }
 }

@@ -6,9 +6,11 @@ use App\Models\Portefeuille;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/** Cas « Consulter portefeuille » (propriétaire, agent). */
 class PortefeuilleController extends Controller
 {
     private const NB_ECRITURES = 50;
+
     private const NB_RETRAITS = 30;
 
     /** Cas « Consulter portefeuille » : les deux soldes, l'historique et les retraits. */

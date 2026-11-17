@@ -2,200 +2,90 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Compte;
+use App\Enums\StatutAnnonce;
+use App\Enums\TypeTransaction;
 use App\Models\Annonce;
 use App\Models\Bien;
+use App\Models\OptionPremium;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Models\Mandat;
+use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Cas « Publier une annonce » (propriétaire, ou agent pour un bien assigné), étendu par
+ * « Activer option premium », et « Gérer ses annonces ».
+ */
 class AnnonceController extends Controller
 {
-    private function refuser(string $message = 'Accès refusé.')
+    public function index(Request $request): JsonResponse
     {
-        return response()->json(['message' => $message], 403);
+        return response()->json(Annonce::whereIn('bien_id', $this->biensGeres($request->user()))->with('bien.medias', 'optionPremium')->latest()->get());
     }
 
-    // Admin : toutes les annonces. Propriétaire : les siennes.
-    public function index(Request $request)
+    public function store(Request $request): JsonResponse
     {
-        $user = $request->user();
-
-        $query = Annonce::with(['bien', 'auteur:id,nom,prenom,telephone'])->latest();
-
-        if ($user->role === 'administrateur') {
-            if ($request->filled('statut')) {
-                $query->where('statut', $request->statut);
-            }
-        } elseif ($user->role === 'proprietaire') {
-            $query->where('auteur_id', $user->id);
-        } else {
-            return $this->refuser();
-        }
-
-        return response()->json($query->get());
-    }
-
-       // Le propriétaire, ou l'agence / l'agent sous mandat, soumet un bien pour publication
-    public function store(Request $request)
-    {
-        $user = $request->user();
-
-        if (!in_array($user->role, ['proprietaire', 'agent'], true)) {
-            return $this->refuser('Action non autorisée.');
-        }
-
-        $data = $request->validate([
-            'bien_id' => 'required|exists:biens,id',
+        $d = $request->validate([
+            'bien_id' => ['required', 'uuid', 'exists:biens,id'],
+            'type_transaction' => ['required', Rule::enum(TypeTransaction::class)],
+            'prix' => ['required', 'integer', 'min:1'],
+            'charges' => ['sometimes', 'integer', 'min:0'],
+            'caution' => ['sometimes', 'integer', 'min:0'],
         ]);
+        $bien = Bien::findOrFail($d['bien_id']);
+        $this->exigerGestion($bien, $request->user());
 
-        $bien = Bien::findOrFail($data['bien_id']);
+        $annonce = $bien->proprietaire->publierAnnonce($bien, TypeTransaction::from($d['type_transaction']), $d['prix'], $d['charges'] ?? 0, $d['caution'] ?? 0);
 
-        if ($message = $this->refusPublication($user, $bien)) {
-            return $this->refuser($message);
-        }
-
-        if ($bien->statut !== 'disponible') {
-            return response()->json(['message' => 'Ce bien n\'est plus disponible.'], 422);
-        }
-
-        $dejaActive = Annonce::where('bien_id', $bien->id)
-            ->whereIn('statut', ['en_attente', 'publiee'])
-            ->exists();
-
-        if ($dejaActive) {
-            return response()->json(
-                ['message' => 'Ce bien a déjà une annonce en attente ou publiée.'],
-                422
-            );
-        }
-
-        $annonce = Annonce::create([
-            'bien_id'          => $bien->id,
-            'auteur_id'        => $user->id,
-            'titre'            => $bien->titre,
-            'description'      => $bien->description,
-            'prix'             => $bien->prix,
-            'photos'           => $bien->photos ?? [],
-            'type_transaction' => $bien->transaction,
-            'statut'           => 'en_attente',
-            'bien_verifie'     => false,
-        ]);
-
-        return response()->json($annonce, 201);
+        return response()->json($annonce, Response::HTTP_CREATED);
     }
 
-    // Retourne un message de refus, ou null si la publication est autorisée
-    private function refusPublication(Compte $user, Bien $bien): ?string
+    public function update(Request $request, Annonce $annonce): JsonResponse
     {
-        $mandat = Mandat::where('bien_id', $bien->id)
-            ->where('statut', 'actif')
-            ->whereDate('date_fin', '>=', today())
-            ->first();
+        $this->exigerGestion($annonce->bien, $request->user());
+        $d = $request->validate(['prix' => ['required', 'integer', 'min:1'], 'description' => ['required', 'string', 'max:5000']]);
+        $annonce->modifier($d['prix'], $d['description']);
 
-        if ($user->role === 'proprietaire') {
-            if ($bien->proprietaire_id !== $user->id) {
-                return 'Ce bien ne vous appartient pas.';
-            }
-
-            if ($mandat && $mandat->type === 'exclusif') {
-                return 'Ce bien est sous mandat exclusif : seul l\'agent immobilier peut le publier.';
-            }
-
-            return null;
-        }
-
-        if (!$mandat) {
-            return 'Ce bien n\'est pas sous mandat actif.';
-        }
-
-        if ($user->role === 'agent') {
-            return ($mandat->agent_id === $user->id || $mandat->agence_id === $user->id)
-                ? null
-                : 'Ce bien ne vous est pas confié par mandat.';
-        }
-
-        return 'Action non autorisée.';
+        return response()->json($annonce->fresh('bien'));
     }
 
-    public function show(Request $request, Annonce $annonce)
+    public function suspendre(Request $request, Annonce $annonce): JsonResponse
     {
-        $user = $request->user();
+        $this->exigerGestion($annonce->bien, $request->user());
+        $annonce->suspendre();
 
-        if ($user->role !== 'administrateur' && $annonce->auteur_id !== $user->id) {
-            return $this->refuser();
-        }
-
-        return response()->json($annonce->load(['bien', 'auteur:id,nom,prenom,telephone']));
+        return response()->json($annonce);
     }
 
-    // Modération par l'administrateur : publier ou rejeter
-    public function update(Request $request, Annonce $annonce)
+    /** Le propriétaire remet en ligne une annonce qu'il a suspendue : elle repasse en modération. */
+    public function reprendre(Request $request, Annonce $annonce): JsonResponse
     {
-        if ($request->user()->role !== 'administrateur') {
-            return $this->refuser('Action réservée à l\'administrateur.');
-        }
+        $this->exigerGestion($annonce->bien, $request->user());
+        $annonce->modifier($annonce->prix, $annonce->bien->description);
 
-        $data = $request->validate([
-            'statut'      => 'required|in:publiee,rejetee',
-            'motif_rejet' => 'required_if:statut,rejetee|nullable|string|max:500',
-            'verifie'     => 'nullable|boolean',
-        ], [
-            'motif_rejet.required_if' => 'Indiquez le motif du rejet.',
-        ]);
-
-        if (!in_array($annonce->statut, ['en_attente', 'publiee'])) {
-            return response()->json(['message' => 'Cette annonce a déjà été traitée.'], 422);
-        }
-
-        if ($data['statut'] === 'publiee') {
-            $verifie = (bool) ($data['verifie'] ?? false);
-
-            $annonce->update([
-                'statut'       => 'publiee',
-                'motif_rejet'  => null,
-                'bien_verifie' => $verifie,
-            ]);
-            $annonce->bien()->update(['est_verifie' => $verifie]);
-        } else {
-            $annonce->update([
-                'statut'      => 'rejetee',
-                'motif_rejet' => $data['motif_rejet'],
-            ]);
-        }
-
-        return response()->json($annonce->load('bien'));
+        return response()->json($annonce);
     }
 
-    // Attribuer ou retirer le badge « Bien vérifié »
-    public function verification(Request $request, Annonce $annonce)
+    public function conclure(Request $request, Annonce $annonce): JsonResponse
     {
-        if ($request->user()->role !== 'administrateur') {
-            return $this->refuser('Action réservée à l\'administrateur.');
-        }
+        $this->exigerGestion($annonce->bien, $request->user());
+        $this->exigerQue($annonce->statut === StatutAnnonce::PUBLIEE, 'Seule une annonce publiée peut être conclue.');
+        $annonce->marquerConclue();
 
-        $data = $request->validate(['verifie' => 'required|boolean']);
-
-        $annonce->update(['bien_verifie' => $data['verifie']]);
-        $annonce->bien()->update(['est_verifie' => $data['verifie']]);
-
-        return response()->json($annonce->load('bien'));
+        return response()->json($annonce);
     }
 
-        // L'auteur, ou le propriétaire du bien, retire l'annonce
-    public function destroy(Request $request, Annonce $annonce)
+    public function optionsPremium(): JsonResponse
     {
-        $user = $request->user();
-        $annonce->loadMissing('bien');
+        return response()->json(OptionPremium::where('active', true)->orderBy('prix')->get());
+    }
 
-        $estAuteur = $annonce->auteur_id === $user->id;
-        $estProprietaire = $annonce->bien && $annonce->bien->proprietaire_id === $user->id;
+    public function activerPremium(Request $request, Annonce $annonce): JsonResponse
+    {
+        $this->exigerGestion($annonce->bien, $request->user());
+        $id = $request->validate(['option_premium_id' => ['required', 'uuid', 'exists:options_premium,id']])['option_premium_id'];
+        $annonce->activerPremium(OptionPremium::findOrFail($id));
 
-        if (!$estAuteur && !$estProprietaire) {
-            return $this->refuser();
-        }
-
-        $annonce->delete();
-
-        return response()->json(['message' => 'Annonce retirée.']);
+        return response()->json($annonce->fresh('optionPremium'));
     }
 }

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\MethodePaiement;
 use App\Enums\StatutRetrait;
 use App\Exceptions\OperationRefusee;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,8 @@ use Illuminate\Support\Facades\DB;
  */
 class Retrait extends Model
 {
+    use HasUuids;
+
     protected $table = 'retraits';
 
     protected $fillable = [
@@ -62,6 +65,7 @@ class Retrait extends Model
             $r->portefeuille->debloquer($r->montant, $r);
             $this->setRawAttributes($r->getAttributes(), true);
         });
+        $this->portefeuille->user->notifier('Retrait rejeté', 'Votre retrait de '.Annonce::fcfa($this->montant).' est rejeté : '.$motif.' Le montant est de nouveau disponible.');
     }
 
     /** Le prestataire confirme le versement : l'argent sort du solde en attente. */
@@ -76,12 +80,13 @@ class Retrait extends Model
             $r->update(['statut' => StatutRetrait::VERSE, 'reference_paytech' => $ref, 'traite_le' => now()]);
             $r->portefeuille->debiter($r->montant, $r);
             $this->setRawAttributes($r->getAttributes(), true);
+            $r->portefeuille->user->notifier('Retrait versé', 'Votre retrait de '.Annonce::fcfa($r->montant).' est versé sur '.$r->methode->libelle().'.');
         });
     }
 
     private function exigerStatut(StatutRetrait ...$attendus): void
     {
-        if (!in_array($this->statut, $attendus, true)) {
+        if (! in_array($this->statut, $attendus, true)) {
             throw new OperationRefusee('Ce retrait a déjà été traité.');
         }
     }

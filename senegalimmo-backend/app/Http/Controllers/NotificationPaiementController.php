@@ -20,18 +20,19 @@ use Symfony\Component\HttpFoundation\Response as Http;
 class NotificationPaiementController extends Controller
 {
     private const VENTE_REUSSIE = 'sale_complete';
+
     private const VENTE_ANNULEE = 'sale_canceled';
+
     private const VERSEMENT_REUSSI = 'transfer_success';
+
     private const VERSEMENT_ECHOUE = 'transfer_failed';
 
-    public function __construct(private readonly PasserellePaiement $passerelle, private readonly GestionRetraits $retraits)
-    {
-    }
+    public function __construct(private readonly PasserellePaiement $passerelle, private readonly GestionRetraits $retraits) {}
 
     public function ipn(Request $request): Response
     {
         $corps = $request->getContent() !== '' ? $request->getContent() : http_build_query($request->all());
-        if (!$this->passerelle->verifierNotification((string) $request->input('hmac_compute', ''), $corps)) {
+        if (! $this->passerelle->verifierNotification((string) $request->input('hmac_compute', ''), $corps)) {
             Log::warning('Notification de paiement rejetée : signature invalide.');
 
             return response('Signature invalide', Http::HTTP_FORBIDDEN);
@@ -91,6 +92,6 @@ class NotificationPaiementController extends Controller
         ];
         $this->ipn(Request::create('/api/paiements/ipn', 'POST', $corps));
 
-        return redirect()->away(rtrim((string) config('services.paytech.front_url'), '/') . '/paiement/retour?ref=' . urlencode($reference));
+        return redirect()->away(rtrim((string) config('services.paytech.front_url'), '/').'/paiement/retour?ref='.urlencode($reference));
     }
 }

@@ -2,125 +2,87 @@
 
 namespace App\Http\Controllers;
 
+use App\Contracts\ServiceStockage;
+use App\Models\Administrateur;
+use App\Models\Agent;
+use App\Models\Client;
+use App\Models\Proprietaire;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rule;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Validation\Rules\Password;
 
+/** Cas « Gérer son profil » : identité, attributs propres à chaque classe, mot de passe, pièces. */
 class ProfilController extends Controller
 {
-    // Champs propres à chaque rôle (ceux du diagramme de classes)
-    private function champsRole(string $role): array
+    private const LONGUEUR_MIN_MOT_DE_PASSE = 8;
+
+    private const TAILLE_MAX_KO = 5120;
+
+    private const DUREE_LIEN_MIN = 15;
+
+    public function __construct(private readonly ServiceStockage $stockage) {}
+
+    public function modifier(Request $request): JsonResponse
     {
-        return match ($role) {
-            'proprietaire'    => ['numero_cni' => 'nullable|string|max:30'],
-            'client'          => [
-                'profession'     => 'nullable|string|max:100',
-                'revenu_mensuel' => 'nullable|numeric|min:0',
-                'budget_min'     => 'nullable|numeric|min:0',
-                'budget_max'     => 'nullable|numeric|min:0',
-            ],
-            'agent'           => ['nom_agence' => 'nullable|string|max:120', 'numero_licence' => 'nullable|string|max:60'],
-            default           => [],
-        };
+        $compte = $request->user();
+        $donnees = $request->validate([
+            'prenom' => ['required', 'string', 'max:100'],
+            'nom' => ['required', 'string', 'max:100'],
+            'telephone' => ['sometimes', 'string', 'regex:/^\+?[0-9 ]{9,15}$/'],
+            'photo' => ['sometimes', 'image', 'max:'.self::TAILLE_MAX_KO],
+        ] + $this->reglesPropres($compte));
+
+        $photo = $request->file('photo');
+        $compte->modifierProfil($donnees['prenom'], $donnees['nom'], $photo ? $this->ranger($photo, 'photos') : null);
+        $compte->update(collect($donnees)->except(['prenom', 'nom', 'photo'])->all());
+
+        return response()->json($compte->fresh());
     }
 
-    public function show(Request $request)
+    public function changerMotDePasse(Request $request): JsonResponse
     {
-        $user = $request->user();
-
-        return response()->json(array_merge($user->toArray(), [
-            'a_document' => !empty($user->document_identite),
-        ]));
-    }
-
-    public function update(Request $request)
-    {
-        $user = $request->user();
-
-        $data = $request->validate([
-            'nom'       => 'required|string|max:255',
-            'prenom'    => 'required|string|max:255',
-            'email'     => ['required', 'email', Rule::unique('users', 'email')->ignore($user->id)],
-            'telephone' => 'required|string|max:20',
-            'adresse'   => 'nullable|string|max:255',
-        ] + $this->champsRole($user->role));
-
-        if ($user->role === 'client'
-            && isset($data['budget_min'], $data['budget_max'])
-            && (float) $data['budget_max'] < (float) $data['budget_min']) {
-            return response()->json(['message' => 'Le budget maximum doit être supérieur au budget minimum.'], 422);
-        }
-
-        $user->update($data);
-
-        return response()->json(['message' => 'Profil mis à jour.', 'user' => $user->fresh()]);
-    }
-
-    public function motDePasse(Request $request)
-    {
-        $user = $request->user();
-
-        $data = $request->validate([
-            'mot_de_passe_actuel' => 'required|string',
-            'password'            => 'required|string|min:6|confirmed',
+        $donnees = $request->validate([
+            'ancien' => ['required', 'string'],
+            'nouveau' => ['required', 'confirmed', Password::min(self::LONGUEUR_MIN_MOT_DE_PASSE)],
         ]);
-
-        if (!Hash::check($data['mot_de_passe_actuel'], $user->password)) {
-            return response()->json(['message' => 'Le mot de passe actuel est incorrect.'], 422);
-        }
-
-        $user->update(['password' => $data['password']]);
-
-        // Les autres appareils connectés sont déconnectés
-        $courant = data_get($user->currentAccessToken(), 'id');
-        if ($courant) {
-            $user->tokens()->where('id', '!=', $courant)->delete();
-        }
+        $request->user()->changerMotDePasse($donnees['ancien'], $donnees['nouveau']);
 
         return response()->json(['message' => 'Mot de passe modifié.']);
     }
 
-    // Envoi d'une pièce d'identité, conservée hors du dossier public
-    public function document(Request $request)
+    /** La pièce d'identité du client, du propriétaire ou la carte professionnelle de l'agent. */
+    public function televerserPieceIdentite(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $request->validate(['fichier' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:'.self::TAILLE_MAX_KO]]);
+        $compte = $request->user();
+        $this->exigerQue(! $compte instanceof Administrateur);
+        $compte->update(['piece_identite_url' => $this->ranger($request->file('fichier'), 'pieces')]);
 
-        $request->validate([
-            'document' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
-        ], [
-            'document.mimes' => 'Le document doit être un PDF, JPG ou PNG.',
-            'document.max'   => 'Le document ne doit pas dépasser 5 Mo.',
-        ]);
-
-        if ($user->verification === 'verifie') {
-            return response()->json(['message' => 'Votre compte est déjà vérifié.'], 422);
-        }
-
-        if ($user->document_identite) {
-            Storage::disk('local')->delete($user->document_identite);
-        }
-
-        $chemin = $request->file('document')->store('documents', 'local');
-
-        $user->update([
-            'document_identite'  => $chemin,
-            'verification'       => 'en_attente',
-            'verification_motif' => null,
-            'est_verifie'        => false,
-        ]);
-
-        return response()->json(['message' => 'Document envoyé. Un administrateur va le vérifier.']);
+        return response()->json(['message' => "Pièce d'identité envoyée."]);
     }
 
-    public function documentVoir(Request $request)
+    public function pieceIdentite(Request $request): JsonResponse
     {
-        $chemin = $request->user()->document_identite;
+        $url = $request->user()->piece_identite_url;
+        $this->exigerQue($url !== null, "Aucune pièce d'identité envoyée.");
 
-        if (!$chemin || !Storage::disk('local')->exists($chemin)) {
-            return response()->json(['message' => 'Aucun document.'], 404);
-        }
+        return response()->json(['url' => $this->stockage->urlSignee($url, self::DUREE_LIEN_MIN)]);
+    }
 
-        return Storage::disk('local')->response($chemin);
+    /** @return array<string, list<string>> */
+    private function reglesPropres(object $compte): array
+    {
+        return match (true) {
+            $compte instanceof Client => ['date_naissance' => ['sometimes', 'nullable', 'date', 'before:today'], 'profession' => ['sometimes', 'nullable', 'string', 'max:120']],
+            $compte instanceof Proprietaire => ['adresse' => ['sometimes', 'nullable', 'string', 'max:255']],
+            $compte instanceof Agent => ['agence' => ['sometimes', 'nullable', 'string', 'max:120'], 'numero_carte_professionnelle' => ['sometimes', 'nullable', 'string', 'max:60']],
+            default => [],
+        };
+    }
+
+    private function ranger(UploadedFile $fichier, string $dossier): string
+    {
+        return $this->stockage->televerser((string) $fichier->get(), $dossier.'/'.$fichier->hashName());
     }
 }

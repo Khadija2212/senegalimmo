@@ -2,37 +2,42 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\StatutValidation;
 use App\Models\Agent;
-use App\Models\Commission;
-use App\Models\Mandat;
-use App\Models\Visite;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Carbon;
 
+/** Cas « Consulter ses performances » et « Exporter planning » (agent) ; annuaire des agents validés. */
 class AgentController extends Controller
 {
-    public function index(Request $request)
+    private const PLANNING_PAR_DEFAUT_JOURS = 30;
+
+    /** Les agents validés, que le propriétaire peut mandater. */
+    public function index(): JsonResponse
     {
-        $user = $request->user();
-
-        if ($user->role !== 'agent') {
-            return response()->json(['message' => 'Accès refusé.'], 403);
-        }
-
-        return response()->json([]);
+        return response()->json(Agent::where('statut_validation', StatutValidation::VALIDE)
+            ->orderBy('nom')->get(['id', 'prenom', 'nom', 'agence', 'photo_url', 'valide_le']));
     }
 
-    public function store(Request $request)
+    public function performances(Request $request): JsonResponse
     {
-        return response()->json([
-            'message' => 'La création de sous-agents par agence a été supprimée : chaque agent immobilier dispose de son propre compte.',
-        ], 403);
+        /** @var Agent $agent */
+        $agent = $request->user();
+
+        return response()->json(['taux_conversion' => $agent->tauxConversion()] + $agent->indicateursTableauDeBord());
     }
 
-    // Désactivé : rôle agence fusionné avec agent immobilier
-    public function statut(Request $request, Agent $agent)
+    public function planning(Request $request): Response
     {
-        return response()->json([
-            'message' => 'La gestion de sous-agents par agence a été supprimée.',
-        ], 403);
+        $d = $request->validate(['debut' => ['sometimes', 'date'], 'fin' => ['sometimes', 'date', 'after_or_equal:debut']]);
+        $debut = Carbon::parse($d['debut'] ?? today());
+        $fin = Carbon::parse($d['fin'] ?? $debut->copy()->addDays(self::PLANNING_PAR_DEFAUT_JOURS));
+
+        return response($request->user()->exporterPlanning($debut, $fin), Response::HTTP_OK, [
+            'Content-Type' => 'text/calendar; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="planning-visites.ics"',
+        ]);
     }
 }

@@ -5,6 +5,8 @@ namespace App\Enums;
 /** Énumération Role du diagramme de classes : une valeur par classe concrète de Compte. */
 enum Role: string
 {
+    use ValeursEnum;
+
     case CLIENT = 'client';
     case PROPRIETAIRE = 'proprietaire';
     case AGENT = 'agent';

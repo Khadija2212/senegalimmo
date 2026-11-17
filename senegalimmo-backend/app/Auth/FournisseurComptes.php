@@ -17,7 +17,7 @@ class FournisseurComptes extends EloquentUserProvider
 {
     public function createModel(): Model&Authenticatable
     {
-        return new Client();
+        return new Client;
     }
 
     /** @param Model|null $model */

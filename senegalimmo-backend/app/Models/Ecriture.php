@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\TypeEcriture;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Ecriture extends Model
 {
+    use HasUuids;
+
     protected $table = 'ecritures';
 
     protected $fillable = ['type', 'montant', 'solde_apres', 'libelle', 'date', 'paiement_id', 'retrait_id'];

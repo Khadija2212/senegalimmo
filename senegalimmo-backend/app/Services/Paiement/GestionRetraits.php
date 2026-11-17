@@ -2,13 +2,14 @@
 
 namespace App\Services\Paiement;
 
-use App\Models\Administrateur;
-use App\Models\Compte;
 use App\Contracts\PasserellePaiement;
 use App\Enums\MethodePaiement;
 use App\Enums\StatutRetrait;
 use App\Exceptions\OperationRefusee;
 use App\Exceptions\PasserelleIndisponible;
+use App\Models\Administrateur;
+use App\Models\Annonce;
+use App\Models\Compte;
 use App\Models\Portefeuille;
 use App\Models\Retrait;
 use Illuminate\Support\Facades\DB;
@@ -19,9 +20,7 @@ use Illuminate\Support\Facades\DB;
  */
 class GestionRetraits
 {
-    public function __construct(private readonly PasserellePaiement $passerelle, private readonly int $minimum)
-    {
-    }
+    public function __construct(private readonly PasserellePaiement $passerelle, private readonly int $minimum) {}
 
     public function demander(Compte $u, int $montant, MethodePaiement $m, string $numero): Retrait
     {
@@ -29,11 +28,11 @@ class GestionRetraits
             throw new OperationRefusee('Un retrait se fait vers Wave, Orange Money ou Free Money.');
         }
         if ($montant < $this->minimum) {
-            throw new OperationRefusee('Le montant minimum d\'un retrait est de ' . number_format($this->minimum, 0, ',', ' ') . ' FCFA.');
+            throw new OperationRefusee('Le montant minimum d\'un retrait est de '.number_format($this->minimum, 0, ',', ' ').' FCFA.');
         }
         $portefeuille = Portefeuille::de($u);
 
-        return DB::transaction(function () use ($portefeuille, $montant, $m, $numero): Retrait {
+        $retrait = DB::transaction(function () use ($portefeuille, $montant, $m, $numero): Retrait {
             $retrait = $portefeuille->retraits()->create([
                 'montant' => $montant,
                 'methode' => $m,
@@ -45,6 +44,9 @@ class GestionRetraits
 
             return $retrait;
         });
+        Administrateur::notifierTous('Demande de retrait', $u->nomComplet().' demande '.Annonce::fcfa($montant).'.');
+
+        return $retrait;
     }
 
     /**
@@ -58,7 +60,7 @@ class GestionRetraits
         try {
             $reference = $this->passerelle->transferer($retrait->numero_beneficiaire, $retrait->montant, $retrait->methode);
         } catch (PasserelleIndisponible $e) {
-            $retrait->rejeter('Versement impossible : ' . $e->getMessage());
+            $retrait->rejeter('Versement impossible : '.$e->getMessage());
 
             return $retrait;
         }

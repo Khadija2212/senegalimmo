@@ -1,173 +1,181 @@
 <?php
 
-use App\Http\Controllers\PortefeuilleController;
-use App\Http\Controllers\RetraitController;
-use App\Http\Controllers\AdminUtilisateurController;
-use App\Http\Controllers\AlerteController;
-use App\Http\Controllers\ProfilController;
-use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\Admin\AnnonceAdminController;
+use App\Http\Controllers\Admin\CompteAdminController;
+use App\Http\Controllers\Admin\NotificationAdminController;
+use App\Http\Controllers\Admin\OptionPremiumAdminController;
+use App\Http\Controllers\Admin\RegleCommissionAdminController;
+use App\Http\Controllers\Admin\SignalementAdminController;
+use App\Http\Controllers\Admin\TransactionAdminController;
 use App\Http\Controllers\AgentController;
 use App\Http\Controllers\AnnonceController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BailController;
 use App\Http\Controllers\BienController;
-use App\Http\Controllers\CategorieController;
-use App\Http\Controllers\ChangeController;
-use App\Http\Controllers\CommissionController;
 use App\Http\Controllers\ContratController;
+use App\Http\Controllers\ConversationController;
 use App\Http\Controllers\DemandeLocationController;
 use App\Http\Controllers\EtatDesLieuxController;
 use App\Http\Controllers\FavoriController;
 use App\Http\Controllers\MandatController;
-use App\Http\Controllers\MessageController;
-use App\Http\Controllers\NotationController;
+use App\Http\Controllers\MediaController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\NotificationPaiementController;
 use App\Http\Controllers\OffreAchatController;
 use App\Http\Controllers\PaiementController;
-use App\Http\Controllers\NotificationPaiementController;
-use App\Http\Controllers\PromesseVenteController;
+use App\Http\Controllers\PortefeuilleController;
+use App\Http\Controllers\ProfilController;
+use App\Http\Controllers\RechercheController;
+use App\Http\Controllers\RetraitController;
 use App\Http\Controllers\SignalementController;
-use App\Http\Controllers\StatsController;
+use App\Http\Controllers\TableauDeBordController;
 use App\Http\Controllers\VisiteController;
 use Illuminate\Support\Facades\Route;
 
-// ===== Routes publiques =====
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+/*
+| Les routes suivent les diagrammes de cas d'utilisation : cas communs (Visiteur, Utilisateur),
+| puis Client, Propriétaire, Agent et Administrateur. Les identifiants sont des UUID.
+*/
 
-Route::get('/biens-publics', [BienController::class, 'publicIndex']);
-Route::get('/biens-publics/{bien}', [BienController::class, 'publicShow']);
-Route::get('/categories', [CategorieController::class, 'index']);
+// Visiteur : rechercher, filtrer, comparer, carte, consulter, s'inscrire, s'authentifier
+Route::post('/inscription', [AuthController::class, 'inscrire'])->middleware('throttle:10,1');
+Route::post('/connexion', [AuthController::class, 'connecter'])->middleware('throttle:10,1');
+Route::get('/annonces', [RechercheController::class, 'rechercher']);
+Route::get('/annonces/carte', [RechercheController::class, 'carte']);
+Route::get('/annonces/comparer', [RechercheController::class, 'comparer']);
+Route::get('/annonces/{annonce}', [RechercheController::class, 'consulter'])->whereUuid('annonce');
+Route::get('/options-premium', [AnnonceController::class, 'optionsPremium']);
 
-Route::get('/proprietaires/{id}/avis', [NotationController::class, 'avis'])->whereNumber('id');
-Route::get('/taux-change', [ChangeController::class, 'index']);
-
-// Appelée par la passerelle de paiement (authentifiée par signature, pas par jeton)
+// Passerelle de paiement : authentifiée par signature, pas par jeton
 Route::post('/paiements/ipn', [NotificationPaiementController::class, 'ipn']);
-// Page de paiement de la passerelle simulée (développement local uniquement)
 Route::get('/paiements/simulation/{reference}/{jeton}', [NotificationPaiementController::class, 'simulation']);
 
-// ===== Routes protégées =====
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/me', [AuthController::class, 'me']);
-    Route::put('/profil', [AuthController::class, 'modifierProfil']);
-    Route::put('/profil/mot-de-passe', [AuthController::class, 'changerMotDePasse']);
-    Route::post('/profil/document', [AuthController::class, 'televerserDocument']);
-    Route::put('/profil/devise', [AuthController::class, 'devise']);
+Route::middleware('auth:sanctum')->group(function (): void {
+    // Utilisateur et Administrateur : profil, tableau de bord, notifications
+    Route::post('/deconnexion', [AuthController::class, 'deconnecter']);
+    Route::get('/moi', [AuthController::class, 'moi']);
+    Route::post('/profil', [ProfilController::class, 'modifier']);
+    Route::put('/profil/mot-de-passe', [ProfilController::class, 'changerMotDePasse']);
+    Route::post('/profil/piece-identite', [ProfilController::class, 'televerserPieceIdentite']);
+    Route::get('/profil/piece-identite', [ProfilController::class, 'pieceIdentite']);
+    Route::get('/tableau-de-bord', TableauDeBordController::class);
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/tout-lire', [NotificationController::class, 'toutLire']);
+    Route::post('/notifications/{notification}/lire', [NotificationController::class, 'marquerLue']);
 
-    Route::get('/stats', [StatsController::class, 'index']);
+    Route::middleware('role:client,proprietaire,agent')->group(function (): void {
+        // Échanger par messagerie
+        Route::get('/conversations', [ConversationController::class, 'index']);
+        Route::post('/conversations', [ConversationController::class, 'store']);
+        Route::get('/conversations/{conversation}/messages', [ConversationController::class, 'messages']);
+        Route::post('/conversations/{conversation}/messages', [ConversationController::class, 'envoyer']);
 
-    // Favoris
-    Route::get('/favoris', [FavoriController::class, 'index']);
-    Route::get('/favoris/ids', [FavoriController::class, 'ids']);
-    Route::post('/favoris/toggle', [FavoriController::class, 'toggle']);
+        // Contrats : consulter, télécharger, signer, relancer
+        Route::get('/contrats', [ContratController::class, 'index']);
+        Route::get('/contrats/{contrat}', [ContratController::class, 'show']);
+        Route::get('/contrats/{contrat}/document', [ContratController::class, 'document']);
+        Route::post('/contrats/{contrat}/signer', [ContratController::class, 'signer']);
+        Route::post('/signatures/{signature}/relancer', [ContratController::class, 'relancer']);
+        Route::get('/baux/{bail}/echeancier', [BailController::class, 'echeancier']);
+        Route::get('/baux/{bail}/etats-des-lieux', [EtatDesLieuxController::class, 'index']);
 
-    // Biens
-    Route::post('/biens/{bien}/photos', [BienController::class, 'ajouterPhotos']);
-    Route::post('/biens/{bien}/photos/supprimer', [BienController::class, 'supprimerPhoto']);
-    Route::apiResource('biens', BienController::class);
+        // Demandes, offres, visites : lister et répondre
+        Route::get('/demandes-location', [DemandeLocationController::class, 'index']);
+        Route::get('/offres-achat', [OffreAchatController::class, 'index']);
+        Route::get('/visites', [VisiteController::class, 'index']);
+        Route::post('/visites/{visite}/annuler', [VisiteController::class, 'annuler']);
+        Route::post('/visites/{visite}/reprogrammer', [VisiteController::class, 'reprogrammer']);
 
-    // Annonces
-    Route::put('/annonces/{annonce}/verification', [AnnonceController::class, 'verification']);
-    Route::apiResource('annonces', AnnonceController::class);
+        // Paiements versés ou reçus, quittances
+        Route::get('/paiements', [PaiementController::class, 'index']);
+        Route::get('/paiements/reference/{reference}', [PaiementController::class, 'parReference']);
+        Route::get('/paiements/{paiement}/quittance', [PaiementController::class, 'quittance']);
+    });
 
-    // Visites
-    Route::apiResource('visites', VisiteController::class);
+    // Client
+    Route::middleware('role:client')->group(function (): void {
+        Route::get('/favoris', [FavoriController::class, 'index']);
+        Route::post('/favoris/{annonce}', [FavoriController::class, 'store']);
+        Route::delete('/favoris/{annonce}', [FavoriController::class, 'destroy']);
+        Route::post('/demandes-location', [DemandeLocationController::class, 'store']);
+        Route::post('/visites', [VisiteController::class, 'store']);
+        Route::post('/offres-achat', [OffreAchatController::class, 'store']);
+        Route::post('/offres-achat/{offre}/retirer', [OffreAchatController::class, 'retirer']);
+        Route::get('/signalements', [SignalementController::class, 'index']);
+        Route::post('/signalements', [SignalementController::class, 'store']);
+        Route::post('/paiements/initier', [PaiementController::class, 'initier']);
+        Route::post('/etats-des-lieux/{etat}/valider', [EtatDesLieuxController::class, 'valider']);
+    });
 
-    // Location
-    Route::get('/demandes-location', [DemandeLocationController::class, 'index']);
-    Route::post('/demandes-location', [DemandeLocationController::class, 'store']);
-    Route::put('/demandes-location/{demande}', [DemandeLocationController::class, 'update']);
+    // Propriétaire et Agent : biens, annonces, médias, réponses aux clients, portefeuille
+    Route::middleware('role:proprietaire,agent')->group(function (): void {
+        Route::get('/biens', [BienController::class, 'index']);
+        Route::get('/biens/{bien}', [BienController::class, 'show']);
+        Route::put('/biens/{bien}', [BienController::class, 'update']);
+        Route::post('/biens/{bien}/medias', [MediaController::class, 'store']);
+        Route::delete('/medias/{media}', [MediaController::class, 'destroy']);
+        Route::get('/mes-annonces', [AnnonceController::class, 'index']);
+        Route::post('/mes-annonces', [AnnonceController::class, 'store']);
+        Route::put('/mes-annonces/{annonce}', [AnnonceController::class, 'update']);
+        Route::post('/mes-annonces/{annonce}/suspendre', [AnnonceController::class, 'suspendre']);
+        Route::post('/mes-annonces/{annonce}/reprendre', [AnnonceController::class, 'reprendre']);
+        Route::post('/mes-annonces/{annonce}/conclure', [AnnonceController::class, 'conclure']);
+        Route::post('/mes-annonces/{annonce}/premium', [AnnonceController::class, 'activerPremium']);
+        Route::post('/demandes-location/{demande}/accepter', [DemandeLocationController::class, 'accepter']);
+        Route::post('/demandes-location/{demande}/refuser', [DemandeLocationController::class, 'refuser']);
+        Route::post('/offres-achat/{offre}/refuser', [OffreAchatController::class, 'refuser']);
+        Route::post('/visites/{visite}/confirmer', [VisiteController::class, 'confirmer']);
+        Route::post('/visites/{visite}/refuser', [VisiteController::class, 'refuser']);
+        Route::post('/mandats/{mandat}/renouveler', [MandatController::class, 'renouveler']);
+        Route::post('/mandats/{mandat}/resilier', [MandatController::class, 'resilier']);
+        Route::get('/portefeuille', [PortefeuilleController::class, 'show']);
+        Route::post('/retraits', [RetraitController::class, 'demander']);
+    });
 
-    Route::post('/contrats/{contrat}/signer', [ContratController::class, 'signer']);
-    Route::get('/contrats/{contrat}/pdf', [ContratController::class, 'pdf']);
-    Route::get('/contrats/{contrat}/echeancier', [PaiementController::class, 'echeancier']);
-    Route::apiResource('contrats', ContratController::class);
+    // Propriétaire
+    Route::middleware('role:proprietaire')->group(function (): void {
+        Route::post('/biens', [BienController::class, 'store']);
+        Route::delete('/biens/{bien}', [BienController::class, 'destroy']);
+        Route::post('/offres-achat/{offre}/accepter', [OffreAchatController::class, 'accepter']);
+        Route::post('/baux', [BailController::class, 'store']);
+        Route::post('/baux/{bail}/resilier', [BailController::class, 'resilier']);
+        Route::post('/baux/{bail}/etats-des-lieux', [EtatDesLieuxController::class, 'store']);
+        Route::get('/agents', [AgentController::class, 'index']);
+        Route::post('/mandats', [MandatController::class, 'store']);
+    });
 
-    Route::get('/etats-des-lieux', [EtatDesLieuxController::class, 'index']);
-    Route::post('/etats-des-lieux', [EtatDesLieuxController::class, 'store']);
-    Route::post('/etats-des-lieux/{etat}/valider', [EtatDesLieuxController::class, 'valider']);
+    // Agent
+    Route::middleware('role:agent')->group(function (): void {
+        Route::get('/agent/performances', [AgentController::class, 'performances']);
+        Route::get('/agent/planning', [AgentController::class, 'planning']);
+        Route::post('/visites/{visite}/compte-rendu', [VisiteController::class, 'compteRendu']);
+    });
 
-    // Paiements
-    Route::get('/paiements', [PaiementController::class, 'index']);
-    Route::post('/paiements/initier', [PaiementController::class, 'initier']);
-    Route::get('/paiements/ref/{reference}', [PaiementController::class, 'showByReference']);
-    Route::get('/paiements/{paiement}/quittance', [PaiementController::class, 'quittance']);
-
-    // Vente
-    Route::get('/offres-achat', [OffreAchatController::class, 'index']);
-    Route::post('/offres-achat', [OffreAchatController::class, 'store']);
-    Route::put('/offres-achat/{offre}', [OffreAchatController::class, 'update']);
-
-    Route::get('/promesses-vente', [PromesseVenteController::class, 'index']);
-    Route::post('/promesses-vente', [PromesseVenteController::class, 'store']);
-    Route::post('/promesses-vente/{promesse}/signer', [PromesseVenteController::class, 'signer']);
-    Route::get('/promesses-vente/{promesse}/pdf', [PromesseVenteController::class, 'pdf']);
-
-    // Signalements
-    Route::get('/signalements', [SignalementController::class, 'index']);
-    Route::post('/signalements', [SignalementController::class, 'store']);
-    Route::put('/signalements/{signalement}', [SignalementController::class, 'update']);
-
-    // Demandes de retrait
-
-    // Catégories (admin CRUD)
-    Route::post('/categories', [CategorieController::class, 'store']);
-    Route::put('/categories/{categorie}', [CategorieController::class, 'update']);
-    Route::delete('/categories/{categorie}', [CategorieController::class, 'destroy']);
-
-    // Administration : utilisateurs & statistiques
-    Route::get('/admin/users', [AdminUserController::class, 'index']);
-    Route::put('/admin/users/{user}/statut', [AdminUserController::class, 'toggleStatut']);
-    Route::put('/admin/users/{user}/valider', [AdminUserController::class, 'validerDocument']);
-    Route::get('/admin/users/{user}/document', [AdminUserController::class, 'document']);
-    Route::get('/admin/export-stats', [AdminUserController::class, 'exportStats']);
-
-    // Messagerie
-    Route::get('/conversations', [MessageController::class, 'conversations']);
-    Route::get('/messages', [MessageController::class, 'index']);
-    Route::post('/messages', [MessageController::class, 'store']);
-
-    // Notation
-    Route::get('/notations/a-faire', [NotationController::class, 'aFaire']);
-    Route::post('/notations', [NotationController::class, 'store']);
-
-    // Agences, agents, mandats, commissions
-    Route::get('/agences', [MandatController::class, 'agences']);
-    Route::get('/mandats', [MandatController::class, 'index']);
-    Route::post('/mandats', [MandatController::class, 'store']);
-    Route::put('/mandats/{mandat}', [MandatController::class, 'update']);
-    Route::put('/mandats/{mandat}/agent', [MandatController::class, 'assigner']);
-    Route::get('/biens-geres', [MandatController::class, 'biensGeres']);
-
-    Route::get('/agents', [AgentController::class, 'index']);
-    Route::post('/agents', [AgentController::class, 'store']);
-    Route::put('/agents/{agent}/statut', [AgentController::class, 'statut']);
-
-    Route::get('/commissions', [CommissionController::class, 'index']);
-    Route::put('/commissions/{commission}/regler', [CommissionController::class, 'regler']);
-
-        // Alertes
-    Route::get('/alertes', [AlerteController::class, 'index']);
-    Route::post('/alertes/lire-tout', [AlerteController::class, 'lireTout']);
-    Route::post('/alertes/{alerte}/lire', [AlerteController::class, 'lire']);
-
-    // Profil
-    Route::get('/profil', [ProfilController::class, 'show']);
-    Route::put('/profil', [ProfilController::class, 'update']);
-    Route::put('/profil/mot-de-passe', [ProfilController::class, 'motDePasse']);
-    Route::post('/profil/document', [ProfilController::class, 'document']);
-    Route::get('/profil/document', [ProfilController::class, 'documentVoir']);
-
-    // Administration des utilisateurs
-    Route::get('/admin/utilisateurs', [AdminUtilisateurController::class, 'index']);
-    Route::put('/admin/utilisateurs/{user}/statut', [AdminUtilisateurController::class, 'statut']);
-    Route::put('/admin/utilisateurs/{user}/verification', [AdminUtilisateurController::class, 'verification']);
-    Route::get('/admin/utilisateurs/{user}/document', [AdminUtilisateurController::class, 'document']);
-        // Portefeuille et retraits
-    Route::get('/portefeuille', [PortefeuilleController::class, 'show']);
-    Route::post('/retraits', [RetraitController::class, 'demander']);
-    Route::get('/admin/retraits', [RetraitController::class, 'adminIndex']);
-    Route::post('/admin/retraits/{retrait}/traiter', [RetraitController::class, 'traiter']);
-
-    Route::put('/commissions/{commission}/payer', [CommissionController::class, 'payer']);
+    // Administrateur, par domaine de son niveau (RoleAdmin)
+    Route::prefix('admin')->group(function (): void {
+        Route::middleware('admin:moderateur')->group(function (): void {
+            Route::get('/annonces', [AnnonceAdminController::class, 'index']);
+            Route::post('/annonces/{annonce}/moderer', [AnnonceAdminController::class, 'moderer']);
+            Route::post('/annonces/{annonce}/badge', [AnnonceAdminController::class, 'badge']);
+            Route::get('/comptes', [CompteAdminController::class, 'index']);
+            Route::post('/comptes/{compte}/suspendre', [CompteAdminController::class, 'suspendre']);
+            Route::post('/comptes/{compte}/reactiver', [CompteAdminController::class, 'reactiver']);
+            Route::get('/comptes/{compte}/piece-identite', [CompteAdminController::class, 'pieceIdentite']);
+            Route::post('/agents/{agent}/valider', [CompteAdminController::class, 'validerAgent']);
+            Route::post('/proprietaires/{proprietaire}/verifier-identite', [CompteAdminController::class, 'verifierIdentite']);
+            Route::get('/signalements', [SignalementAdminController::class, 'index']);
+            Route::post('/signalements/{signalement}/traiter', [SignalementAdminController::class, 'traiter']);
+            Route::post('/notifications', [NotificationAdminController::class, 'envoyer']);
+        });
+        Route::middleware('admin:finance')->group(function (): void {
+            Route::get('/retraits', [RetraitController::class, 'adminIndex']);
+            Route::post('/retraits/{retrait}/traiter', [RetraitController::class, 'traiter']);
+            Route::get('/transactions', [TransactionAdminController::class, 'index']);
+            Route::get('/regles-commission', [RegleCommissionAdminController::class, 'index']);
+            Route::post('/regles-commission', [RegleCommissionAdminController::class, 'store']);
+            Route::get('/options-premium', [OptionPremiumAdminController::class, 'index']);
+            Route::post('/options-premium', [OptionPremiumAdminController::class, 'store']);
+            Route::put('/options-premium/{option}', [OptionPremiumAdminController::class, 'update']);
+        });
+    });
 });

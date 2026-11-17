@@ -3,16 +3,27 @@
 namespace App\Models;
 
 use App\Enums\TypeTransaction;
+use App\Exceptions\OperationRefusee;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /** RegleCommission du diagramme : taux et minimum fixés par l'administrateur. */
 class RegleCommission extends Model
 {
+    use HasUuids;
+
     private const POURCENT = 100;
 
     protected $table = 'regles_commission';
 
     protected $fillable = ['type_transaction', 'taux', 'montant_minimum', 'actif_depuis'];
+
+    /** Association « définit » : Administrateur 1 vers RegleCommission 0..*. */
+    public function administrateur(): BelongsTo
+    {
+        return $this->belongsTo(Administrateur::class, 'administrateur_id');
+    }
 
     protected $casts = [
         'type_transaction' => TypeTransaction::class,
@@ -28,7 +39,7 @@ class RegleCommission extends Model
             ->whereDate('actif_depuis', '<=', today())
             ->orderByDesc('actif_depuis')
             ->orderByDesc('id')
-            ->firstOrFail();
+            ->first() ?? throw new OperationRefusee('Aucune règle de commission en vigueur pour ce type de transaction.');
     }
 
     /** Commission en FCFA : le taux appliqué, jamais sous le minimum, jamais au-dessus du montant. */

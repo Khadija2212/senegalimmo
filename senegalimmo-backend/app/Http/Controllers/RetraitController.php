@@ -11,16 +11,16 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\Response;
 
+/** Cas « Demander un retrait » (propriétaire, agent) et « Valider les retraits » (administrateur). */
 class RetraitController extends Controller
 {
-    private const ADMIN = 'administrateur';
     private const LIMITE_ADMIN = 200;
+
     private const DECISION_APPROUVER = 'approuver';
+
     private const DECISION_REJETER = 'rejeter';
 
-    public function __construct(private readonly GestionRetraits $retraits)
-    {
-    }
+    public function __construct(private readonly GestionRetraits $retraits) {}
 
     /** Cas « Demander un retrait » : le montant est bloqué tout de suite. */
     public function demander(Request $request): JsonResponse
@@ -44,9 +44,7 @@ class RetraitController extends Controller
     /** Liste de l'administrateur : les demandes à traiter d'abord. */
     public function adminIndex(Request $request): JsonResponse
     {
-        abort_unless($request->user()->role === self::ADMIN, Response::HTTP_FORBIDDEN, 'Accès refusé.');
-
-        $requete = Retrait::with(['portefeuille.user:id,nom,prenom,role,telephone', 'validateur:id,nom,prenom'])
+        $requete = Retrait::with(['portefeuille.user:id,nom,prenom,telephone', 'validateur:id,nom,prenom'])
             ->orderByRaw('case when statut = ? then 0 else 1 end', [StatutRetrait::DEMANDE->value])
             ->orderByDesc('id')
             ->limit(self::LIMITE_ADMIN);
@@ -61,17 +59,16 @@ class RetraitController extends Controller
     public function traiter(Request $request, Retrait $retrait): JsonResponse
     {
         $admin = $request->user();
-        abort_unless($admin->role === self::ADMIN, Response::HTTP_FORBIDDEN, 'Accès refusé.');
 
         $data = $request->validate([
             'decision' => ['required', Rule::in([self::DECISION_APPROUVER, self::DECISION_REJETER])],
-            'motif' => ['required_if:decision,' . self::DECISION_REJETER, 'nullable', 'string', 'max:500'],
+            'motif' => ['required_if:decision,'.self::DECISION_REJETER, 'nullable', 'string', 'max:500'],
         ], ['motif.required_if' => 'Indiquez le motif du rejet.']);
 
         if ($data['decision'] === self::DECISION_REJETER) {
             $retrait->rejeter($data['motif'], $admin);
         } else {
-            $this->retraits->valider($retrait, $admin);
+            $admin->validerRetrait($retrait);
         }
 
         return response()->json($retrait->fresh(['validateur:id,nom,prenom']));

@@ -3,12 +3,10 @@
 namespace App\Http\Requests;
 
 use App\Enums\MethodePaiement;
-use App\Models\PaiementCaution;
-use App\Models\PaiementIndemnite;
-use App\Models\PaiementLoyer;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+/** Corps du cas « Effectuer un paiement » : la sous-classe de Paiement, la méthode et le contrat réglé. */
 class InitierPaiementRequest extends FormRequest
 {
     public function authorize(): bool
@@ -19,13 +17,11 @@ class InitierPaiementRequest extends FormRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
-        $avecBail = PaiementLoyer::TYPE . ',' . PaiementCaution::TYPE;
-
         return [
-            'type' => ['required', Rule::in([PaiementLoyer::TYPE, PaiementCaution::TYPE, PaiementIndemnite::TYPE])],
+            'type' => ['required', Rule::in(['loyer', 'caution', 'indemnite'])],
             'methode' => ['required', Rule::enum(MethodePaiement::class)],
-            'bail_id' => ['required_if:type,' . $avecBail, 'nullable', 'integer', 'exists:contrats,id'],
-            'promesse_id' => ['required_if:type,' . PaiementIndemnite::TYPE, 'nullable', 'integer', 'exists:promesses_vente,id'],
+            'bail_id' => ['required_if:type,loyer,caution', 'nullable', 'uuid', Rule::exists('contrats', 'id')->where('nature', 'bail')],
+            'promesse_id' => ['required_if:type,indemnite', 'nullable', 'uuid', Rule::exists('contrats', 'id')->where('nature', 'promesse_vente')],
         ];
     }
 

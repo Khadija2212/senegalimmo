@@ -2,73 +2,31 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Bien;
-use App\Models\Signalement;
+use App\Enums\MotifSignalement;
+use App\Models\Annonce;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\Response;
 
+/** Cas « Signaler un problème » (client), qui inclut « Notifier le propriétaire ». */
 class SignalementController extends Controller
 {
-    // Admin : liste tous les signalements
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        if ($request->user()->role !== 'administrateur') {
-            return response()->json(['message' => 'Accès réservé à l\'administrateur.'], 403);
-        }
-
-        $signalements = Signalement::with([
-            'user:id,nom,prenom,email,telephone',
-            'bien:id,titre,prix,statut,proprietaire_id',
-            'bien.proprietaire:id,nom,prenom,telephone',
-        ])
-            ->latest()
-            ->get();
-
-        return response()->json($signalements);
+        return response()->json($request->user()->signalements()->with('annonce.bien:id,titre')->latest()->get());
     }
 
-    // Utilisateur : signaler un bien suspect
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
-        $data = $request->validate([
-            'bien_id'     => 'required|exists:biens,id',
-            'motif'       => 'required|string|max:255',
-            'description' => 'nullable|string|max:1500',
+        $d = $request->validate([
+            'annonce_id' => ['sometimes', 'nullable', 'uuid', 'exists:annonces,id'],
+            'motif' => ['required', Rule::enum(MotifSignalement::class)],
+            'description' => ['required', 'string', 'max:3000'],
         ]);
+        $annonce = isset($d['annonce_id']) ? Annonce::findOrFail($d['annonce_id']) : null;
+        $signalement = $request->user()->signalerProbleme($annonce, MotifSignalement::from($d['motif']), $d['description']);
 
-        $signalement = Signalement::create([
-            'user_id'     => $request->user()->id,
-            'bien_id'     => $data['bien_id'],
-            'motif'       => $data['motif'],
-            'description' => $data['description'] ?? null,
-            'statut'      => 'en_attente',
-        ]);
-
-        return response()->json([
-            'message'     => 'Votre signalement a été enregistré et sera examiné par l\'administrateur.',
-            'signalement' => $signalement,
-        ], 201);
-    }
-
-    // Admin : traiter ou rejeter un signalement
-    public function update(Request $request, Signalement $signalement)
-    {
-        if ($request->user()->role !== 'administrateur') {
-            return response()->json(['message' => 'Accès réservé à l\'administrateur.'], 403);
-        }
-
-        $data = $request->validate([
-            'statut'        => 'required|in:traite,rejete',
-            'reponse_admin' => 'nullable|string|max:1000',
-        ]);
-
-        $signalement->update([
-            'statut'        => $data['statut'],
-            'reponse_admin' => $data['reponse_admin'] ?? null,
-        ]);
-
-        return response()->json([
-            'message'     => 'Signalement mis à jour.',
-            'signalement' => $signalement,
-        ]);
+        return response()->json($signalement, Response::HTTP_CREATED);
     }
 }

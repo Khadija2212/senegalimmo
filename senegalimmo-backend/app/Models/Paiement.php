@@ -4,7 +4,9 @@ namespace App\Models;
 
 use App\Enums\MethodePaiement;
 use App\Enums\StatutPaiement;
+use App\Models\Concerns\HeritageTableUnique;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -16,17 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 abstract class Paiement extends Model
 {
-    use CycleDePaiement;
-
-    /** Valeur de la colonne « type » propre à chaque sous-classe. */
-    public const TYPE = '';
-
-    /** @var array<string, class-string<Paiement>> */
-    public const SOUS_CLASSES = [
-        PaiementLoyer::TYPE => PaiementLoyer::class,
-        PaiementCaution::TYPE => PaiementCaution::class,
-        PaiementIndemnite::TYPE => PaiementIndemnite::class,
-    ];
+    use CycleDePaiement, HasUuids, HeritageTableUnique;
 
     protected $table = 'paiements';
 
@@ -60,40 +52,30 @@ abstract class Paiement extends Model
     /** Le bien concerné, pour les reçus et les listes. */
     abstract public function bien(): ?Bien;
 
-    protected static function booted(): void
+    protected static function colonneDiscriminante(): string
     {
-        if (static::TYPE === '') {
-            return;
-        }
-        static::addGlobalScope('type', fn (Builder $q) => $q->where('paiements.type', static::TYPE));
-        static::creating(function (Paiement $p): void {
-            $p->setAttribute('type', static::TYPE);
-        });
+        return 'type';
     }
 
-    /** Tous les paiements, chacun chargé dans sa sous-classe. */
-    public static function tous(): Builder
+    public static function sousClasses(): array
     {
-        return (new PaiementLoyer())->newQueryWithoutScope('type');
+        return ['loyer' => PaiementLoyer::class, 'caution' => PaiementCaution::class, 'indemnite' => PaiementIndemnite::class];
     }
 
-    /** @param object|array<string, mixed> $attributes */
-    public function newFromBuilder($attributes = [], $connection = null): Paiement
+    /** Les paiements versés par ce client, ou reçus par ce propriétaire. */
+    public static function concernant(Utilisateur $u): Builder
     {
-        $type = is_object($attributes) ? ($attributes->type ?? null) : ($attributes['type'] ?? null);
-        $classe = self::SOUS_CLASSES[$type] ?? static::class;
+        $client = $u instanceof Client;
+        $colonne = $client ? 'client_id' : 'proprietaire_id';
+        $baux = Bail::whereHas($client ? 'demandeLocation' : 'demandeLocation.annonce.bien', fn (Builder $q) => $q->where($colonne, $u->id))->select('contrats.id');
+        $promesses = PromesseVente::whereHas($client ? 'offreAchat' : 'offreAchat.annonce.bien', fn (Builder $q) => $q->where($colonne, $u->id))->select('contrats.id');
 
-        $modele = (new $classe())->newInstance([], true);
-        $modele->setRawAttributes((array) $attributes, true);
-        $modele->setConnection($connection ?: $this->getConnectionName());
-        $modele->fireModelEvent('retrieved', false);
-
-        return $modele;
+        return static::tous()->where(fn (Builder $q) => $q->whereIn('bail_id', $baux)->orWhereIn('promesse_id', $promesses));
     }
 
     public function getTypeAttribute(): string
     {
-        return static::TYPE;
+        return (string) static::valeurDiscriminante();
     }
 
     public function getLibelleAttribute(): string
@@ -114,7 +96,7 @@ abstract class Paiement extends Model
 
     public function estPartie(Compte $u): bool
     {
-        return $u->role === 'administrateur' || $this->payeur()?->is($u) || $this->beneficiaire()?->is($u);
+        return $u instanceof Administrateur || $this->payeur()?->is($u) || $this->beneficiaire()?->is($u);
     }
 
     /** Montant crédité au bénéficiaire, une fois la commission de la plateforme retenue. */

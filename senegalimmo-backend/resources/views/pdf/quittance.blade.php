@@ -37,7 +37,7 @@
     @endif
     <tr><td class="l">Objet</td><td>{{ $objet }}</td></tr>
     @if ($paiement->bail_id)
-    <tr><td class="l">Bail</td><td>BAIL-{{ str_pad($paiement->bail_id, 4, '0', STR_PAD_LEFT) }}</td></tr>
+    <tr><td class="l">Bail</td><td>{{ $paiement->bail->reference }}</td></tr>
     @endif
     <tr><td class="l">Mode de paiement</td><td>{{ $paiement->methode->libelle() }} (via PayTech)</td></tr>
 </table>

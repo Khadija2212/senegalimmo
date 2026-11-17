@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * Classe abstraite Utilisateur du diagramme : toute personne inscrite qui n'est pas
@@ -17,23 +17,32 @@ abstract class Utilisateur extends Compte
      */
     abstract public function indicateursTableauDeBord(): array;
 
-    public function messagesEnvoyes(): HasMany
+    /** Association « participe » : Utilisateur 2..* vers Conversation 0..*. */
+    public function conversations(): BelongsToMany
     {
-        return $this->hasMany(Message::class, 'expediteur_id');
+        return $this->belongsToMany(Conversation::class, 'conversation_participants', 'utilisateur_id', 'conversation_id');
     }
 
-    public function messagesRecus(): HasMany
+    /** Opération du diagramme : seul un participant écrit dans la conversation. */
+    public function envoyerMessage(Conversation $c, string $contenu, ?string $pieceJointeUrl = null): Message
     {
-        return $this->hasMany(Message::class, 'destinataire_id');
+        $m = new Message(['contenu' => $contenu, 'piece_jointe_url' => $pieceJointeUrl]);
+        $m->expediteur()->associate($this);
+        $c->ajouterMessage($m);
+
+        return $m;
     }
 
-    public function notationsRecues(): HasMany
+    protected function apresConnexion(): void
     {
-        return $this->hasMany(Notation::class, 'note_id');
+        $this->forceFill(['derniere_connexion' => now()])->save();
     }
 
     protected function messagesNonLus(): int
     {
-        return Message::where('destinataire_id', $this->id)->where('lu', false)->count();
+        return Message::whereIn('conversation_id', $this->conversations()->select('conversations.id'))
+            ->where('expediteur_id', '!=', $this->id)
+            ->whereNull('lu_le')
+            ->count();
     }
 }

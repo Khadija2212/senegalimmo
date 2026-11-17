@@ -14,7 +14,7 @@ class JetonAcces extends PersonalAccessToken
 
     public function getTokenableAttribute(): ?Compte
     {
-        if (!array_key_exists('tokenable', $this->relations)) {
+        if (! array_key_exists('tokenable', $this->relations)) {
             $this->setRelation('tokenable', Compte::tous()->find($this->tokenable_id));
         }
 

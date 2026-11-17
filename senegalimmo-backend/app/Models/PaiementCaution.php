@@ -4,16 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/** PaiementCaution : dépôt de garantie d'un Bail (0..1 vers 1), restituable en fin de bail. */
+/** PaiementCaution du diagramme : dépôt de garantie d'un Bail (0..1 vers 1). */
 class PaiementCaution extends Paiement
 {
-    public const TYPE = 'caution';
-
-    protected $attributes = ['restituable' => true];
-
+    /** Association « couvre ». */
     public function bail(): BelongsTo
     {
-        return $this->belongsTo(Contrat::class, 'bail_id');
+        return $this->belongsTo(Bail::class, 'bail_id');
     }
 
     public function libelle(): string
@@ -23,16 +20,16 @@ class PaiementCaution extends Paiement
 
     public function payeur(): ?Client
     {
-        return $this->bail?->locataire;
+        return $this->bail?->locataire();
     }
 
     public function beneficiaire(): ?Proprietaire
     {
-        return $this->bail?->proprietaire;
+        return $this->bail?->proprietaire();
     }
 
     public function bien(): ?Bien
     {
-        return $this->bail?->bien;
+        return $this->bail?->bienConcerne();
     }
 }

@@ -14,24 +14,24 @@ use Illuminate\Support\Str;
 class PasserelleSimulee implements PasserellePaiement
 {
     public const CLE = 'simulation';
+
     private const PREFIXE_REFERENCE = 'SIM-';
+
     private const LONGUEUR_REFERENCE = 16;
 
-    public function __construct(private readonly string $secret, private readonly string $urlApi)
-    {
-    }
+    public function __construct(private readonly string $secret, private readonly string $urlApi) {}
 
     public function demanderPaiement(string $ref, int $montant, MethodePaiement $m): string
     {
-        $jeton = self::PREFIXE_REFERENCE . Str::lower(Str::random(self::LONGUEUR_REFERENCE));
+        $jeton = self::PREFIXE_REFERENCE.Str::lower(Str::random(self::LONGUEUR_REFERENCE));
 
-        return rtrim($this->urlApi, '/') . '/api/paiements/simulation/' . urlencode($ref) . '/' . $jeton;
+        return rtrim($this->urlApi, '/').'/api/paiements/simulation/'.urlencode($ref).'/'.$jeton;
     }
 
     public function verifierNotification(string $signature, string $corps): bool
     {
         $donnees = PayTechPasserelle::lireCorps($corps);
-        if ($signature === '' || !isset($donnees['item_price'], $donnees['ref_command'])) {
+        if ($signature === '' || ! isset($donnees['item_price'], $donnees['ref_command'])) {
             return false;
         }
 
@@ -40,11 +40,11 @@ class PasserelleSimulee implements PasserellePaiement
 
     public function transferer(string $numero, int $montant, MethodePaiement $m): string
     {
-        return self::PREFIXE_REFERENCE . 'VERSEMENT-' . Str::upper(Str::random(self::LONGUEUR_REFERENCE));
+        return self::PREFIXE_REFERENCE.'VERSEMENT-'.Str::upper(Str::random(self::LONGUEUR_REFERENCE));
     }
 
     public function signer(int $montant, string $ref): string
     {
-        return hash_hmac('sha256', $montant . '|' . $ref . '|' . self::CLE, $this->secret);
+        return hash_hmac('sha256', $montant.'|'.$ref.'|'.self::CLE, $this->secret);
     }
 }

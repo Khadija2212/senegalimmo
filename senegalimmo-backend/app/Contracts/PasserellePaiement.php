@@ -23,8 +23,8 @@ interface PasserellePaiement
     /**
      * Vérifie qu'une notification vient bien du prestataire.
      *
-     * @param string $signature signature jointe à la notification (vide si absente)
-     * @param string $corps corps brut de la requête reçue
+     * @param  string  $signature  signature jointe à la notification (vide si absente)
+     * @param  string  $corps  corps brut de la requête reçue
      */
     public function verifierNotification(string $signature, string $corps): bool;
 

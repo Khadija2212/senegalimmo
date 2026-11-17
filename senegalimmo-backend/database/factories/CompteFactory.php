@@ -21,7 +21,7 @@ abstract class CompteFactory extends Factory
             'nom' => fake()->lastName(),
             'prenom' => fake()->firstName(),
             'email' => fake()->unique()->safeEmail(),
-            'telephone' => '77' . fake()->numerify('#######'),
+            'telephone' => '77'.fake()->numerify('#######'),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
         ];

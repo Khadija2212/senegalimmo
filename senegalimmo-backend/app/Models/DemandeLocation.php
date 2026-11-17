@@ -2,43 +2,53 @@
 
 namespace App\Models;
 
+use App\Enums\StatutDemande;
+use App\Models\Concerns\ExigeStatut;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
+/** DemandeLocation du diagramme : déposée par un Client, concerne une Annonce, peut donner un Bail. */
 class DemandeLocation extends Model
 {
+    use ExigeStatut, HasUuids;
+
     protected $table = 'demandes_location';
 
-    protected $fillable = [
-        'bien_id',
-        'locataire_id',
-        'proprietaire_id',
-        'message',
-        'date_emmenagement',
-        'statut',
-        'motif_refus',
-    ];
+    protected $fillable = ['annonce_id', 'date_entree_souhaitee', 'duree_mois', 'message', 'statut'];
 
-    protected $casts = [
-        'date_emmenagement' => 'date',
-    ];
+    protected $attributes = ['statut' => 'en_attente'];
 
-    public function bien()
+    protected $casts = ['date_entree_souhaitee' => 'date', 'duree_mois' => 'integer', 'statut' => StatutDemande::class];
+
+    public function client(): BelongsTo
     {
-        return $this->belongsTo(Bien::class);
+        return $this->belongsTo(Client::class, 'client_id');
     }
 
-    public function locataire()
+    public function annonce(): BelongsTo
     {
-        return $this->belongsTo(Client::class, 'locataire_id');
+        return $this->belongsTo(Annonce::class);
     }
 
-    public function proprietaire()
+    /** Association « est issu de » : Bail 0..1 vers DemandeLocation 1. */
+    public function bail(): HasOne
     {
-        return $this->belongsTo(Proprietaire::class, 'proprietaire_id');
+        return $this->hasOne(Bail::class, 'demande_location_id');
     }
 
-    public function contrat()
+    public function accepter(): void
     {
-        return $this->hasOne(Contrat::class, 'demande_id');
+        $this->exigerStatut(StatutDemande::EN_ATTENTE);
+        $this->update(['statut' => StatutDemande::ACCEPTEE]);
+        $this->client->notifier('Demande de location acceptée', 'Votre demande pour « '.$this->annonce->bien->titre.' » est acceptée. Le bail va suivre.');
+    }
+
+    public function refuser(string $motif): void
+    {
+        $this->exigerStatut(StatutDemande::EN_ATTENTE);
+        $this->update(['statut' => StatutDemande::REFUSEE]);
+        $this->client->notifier('Demande de location refusée', 'Votre demande pour « '.$this->annonce->bien->titre.' » est refusée : '.$motif);
     }
 }

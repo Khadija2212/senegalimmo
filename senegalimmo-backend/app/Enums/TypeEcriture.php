@@ -5,6 +5,8 @@ namespace App\Enums;
 /** Énumération TypeEcriture du diagramme de classes. */
 enum TypeEcriture: string
 {
+    use ValeursEnum;
+
     case CREDIT_LOYER = 'credit_loyer';
     case CREDIT_VENTE = 'credit_vente';
     case COMMISSION_AGENT = 'commission_agent';
@@ -22,11 +24,5 @@ enum TypeEcriture: string
             self::DEBIT_RETRAIT => 'Retrait versé',
             self::DEBLOCAGE => 'Retrait annulé',
         };
-    }
-
-    /** @return list<string> */
-    public static function valeurs(): array
-    {
-        return array_column(self::cases(), 'value');
     }
 }

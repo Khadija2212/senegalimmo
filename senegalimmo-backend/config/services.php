@@ -34,22 +34,34 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
-        'paytech' => [
-        'key'       => env('PAYTECH_API_KEY'),
-        'secret'    => env('PAYTECH_API_SECRET'),
-        'env'       => env('PAYTECH_ENV', 'test'),
-        'ipn_url'   => env('PAYTECH_IPN_URL'),
+    'paytech' => [
+        'key' => env('PAYTECH_API_KEY'),
+        'secret' => env('PAYTECH_API_SECRET'),
+        'env' => env('PAYTECH_ENV', 'test'),
+        'ipn_url' => env('PAYTECH_IPN_URL'),
         'front_url' => env('FRONTEND_URL', 'http://localhost:4200'),
-        'base_url'  => env('PAYTECH_BASE_URL', 'https://paytech.sn/api'),
+        'base_url' => env('PAYTECH_BASE_URL', 'https://paytech.sn/api'),
     ],
     // Implémentation de PasserellePaiement : « paytech » ou « simulation » (jamais en production)
     'paiement' => [
-        'passerelle'        => env('PAIEMENT_PASSERELLE', 'paytech'),
+        'passerelle' => env('PAIEMENT_PASSERELLE', 'paytech'),
         'simulation_secret' => env('PAIEMENT_SIMULATION_SECRET', 'secret-local-de-simulation'),
     ],
-        'change' => [
-        // Valeur de secours si le service de taux est indisponible (à ajuster)
-        'usd_par_eur' => env('USD_PAR_EUR', 1.10),
+    'stockage' => [
+        'disque' => env('STOCKAGE_DISQUE', 'local'),
+    ],
+    'mapbox' => [
+        'jeton' => env('MAPBOX_JETON', ''),
+    ],
+    // Prestataires des canaux de notification ; vides, le canal est consigné dans le journal.
+    'orange_sms' => [
+        'client_id' => env('ORANGE_SMS_CLIENT_ID', ''),
+        'secret' => env('ORANGE_SMS_SECRET', ''),
+        'numero_expediteur' => env('ORANGE_SMS_NUMERO_EXPEDITEUR', '2210000'),
+        'nom_expediteur' => env('ORANGE_SMS_NOM_EXPEDITEUR', ''),
+    ],
+    'firebase' => [
+        'compte_service' => env('FIREBASE_COMPTE_SERVICE', ''),
     ],
     'retrait' => [
         'minimum' => env('RETRAIT_MINIMUM', 5000),

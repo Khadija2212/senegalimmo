@@ -2,16 +2,22 @@
 
 namespace App\Models;
 
-use Dompdf\Dompdf;
-use Dompdf\Options;
+use App\Contracts\ServiceStockage;
+use App\Services\DocumentPdf;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/** Recu du diagramme : atteste un Paiement réussi (composition). */
+/** Recu du diagramme : atteste un Paiement réussi (composition « atteste »). */
 class Recu extends Model
 {
+    use HasUuids;
+
     private const DOSSIER = 'recus';
+
     private const FORMAT = 'A5';
+
+    private const DUREE_LIEN_MIN = 15;
 
     protected $table = 'recus';
 
@@ -19,40 +25,22 @@ class Recu extends Model
 
     protected $casts = ['emis_le' => 'datetime'];
 
-    /** Le paiement attesté, chargé dans sa sous-classe. */
-    public function paiement(): Paiement
+    public function paiementAtteste(): BelongsTo
     {
-        return Paiement::tous()->findOrFail($this->paiement_id);
+        return $this->belongsTo(PaiementLoyer::class, 'paiement_id')->withoutGlobalScope('heritage');
     }
 
-    /**
-     * Produit le PDF une fois, le range dans le stockage privé et renvoie son chemin.
-     */
+    /** Opération du diagramme : produit le PDF une fois, le range, et renvoie une adresse de lecture. */
     public function telecharger(): string
     {
-        if ($this->document_url && Storage::disk('local')->exists($this->document_url)) {
-            return $this->document_url;
+        $stockage = app(ServiceStockage::class);
+        if ($this->document_url === null) {
+            $paiement = $this->paiementAtteste;
+            $vue = $paiement instanceof PaiementIndemnite ? 'pdf.recu_vente' : 'pdf.quittance';
+            $pdf = DocumentPdf::rendre($vue, ['paiement' => $paiement, 'recu' => $this], self::FORMAT);
+            $this->update(['document_url' => $stockage->televerser($pdf, self::DOSSIER.'/'.$this->numero.'.pdf')]);
         }
 
-        $paiement = $this->paiement();
-        $options = new Options();
-        $options->set('defaultFont', 'DejaVu Sans');
-        $options->set('isRemoteEnabled', false);
-
-        $pdf = new Dompdf($options);
-        $pdf->loadHtml(view(self::vue($paiement), ['paiement' => $paiement, 'recu' => $this])->render());
-        $pdf->setPaper(self::FORMAT, 'portrait');
-        $pdf->render();
-
-        $chemin = self::DOSSIER . '/' . $this->numero . '.pdf';
-        Storage::disk('local')->put($chemin, (string) $pdf->output());
-        $this->update(['document_url' => $chemin]);
-
-        return $chemin;
-    }
-
-    private static function vue(Paiement $paiement): string
-    {
-        return $paiement instanceof PaiementIndemnite ? 'pdf.recu_vente' : 'pdf.quittance';
+        return $stockage->urlSignee($this->document_url, self::DUREE_LIEN_MIN);
     }
 }

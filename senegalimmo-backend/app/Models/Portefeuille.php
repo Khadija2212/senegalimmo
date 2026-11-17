@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\TypeEcriture;
 use App\Exceptions\OperationRefusee;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -15,8 +16,7 @@ use Illuminate\Support\Facades\DB;
  */
 class Portefeuille extends Model
 {
-    /** Rôles qui détiennent un portefeuille (association « détient » du diagramme). */
-    public const ROLES = ['proprietaire', 'agent'];
+    use HasUuids;
 
     protected $table = 'portefeuilles';
 
@@ -31,7 +31,7 @@ class Portefeuille extends Model
     /** Le portefeuille de ce compte, créé à la première utilisation. */
     public static function de(Compte $u): self
     {
-        if (!in_array($u->role, self::ROLES, true)) {
+        if (! $u instanceof Proprietaire && ! $u instanceof Agent) {
             throw new OperationRefusee('Le portefeuille est réservé aux propriétaires et aux agents immobiliers.', OperationRefusee::INTERDIT);
         }
 
@@ -40,7 +40,7 @@ class Portefeuille extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(Client::class, 'user_id')->withoutGlobalScope('role');
+        return $this->belongsTo(Client::class, 'user_id')->withoutGlobalScope('heritage');
     }
 
     public function ecritures(): HasMany
@@ -57,7 +57,7 @@ class Portefeuille extends Model
     public function crediter(int $montant, Paiement $p): void
     {
         $type = $p instanceof PaiementIndemnite ? TypeEcriture::CREDIT_VENTE : TypeEcriture::CREDIT_LOYER;
-        $this->mouvement($type, $montant, 0, $p->libelle() . ' (' . $p->reference . ')', ['paiement_id' => $p->id]);
+        $this->mouvement($type, $montant, 0, $p->libelle().' ('.$p->reference.')', ['paiement_id' => $p->id]);
     }
 
     /** Opération du diagramme : un retrait demandé met le montant de côté. */
@@ -80,10 +80,10 @@ class Portefeuille extends Model
 
     private static function libelleRetrait(string $texte, ?Retrait $r): string
     {
-        return $r ? $texte . ' n°' . $r->id : $texte;
+        return $r ? $texte.' du '.$r->demande_le->format('d/m/Y') : $texte;
     }
 
-    /** @return array<string, int> */
+    /** @return array<string, string> */
     private static function lien(?Retrait $r): array
     {
         return $r ? ['retrait_id' => $r->id] : [];
@@ -93,16 +93,16 @@ class Portefeuille extends Model
     public function verserCommission(self $agent, int $montant, string $libelle): void
     {
         DB::transaction(function () use ($agent, $montant, $libelle): void {
-            $this->mouvement(TypeEcriture::COMMISSION_AGENT, -$montant, 0, 'Commission payée : ' . $libelle);
-            $agent->mouvement(TypeEcriture::COMMISSION_AGENT, $montant, 0, 'Commission reçue : ' . $libelle);
+            $this->mouvement(TypeEcriture::COMMISSION_AGENT, -$montant, 0, 'Commission payée : '.$libelle);
+            $agent->mouvement(TypeEcriture::COMMISSION_AGENT, $montant, 0, 'Commission reçue : '.$libelle);
         });
     }
 
     /**
-     * @param int $varDisponible variation du solde disponible
-     * @param int $varAttente variation du solde en attente
-     * @param array<string, int> $liens paiement ou retrait concerné
-     * @param int|null $montantEcrit montant inscrit, si différent de la variation du disponible
+     * @param  int  $varDisponible  variation du solde disponible
+     * @param  int  $varAttente  variation du solde en attente
+     * @param  array<string, string>  $liens  paiement ou retrait concerné
+     * @param  int|null  $montantEcrit  montant inscrit, si différent de la variation du disponible
      */
     private function mouvement(TypeEcriture $type, int $varDisponible, int $varAttente, string $libelle, array $liens = [], ?int $montantEcrit = null): void
     {

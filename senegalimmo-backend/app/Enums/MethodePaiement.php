@@ -8,6 +8,8 @@ namespace App\Enums;
  */
 enum MethodePaiement: string
 {
+    use ValeursEnum;
+
     case WAVE = 'wave';
     case ORANGE_MONEY = 'orange_money';
     case FREE_MONEY = 'free_money';
@@ -42,11 +44,5 @@ enum MethodePaiement: string
             self::FREE_MONEY => 'Free Money Senegal',
             self::CARTE_BANCAIRE => null,
         };
-    }
-
-    /** @return list<string> */
-    public static function valeurs(): array
-    {
-        return array_column(self::cases(), 'value');
     }
 }

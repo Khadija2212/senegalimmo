@@ -36,7 +36,7 @@
     @endif
     <tr><td class="l">Objet du versement</td><td>{{ $objet }}</td></tr>
     @if ($paiement->promesse_id)
-    <tr><td class="l">Dossier de vente</td><td>PROMESSE-{{ str_pad($paiement->promesse_id, 4, '0', STR_PAD_LEFT) }}</td></tr>
+    <tr><td class="l">Dossier de vente</td><td>{{ $paiement->promesse->reference }}</td></tr>
     @endif
     <tr><td class="l">Mode de règlement</td><td>{{ $paiement->methode->libelle() }} (via PayTech)</td></tr>
 </table>

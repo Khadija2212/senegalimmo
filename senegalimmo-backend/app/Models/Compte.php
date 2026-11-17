@@ -2,109 +2,132 @@
 
 namespace App\Models;
 
+use App\Enums\CanalNotification;
 use App\Enums\Role;
 use App\Enums\StatutCompte;
-use Illuminate\Database\Eloquent\Builder;
+use App\Exceptions\OperationRefusee;
+use App\Models\Concerns\HeritageTableUnique;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
  * Classe abstraite Compte du diagramme : identité, mot de passe, statut.
- * Toutes les classes concrètes partagent la table « users » ; la colonne « role »
- * (énumération Role) désigne la classe chargée.
+ * Les quatre classes concrètes partagent la table « users », la colonne « role » désigne la classe.
  */
 abstract class Compte extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, HasUuids, HeritageTableUnique;
 
-    /** Valeur de la colonne « role » propre à chaque classe concrète. */
-    public const ROLE = '';
-
-    /** @var array<string, class-string<Compte>> */
-    public const CLASSES = [
-        'client' => Client::class,
-        'proprietaire' => Proprietaire::class,
-        'agent' => Agent::class,
-        'administrateur' => Administrateur::class,
-    ];
+    private const NOM_JETON = 'api';
 
     protected $table = 'users';
 
     protected $fillable = [
-        'nom', 'prenom', 'email', 'telephone', 'adresse', 'password', 'role', 'photo', 'est_verifie',
-        'devise', 'mode_diaspora', 'statut', 'agence_id', 'budget_min', 'budget_max', 'profession',
-        'revenu_mensuel', 'numero_cni', 'est_premium', 'nom_agence', 'numero_licence', 'matricule', 'niveau',
-        'document_identite', 'verification', 'verification_motif', 'telephone_verifie', 'email_verifie',
-        'derniere_connexion', 'date_naissance', 'valide_le',
+        'prenom', 'nom', 'email', 'telephone', 'password', 'photo_url', 'statut', 'telephone_verifie', 'email_verifie',
+        'derniere_connexion', 'date_naissance', 'profession', 'piece_identite_url', 'adresse', 'identite_verifiee',
+        'numero_carte_professionnelle', 'agence', 'statut_validation', 'valide_le', 'niveau',
     ];
 
-    protected $hidden = ['password', 'remember_token', 'document_identite'];
+    protected $hidden = ['password', 'remember_token', 'piece_identite_url'];
 
     protected $casts = [
         'password' => 'hashed',
-        'est_verifie' => 'boolean',
-        'est_premium' => 'boolean',
-        'mode_diaspora' => 'boolean',
-        'budget_min' => 'decimal:2',
-        'budget_max' => 'decimal:2',
-        'revenu_mensuel' => 'decimal:2',
+        'statut' => StatutCompte::class,
         'telephone_verifie' => 'boolean',
         'email_verifie' => 'boolean',
+        'identite_verifiee' => 'boolean',
         'derniere_connexion' => 'datetime',
         'date_naissance' => 'date',
         'valide_le' => 'datetime',
     ];
 
-    /** Opération abstraite du diagramme. */
+    protected $appends = ['role'];
+
+    protected static function colonneDiscriminante(): string
+    {
+        return 'role';
+    }
+
+    public static function sousClasses(): array
+    {
+        return [
+            Role::CLIENT->value => Client::class,
+            Role::PROPRIETAIRE->value => Proprietaire::class,
+            Role::AGENT->value => Agent::class,
+            Role::ADMINISTRATEUR->value => Administrateur::class,
+        ];
+    }
+
+    /** Opération abstraite du diagramme : la classe concrète dit son rôle. */
     abstract public function role(): Role;
 
-    protected static function booted(): void
+    public function getRoleAttribute(): string
     {
-        if (static::ROLE === '') {
-            return;
+        return $this->role()->value;
+    }
+
+    /** Association « reçoit » : Compte 1 vers Notification 0..*. */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class, 'compte_id')->latest();
+    }
+
+    /**
+     * Opération du diagramme : vérifie l'adresse, le mot de passe et le statut,
+     * puis renvoie un jeton d'accès.
+     */
+    public function sAuthentifier(string $email, string $motDePasse): string
+    {
+        if (strcasecmp($this->email, $email) !== 0 || ! Hash::check($motDePasse, $this->password)) {
+            throw new OperationRefusee('Adresse e-mail ou mot de passe incorrect.', OperationRefusee::NON_AUTHENTIFIE);
         }
-        static::addGlobalScope('role', fn (Builder $q) => $q->where('users.role', static::ROLE));
-        static::creating(function (Compte $c): void {
-            $c->setAttribute('role', static::ROLE);
-        });
+        if ($this->estSuspendu()) {
+            throw new OperationRefusee("Ce compte est suspendu. Contactez l'administration.", OperationRefusee::INTERDIT);
+        }
+        $this->apresConnexion();
+
+        return $this->createToken(self::NOM_JETON)->plainTextToken;
     }
 
-    /** Tous les comptes, chacun chargé dans sa classe concrète. */
-    public static function tous(): Builder
+    /** Ce qui se passe à chaque connexion réussie ; Utilisateur y note la dernière connexion. */
+    protected function apresConnexion(): void {}
+
+    /** Opération du diagramme. */
+    public function modifierProfil(string $prenom, string $nom, ?string $photoUrl): void
     {
-        return (new Client())->newQueryWithoutScope('role');
+        $this->update(['prenom' => $prenom, 'nom' => $nom] + ($photoUrl !== null ? ['photo_url' => $photoUrl] : []));
     }
 
-    /** Classe concrète correspondant à un rôle, pour créer un compte à l'inscription. */
-    public static function classePour(string $role): string
+    /** Opération du diagramme : l'ancien mot de passe doit être le bon. */
+    public function changerMotDePasse(string $ancien, string $nouveau): void
     {
-        return self::CLASSES[$role] ?? throw new \InvalidArgumentException('Rôle inconnu : ' . $role);
-    }
-
-    /** @param object|array<string, mixed> $attributes */
-    public function newFromBuilder($attributes = [], $connection = null): Compte
-    {
-        $role = is_object($attributes) ? ($attributes->role ?? null) : ($attributes['role'] ?? null);
-        $classe = self::CLASSES[$role] ?? static::class;
-
-        $modele = (new $classe())->newInstance([], true);
-        $modele->setRawAttributes((array) $attributes, true);
-        $modele->setConnection($connection ?: $this->getConnectionName());
-        $modele->fireModelEvent('retrieved', false);
-
-        return $modele;
+        if (! Hash::check($ancien, $this->password)) {
+            throw new OperationRefusee('Le mot de passe actuel est incorrect.');
+        }
+        $this->update(['password' => $nouveau]);
+        $this->tokens()->where('id', '!=', $this->currentAccessToken()?->id)->delete();
     }
 
     public function estSuspendu(): bool
     {
-        return $this->statut !== StatutCompte::ACTIF->value;
+        return in_array($this->statut, [StatutCompte::SUSPENDU, StatutCompte::SUPPRIME], true);
     }
 
-    /** Opération modifierProfil du diagramme. */
-    public function modifierProfil(string $prenom, string $nom, ?string $photoUrl): void
+    public function nomComplet(): string
     {
-        $this->update(['prenom' => $prenom, 'nom' => $nom] + ($photoUrl !== null ? ['photo' => $photoUrl] : []));
+        return trim($this->prenom.' '.$this->nom);
+    }
+
+    /** Crée une Notification pour ce compte et l'envoie sur son canal. */
+    public function notifier(string $titre, string $contenu, CanalNotification $canal = CanalNotification::PUSH): Notification
+    {
+        $n = $this->notifications()->create(['canal' => $canal, 'titre' => $titre, 'contenu' => $contenu]);
+        $n->envoyer();
+
+        return $n;
     }
 }
