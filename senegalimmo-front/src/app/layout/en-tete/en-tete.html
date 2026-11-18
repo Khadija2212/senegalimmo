@@ -37,20 +37,36 @@
   </nav>
 
   <div class="ml-auto hidden items-center gap-5 md:flex">
-    <a
-      class="decoration-ciel hover:text-aqua hover:decoration-aqua font-semibold text-white underline underline-offset-4"
-      [routerLink]="liens.connexion"
-      >{{ textes.connexion }}</a
-    >
-    <a
-      hlmBtn
-      variant="marine"
-      size="lg"
-      class="px-4 font-semibold"
-      [routerLink]="liens.inscription"
-    >
-      {{ textes.inscription }}
-    </a>
+    @if (session.compte(); as c) {
+      <span class="text-ciel inline-flex items-center gap-2 text-[0.95rem]">
+        <ng-icon name="siCompte" size="20" class="text-aqua" />{{ c.prenom }} {{ c.nom }}
+      </span>
+      <button
+        hlmBtn
+        variant="marine"
+        size="lg"
+        type="button"
+        class="px-4 font-semibold"
+        (click)="deconnecter()"
+      >
+        {{ textes.deconnexion }}
+      </button>
+    } @else {
+      <a
+        class="decoration-ciel hover:text-aqua hover:decoration-aqua font-semibold text-white underline underline-offset-4"
+        [routerLink]="liens.connexion"
+        >{{ textes.connexion }}</a
+      >
+      <a
+        hlmBtn
+        variant="marine"
+        size="lg"
+        class="px-4 font-semibold"
+        [routerLink]="liens.inscription"
+      >
+        {{ textes.inscription }}
+      </a>
+    }
   </div>
 
   <button
@@ -83,9 +99,28 @@
       {{ textes.acheter }}
     </a>
     <a class="block py-3 text-white" [routerLink]="liens.publier">{{ textes.publier }}</a>
-    <a class="block py-3 text-white" [routerLink]="liens.connexion">{{ textes.connexion }}</a>
-    <a hlmBtn variant="marine" size="grand" class="mt-2 w-full" [routerLink]="liens.inscription">{{
-      textes.inscription
-    }}</a>
+    @if (session.compte(); as c) {
+      <p class="text-ciel py-3">{{ c.prenom }} {{ c.nom }}</p>
+      <button
+        hlmBtn
+        variant="marine"
+        size="grand"
+        type="button"
+        class="mt-2 w-full"
+        (click)="deconnecter()"
+      >
+        {{ textes.deconnexion }}
+      </button>
+    } @else {
+      <a class="block py-3 text-white" [routerLink]="liens.connexion">{{ textes.connexion }}</a>
+      <a
+        hlmBtn
+        variant="marine"
+        size="grand"
+        class="mt-2 w-full"
+        [routerLink]="liens.inscription"
+        >{{ textes.inscription }}</a
+      >
+    }
   </nav>
 }

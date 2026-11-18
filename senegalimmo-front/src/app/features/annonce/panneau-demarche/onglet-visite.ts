@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmToggleGroupImports } from '@spartan-ng/helm/toggle-group';
@@ -74,7 +82,7 @@ const CHEMIN_VISITES = '/visites';
     <p class="text-encre-3 mt-2.5 text-[0.82rem]">{{ textes.noteVisite }}</p>
   `,
 })
-export class OngletVisite {
+export class OngletVisite implements OnInit {
   readonly annonce = input.required<AnnonceDetaillee>();
   protected readonly textes = TEXTES_DEMARCHE;
   protected readonly envoi = inject(EnvoiDemarche);
@@ -97,6 +105,13 @@ export class OngletVisite {
     ),
   );
 
+  ngOnInit(): void {
+    const repris = this.envoi.valeursReprises('visite');
+    if (!repris) return;
+    if (this.jours.some((j) => j.valeur === repris['jour'])) this.jour.set(String(repris['jour']));
+    if (HEURES.some((h) => h.valeur === repris['heure'])) this.heure.set(String(repris['heure']));
+  }
+
   protected envoyer(): void {
     const a = this.annonce();
     const gere = a.agent ?? a.bien.proprietaire;
@@ -116,6 +131,7 @@ export class OngletVisite {
         lien: CHEMIN_VISITES,
         libelleLien: this.textes.voirVisites,
       },
+      { onglet: 'visite', valeurs: { jour: this.jour(), heure: this.heure() } },
     );
   }
 }

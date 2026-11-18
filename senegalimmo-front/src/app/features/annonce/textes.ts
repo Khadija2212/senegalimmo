@@ -75,6 +75,12 @@ export const TEXTES_ANNONCE = {
 } as const;
 
 export const TEXTES_DEMARCHE = {
+  actionConnexion: {
+    visite: 'demander la visite',
+    location: 'demander la location',
+    offre: 'faire votre offre',
+    garder: 'garder cette annonce',
+  },
   visiter: 'Visiter',
   demanderLocation: 'Demander la location',
   faireOffre: 'Faire une offre',

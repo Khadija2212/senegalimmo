@@ -89,7 +89,12 @@ export class OngletOffre implements OnInit {
   });
 
   ngOnInit(): void {
-    this.montant.set(Math.round(this.annonce().prix * (1 - RABAIS_PROPOSE)));
+    const repris = this.envoi.valeursReprises('demande');
+    const montant = Number(repris?.['montant']);
+    this.montant.set(
+      montant > 0 ? montant : Math.round(this.annonce().prix * (1 - RABAIS_PROPOSE)),
+    );
+    this.message.set(String(repris?.['message'] ?? ''));
   }
 
   protected saisir(champ: HTMLInputElement): void {
@@ -115,6 +120,7 @@ export class OngletOffre implements OnInit {
         lien: CHEMIN_OFFRES,
         libelleLien: this.textes.voirOffres,
       },
+      { onglet: 'demande', valeurs: { montant: this.montant(), message: this.message() } },
     );
   }
 }
