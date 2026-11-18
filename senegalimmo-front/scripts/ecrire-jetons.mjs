@@ -1,5 +1,5 @@
 /*
-  Écrit src/app/core/config/jetons.ts à partir de MAPBOX_JETON (variable d'environnement
+  Écrit src/app/core/config/jetons.ts à partir de MAPBOX_JETON et SENTRY_DSN (variable d'environnement
   ou fichier .env du front). Le fichier généré est ignoré par Git : la clé ne vit pas dans le dépôt.
 */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
@@ -30,11 +30,14 @@ function lireEnv(chemin) {
   );
 }
 
-const jeton = process.env.MAPBOX_JETON ?? lireEnv(fichierEnv).MAPBOX_JETON ?? '';
+const env = lireEnv(fichierEnv);
+const jeton = process.env.MAPBOX_JETON ?? env.MAPBOX_JETON ?? '';
+const dsnSentry = process.env.SENTRY_DSN ?? env.SENTRY_DSN ?? '';
 if (!jeton) {
   process.stderr.write("MAPBOX_JETON absent : la carte ne s'affichera pas (voir .env.example).\n");
 }
 writeFileSync(
   cible,
-  `// Généré par scripts/ecrire-jetons.mjs, ne pas modifier ni commiter.\nexport const MAPBOX_JETON = ${JSON.stringify(jeton)};\n`,
+  `// Généré par scripts/ecrire-jetons.mjs, ne pas modifier ni commiter.\nexport const MAPBOX_JETON = ${JSON.stringify(jeton)};\n` +
+    `export const SENTRY_DSN = ${JSON.stringify(dsnSentry)};\n`,
 );
