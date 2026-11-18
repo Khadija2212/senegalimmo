@@ -80,6 +80,20 @@ export class LigneDemarche {
     const q = this.qui();
     return q.charAt(0).toUpperCase() + q.slice(1);
   });
+  /** Libellés du bouton et de la confirmation : visite ou demande de location. */
+  protected readonly annulation = computed(() =>
+    this.demarche().genre === 'visite'
+      ? {
+          bouton: this.textes.annuler,
+          question: this.textes.confirmerAnnulation(this.quand(), this.quiDebut()),
+          oui: this.textes.ouiAnnuler,
+        }
+      : {
+          bouton: this.textes.annulerDemande,
+          question: this.textes.confirmerAnnulationDemande(this.quiDebut()),
+          oui: this.textes.ouiAnnulerDemande,
+        },
+  );
   protected readonly libelleEcrire = computed(() => {
     const role = this.demarche().interlocuteur?.role;
     return role === this.textes.roleAgent

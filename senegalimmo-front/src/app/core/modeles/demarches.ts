@@ -19,6 +19,7 @@ export interface DemandeLocation {
   date_entree_souhaitee: string;
   duree_mois: number;
   statut: StatutDemande;
+  motif_refus: string | null;
   created_at: string;
   updated_at: string;
   annonce: Annonce;
@@ -29,6 +30,7 @@ export interface OffreAchat {
   id: string;
   montant: number;
   statut: StatutOffre;
+  motif_refus: string | null;
   expire_le: string | null;
   created_at: string;
   updated_at: string;

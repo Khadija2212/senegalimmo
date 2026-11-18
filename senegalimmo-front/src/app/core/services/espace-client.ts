@@ -39,6 +39,10 @@ export class EspaceClientService {
     });
   }
 
+  annulerDemande(id: string): Observable<DemandeLocation> {
+    return this.http.post<DemandeLocation>(`${this.api}/demandes-location/${id}/annuler`, {});
+  }
+
   retirerOffre(id: string): Observable<OffreAchat> {
     return this.http.post<OffreAchat>(`${this.api}/offres-achat/${id}/retirer`, {});
   }

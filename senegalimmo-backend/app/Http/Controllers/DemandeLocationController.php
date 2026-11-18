@@ -12,7 +12,7 @@ use Illuminate\Support\Carbon;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Cas « Demander une location » (client) ; « Gérer demandes de location » (propriétaire),
+ * Cas « Demander une location », étendu par « Annuler sa demande de location » (client) ; « Gérer demandes de location » (propriétaire),
  * étendu par « Accepter ou refuser demande » ; « Traiter demandes clients » (agent).
  */
 class DemandeLocationController extends Controller
@@ -54,6 +54,14 @@ class DemandeLocationController extends Controller
     {
         $this->exigerGestion($demande->annonce->bien, $request->user());
         $demande->refuser($request->validate(['motif' => ['required', 'string', 'max:1000']])['motif']);
+
+        return response()->json($demande);
+    }
+
+    public function annuler(Request $request, DemandeLocation $demande): JsonResponse
+    {
+        $this->exigerQue($demande->client_id === $request->user()->id);
+        $demande->annuler();
 
         return response()->json($demande);
     }

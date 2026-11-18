@@ -76,7 +76,10 @@ export class EspaceClient {
   }
 
   protected annuler(d: Demarche): void {
-    this.agir(d, this.service.annulerVisite(d.id));
+    this.agir(
+      d,
+      d.genre === 'visite' ? this.service.annulerVisite(d.id) : this.service.annulerDemande(d.id),
+    );
   }
 
   protected retirer(d: Demarche): void {
