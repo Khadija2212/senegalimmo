@@ -26,7 +26,16 @@ class VisiteController extends Controller
             ? $compte->visites()
             : Visite::whereHas('annonce', fn (Builder $q) => $q->whereIn('bien_id', $this->biensGeres($compte)));
 
-        return response()->json($requete->with(['annonce.bien', 'client:id,prenom,nom,telephone', 'compteRendu'])->orderBy('date_heure')->get());
+        // Le compte rendu de l'agent est une note de travail : le client ne le reçoit pas.
+        $relations = ['annonce.bien.medias', 'annonce.bien.proprietaire:id,prenom,nom', 'client:id,prenom,nom,telephone'];
+        $visites = $requete->with($compte instanceof Client ? $relations : [...$relations, 'compteRendu'])
+            ->orderBy('date_heure')->get();
+
+        // L'agent mandaté, s'il y en a un, est celui qui confirme la visite.
+        return response()->json($visites->map(fn (Visite $v) => [
+            ...$v->toArray(),
+            'agent' => $v->annonce->bien->mandatActif()?->agent?->only(['id', 'prenom', 'nom', 'agence']),
+        ]));
     }
 
     public function store(Request $request): JsonResponse

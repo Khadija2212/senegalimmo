@@ -23,7 +23,7 @@ class OffreAchatController extends Controller
             ? $compte->offresAchat()
             : OffreAchat::whereHas('annonce', fn (Builder $q) => $q->whereIn('bien_id', $this->biensGeres($compte)));
 
-        return response()->json($requete->with(['annonce.bien', 'client:id,prenom,nom,telephone', 'promesseVente'])->latest()->get());
+        return response()->json($requete->with(['annonce.bien.medias', 'annonce.bien.proprietaire:id,prenom,nom', 'client:id,prenom,nom,telephone', 'promesseVente'])->latest()->get());
     }
 
     public function store(Request $request): JsonResponse

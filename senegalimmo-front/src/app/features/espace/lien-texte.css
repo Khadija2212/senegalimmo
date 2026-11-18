@@ -1,0 +1,22 @@
+/* Actions écrites en toutes lettres : Reprogrammer, Annuler, Retirer */
+@layer components {
+  .lien-texte {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--foreground);
+    font: 600 0.88rem var(--font-sans);
+    text-decoration: underline;
+    text-decoration-color: var(--input);
+    text-underline-offset: 4px;
+    cursor: pointer;
+  }
+  .lien-texte:hover {
+    color: var(--color-bleu-vif);
+    text-decoration-color: var(--color-bleu-vif);
+  }
+  .lien-texte.danger:hover {
+    color: var(--color-refus);
+    text-decoration-color: var(--color-refus);
+  }
+}

@@ -33,8 +33,11 @@ export interface Agent extends Personne {
   agence: string | null;
 }
 
+export type StatutBien = 'brouillon' | 'disponible' | 'sous_offre' | 'loue' | 'vendu' | 'retire';
+
 export interface Bien {
   id: string;
+  statut?: StatutBien;
   titre: string;
   description: string;
   type: TypeBien;

@@ -12,7 +12,7 @@ import { EnvoiDemarche } from './envoi';
 import { RetourEnvoi } from './retour-envoi';
 
 const DUREES_MOIS = [12, 24, 36] as const;
-const CHEMIN_DEMANDES = '/demandes';
+const CHEMIN_DEMANDES = '/espace';
 
 /** Onglet « Demander la location » : cas « Demander une location » du client. */
 @Component({

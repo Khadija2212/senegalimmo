@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { gardeClient } from './core/session/garde-client';
 
 /* Les écrans refaits sont dans le cadre public ; les anciens écrans gardent leurs routes en attendant leur maquette. */
 
@@ -11,6 +12,11 @@ export const routes: Routes = [
         path: '',
         pathMatch: 'full',
         loadComponent: () => import('./features/accueil/accueil').then((m) => m.Accueil),
+      },
+      {
+        path: 'espace',
+        canActivate: [gardeClient],
+        loadComponent: () => import('./features/espace/espace-client').then((m) => m.EspaceClient),
       },
       {
         path: 'annonces/:id',
@@ -38,10 +44,7 @@ export const routes: Routes = [
     path: 'biens/:id',
     loadComponent: () => import('./pages/bien-detail/bien-detail').then((m) => m.BienDetail),
   },
-  {
-    path: 'favoris',
-    loadComponent: () => import('./pages/favoris/favoris').then((m) => m.Favoris),
-  },
+  { path: 'favoris', redirectTo: '/espace?rubrique=favoris', pathMatch: 'full' },
   {
     path: 'comparateur',
     loadComponent: () => import('./pages/comparateur/comparateur').then((m) => m.Comparateur),
@@ -50,10 +53,7 @@ export const routes: Routes = [
     path: 'profil',
     loadComponent: () => import('./pages/profil/profil').then((m) => m.Profil),
   },
-  {
-    path: 'visites',
-    loadComponent: () => import('./pages/visites/visites').then((m) => m.Visites),
-  },
+  { path: 'visites', redirectTo: 'espace', pathMatch: 'full' },
   {
     path: 'admin/annonces',
     loadComponent: () =>
@@ -83,10 +83,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/admin/categories-admin/categories-admin').then((m) => m.CategoriesAdmin),
   },
-  {
-    path: 'demandes',
-    loadComponent: () => import('./pages/demandes/demandes').then((m) => m.Demandes),
-  },
+  { path: 'demandes', redirectTo: 'espace', pathMatch: 'full' },
   {
     path: 'contrats',
     loadComponent: () => import('./pages/contrats/contrats').then((m) => m.Contrats),
@@ -100,10 +97,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./pages/paiement-retour/paiement-retour').then((m) => m.PaiementRetour),
   },
-  {
-    path: 'offres',
-    loadComponent: () => import('./pages/offres/offres').then((m) => m.Offres),
-  },
+  { path: 'offres', redirectTo: 'espace', pathMatch: 'full' },
   {
     path: 'promesses',
     loadComponent: () => import('./pages/promesses/promesses').then((m) => m.Promesses),
@@ -181,18 +175,9 @@ export const routes: Routes = [
     redirectTo: 'proprietaire/annonces',
     pathMatch: 'full',
   },
-  {
-    path: 'locataire/dashboard',
-    loadComponent: () => import('./pages/dashboard/locataire/locataire').then((m) => m.Locataire),
-  },
-  {
-    path: 'acheteur/dashboard',
-    loadComponent: () => import('./pages/dashboard/acheteur/acheteur').then((m) => m.Acheteur),
-  },
-  {
-    path: 'client/dashboard',
-    loadComponent: () => import('./pages/dashboard/client/client').then((m) => m.Client),
-  },
+  { path: 'locataire/dashboard', redirectTo: 'espace', pathMatch: 'full' },
+  { path: 'acheteur/dashboard', redirectTo: 'espace', pathMatch: 'full' },
+  { path: 'client/dashboard', redirectTo: 'espace', pathMatch: 'full' },
   {
     path: 'agence/dashboard',
     redirectTo: 'agent/dashboard',

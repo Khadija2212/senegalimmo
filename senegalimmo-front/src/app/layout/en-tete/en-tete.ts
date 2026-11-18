@@ -30,9 +30,11 @@ export class EnTete {
     { initialValue: '/' },
   );
   /** Onglet actif : seulement sur l'accueil, selon la transaction cherchée. */
-  protected readonly actif = computed<'louer' | 'acheter' | null>(() => {
+  protected readonly actif = computed<'louer' | 'acheter' | 'espace' | null>(() => {
     const arbre = this.router.parseUrl(this.url());
-    if (arbre.root.children['primary']?.segments.length) return null;
+    const segments = arbre.root.children['primary']?.segments ?? [];
+    if (segments[0]?.path === 'espace') return 'espace';
+    if (segments.length) return null;
     return arbre.queryParamMap.get('transaction') === 'vente' ? 'acheter' : 'louer';
   });
 

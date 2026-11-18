@@ -13,13 +13,13 @@ import { HlmToggleGroupImports } from '@spartan-ng/helm/toggle-group';
 import { AnnonceDetaillee } from '../../../core/modeles/annonce';
 import { DemarchesService } from '../../../core/services/demarches';
 import { TEXTES_DEMARCHE } from '../textes';
-import { HEURES, dateHeure, prochainsJours } from './creneaux';
+import { HEURES, dateHeure, prochainsJours } from '../../../core/format/creneaux';
 import { EnvoiDemarche } from './envoi';
 import { RetourEnvoi } from './retour-envoi';
 
 const JOUR_DEFAUT = 1;
 const HEURE_DEFAUT = 1;
-const CHEMIN_VISITES = '/visites';
+const CHEMIN_VISITES = '/espace';
 
 /** Onglet « Visiter » : cas « Demander une visite », qui inclut « Notifier le propriétaire ». */
 @Component({
