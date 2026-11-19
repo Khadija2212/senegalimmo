@@ -21,7 +21,7 @@ import { TEXTES_ACCUEIL } from './textes';
   template: `
     <main class="mx-auto max-w-[1240px] px-4 sm:px-7 lg:px-10">
       <section class="pt-8 pb-2 sm:pt-16 sm:pb-10">
-        <div class="grid items-end gap-8 lg:grid-cols-[7fr_4fr] lg:gap-12">
+        <div class="grid items-center gap-8 lg:grid-cols-[7fr_4fr] lg:gap-12">
           <div>
             <h1
               class="font-display max-w-[17ch] text-[clamp(2.5rem,5.4vw,4.6rem)] leading-[1.1] font-semibold tracking-[-0.005em] text-balance"
