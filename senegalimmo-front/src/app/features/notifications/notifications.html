@@ -1,0 +1,136 @@
+<main class="mx-auto max-w-[880px] px-4 pb-24 sm:px-7 lg:px-10">
+  <section class="flex flex-wrap items-end gap-x-8 gap-y-3 pt-7 pb-5 sm:pt-10 sm:pb-7">
+    <div class="min-w-0">
+      <h1 class="font-display text-[clamp(2rem,3.4vw,2.8rem)] leading-[1.05] font-semibold">
+        {{ textes.titre }}
+      </h1>
+      @if (groupes()?.length) {
+        <p class="text-encre-2 mt-2">
+          {{ nonLues() ? textes.nonLues(nonLues()) : textes.toutLu }}
+        </p>
+      }
+    </div>
+    @if (nonLues()) {
+      <button
+        type="button"
+        class="lien-texte sm:ml-auto"
+        [disabled]="enCours() === 'tout'"
+        (click)="toutMarquer()"
+      >
+        {{ textes.toutMarquer }}
+      </button>
+    }
+  </section>
+
+  @if (erreur(); as e) {
+    <p role="alert" class="confirmer mb-4">{{ e }}</p>
+  }
+
+  @if (premiere.isLoading() && !groupes()) {
+    <div class="animate-pulse" aria-busy="true" [attr.aria-label]="textes.chargement">
+      <div class="bg-brume h-4 w-28 rounded"></div>
+      @for (i of [1, 2, 3]; track i) {
+        <div class="border-border mt-4 border-b pb-4">
+          <div class="bg-brume h-4 w-1/2 rounded"></div>
+          <div class="bg-brume mt-3 h-4 w-5/6 rounded"></div>
+        </div>
+      }
+    </div>
+  } @else if (premiere.error()) {
+    <div class="border-input rounded-cadre border border-dashed px-6 py-8" role="alert">
+      <h2 class="font-display text-[1.4rem] font-semibold">{{ textes.erreurTitre }}</h2>
+      <p class="text-encre-2 mt-1.5">{{ textes.erreurTexte }}</p>
+      <button hlmBtn size="grand" class="mt-4 h-[46px]" (click)="reessayer()">
+        {{ textes.reessayer }}
+      </button>
+    </div>
+  } @else if (groupes(); as liste) {
+    @for (g of liste; track g.cle) {
+      <section class="mb-8" [attr.aria-labelledby]="'j-' + g.cle">
+        <h2
+          [id]="'j-' + g.cle"
+          class="font-display text-[1.35rem] leading-tight font-semibold first-letter:uppercase"
+        >
+          {{ g.libelle }}
+        </h2>
+        <ul class="border-border mt-3 border-t">
+          @for (n of g.elements; track n.id) {
+            <li
+              class="border-border grid grid-cols-[minmax(0,1fr)_auto] gap-x-6 gap-y-1 border-b py-4"
+            >
+              <p class="text-[0.98rem] leading-snug" [class.font-semibold]="!n.lue">
+                {{ n.titre }}
+                @if (!n.lue) {
+                  <span class="text-bleu-vif ml-1.5 text-[0.8rem] font-semibold">{{
+                    textes.nouveau
+                  }}</span>
+                }
+              </p>
+              <span class="text-encre-3 text-[0.8rem] tabular-nums">{{ n.heure }}</span>
+              <p
+                class="col-span-2 text-[0.92rem] break-words"
+                [class.text-encre-2]="n.lue"
+                [class.text-foreground]="!n.lue"
+              >
+                {{ n.contenu }}
+              </p>
+              @if (n.lien || !n.lue) {
+                <div class="col-span-2 mt-1.5 flex flex-wrap gap-x-5 gap-y-2">
+                  @if (n.lien; as l) {
+                    @if (l.externe) {
+                      <a
+                        class="lien-texte"
+                        [href]="l.chemin"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        (click)="marquer(n)"
+                        >{{ l.libelle }}</a
+                      >
+                    } @else {
+                      <a class="lien-texte" [routerLink]="l.chemin" (click)="marquer(n)">{{
+                        l.libelle
+                      }}</a>
+                    }
+                  }
+                  @if (!n.lue) {
+                    <button
+                      type="button"
+                      class="lien-texte"
+                      [disabled]="enCours() === n.id"
+                      (click)="marquer(n)"
+                    >
+                      {{ textes.marquerLue }}
+                    </button>
+                  }
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      </section>
+    } @empty {
+      <div class="vide">
+        <ng-icon name="siCoche" size="32" class="text-bleu" />
+        <div>
+          <h2 class="font-display text-[1.4rem] leading-tight font-semibold">
+            {{ textes.videTitre }}
+          </h2>
+          <p class="text-encre-2 mt-1.5 max-w-[52ch]">{{ textes.videTexte }}</p>
+          <a hlmBtn size="grand" class="mt-[18px] h-[46px]" [routerLink]="espace()">
+            {{ textes.retourEspace }}
+          </a>
+        </div>
+      </div>
+    }
+    @if (resteAnciennes()) {
+      <button
+        type="button"
+        class="lien-texte"
+        [disabled]="chargementSuite()"
+        (click)="plusAnciennes()"
+      >
+        {{ chargementSuite() ? textes.chargementSuite : textes.plusAnciennes }}
+      </button>
+    }
+  }
+</main>
