@@ -6,7 +6,7 @@
     {{ textes.nouveauBail }}
   </h1>
 
-  @if (demandes.isLoading() && !demandes.value()) {
+  @if (demandes.isLoading() && !demandes.hasValue()) {
     <div class="mt-6 animate-pulse" aria-busy="true" [attr.aria-label]="textes.chargement">
       <div class="bg-brume h-5 w-2/3 rounded"></div>
       @for (i of [1, 2, 3, 4]; track i) {

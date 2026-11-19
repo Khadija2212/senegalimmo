@@ -53,9 +53,9 @@
           <div class="bg-brume aspect-[4/3] rounded-champ"></div>
         }
       </div>
-    } @else if (photos.value()?.length) {
+    } @else if (lire(photos)?.length) {
       <ul class="grid grid-cols-3 gap-2 sm:grid-cols-5">
-        @for (p of photos.value() ?? []; track p.id; let i = $index) {
+        @for (p of lire(photos) ?? []; track p.id; let i = $index) {
           <li>
             <label class="relative block cursor-pointer">
               <img

@@ -10,6 +10,7 @@ import { BlocAPayer } from './bloc-a-payer';
 import { LignePaiement } from './ligne-paiement';
 import { preselectionner, sommesDues } from './paiements-vue';
 import { LIENS_PAIEMENTS, TEXTES_PAIEMENTS } from './textes';
+import { lire } from '../../core/ressources/lire';
 
 const ESPACE_PAR_DEFAUT = '/espace';
 
@@ -23,6 +24,7 @@ const ESPACE_PAR_DEFAUT = '/espace';
   host: { class: 'block' },
 })
 export class Paiements {
+  protected readonly lire = lire;
   /** Paramètres d'adresse posés par un contrat : loyer, caution ou indemnité, et le contrat. */
   readonly type = input<string>();
   readonly bail = input<string>();
@@ -43,8 +45,8 @@ export class Paiements {
     stream: () => this.service.donneesAPayer(),
   });
   protected readonly dus = computed(() => {
-    const d = this.aPayer.value();
-    const h = this.historique.value();
+    const d = lire(this.aPayer);
+    const h = lire(this.historique);
     return d && h ? sommesDues(d, h) : [];
   });
   protected readonly preselection = computed(() =>

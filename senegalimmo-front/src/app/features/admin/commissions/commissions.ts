@@ -12,6 +12,7 @@ import { TEXTES_ADMIN } from '../textes';
 import { classerRegles, tauxLisible } from './commissions-vue';
 import { FormulaireRegle } from './formulaire-regle';
 import { TEXTES_COMMISSIONS } from './textes';
+import { lire } from '../../../core/ressources/lire';
 
 const CLE_AJOUT = 'ajout';
 
@@ -44,7 +45,7 @@ const CLE_AJOUT = 'ajout';
         />
       }
 
-      @if (liste.isLoading() && !liste.value()) {
+      @if (liste.isLoading() && !liste.hasValue()) {
         <si-squelette-registre />
       } @else if (liste.error()) {
         <si-erreur-chargement (reessayer)="liste.reload()" />
@@ -108,7 +109,7 @@ export class Commissions {
   protected readonly formulaire = signal(false);
   protected readonly liste = rxResource({ stream: () => this.service.reglesCommission() });
   protected readonly groupes = computed(() =>
-    classerRegles(this.liste.value() ?? [], aujourdhuiIso()),
+    classerRegles(lire(this.liste) ?? [], aujourdhuiIso()),
   );
 
   protected taux(r: RegleCommission): string {

@@ -7,7 +7,9 @@
     <p class="text-encre-2 mt-2 max-w-[60ch]">{{ intro() }}</p>
   </section>
 
-  @if ((historique.isLoading() && !historique.value()) || (aPayer.isLoading() && !aPayer.value())) {
+  @if (
+    (historique.isLoading() && !historique.hasValue()) || (aPayer.isLoading() && !aPayer.hasValue())
+  ) {
     <div class="animate-pulse" aria-busy="true" [attr.aria-label]="textes.chargement">
       <div class="bg-brume h-7 w-40 rounded-md"></div>
       @for (i of [1, 2, 3]; track i) {
@@ -45,7 +47,7 @@
       </section>
     }
 
-    @if (historique.value()?.length) {
+    @if (lire(historique)?.length) {
       <section aria-labelledby="t-historique">
         <h2
           id="t-historique"
@@ -53,14 +55,14 @@
         >
           {{ textes.historique }}
           <small class="text-encre-3 font-sans text-[0.85rem] font-medium">{{
-            historique.value()?.length
+            lire(historique)?.length
           }}</small>
         </h2>
         @if (estClient() && !dus().length) {
           <p class="text-encre-2 mt-1.5 text-[0.92rem]">{{ textes.rienAPayer }}</p>
         }
         <div class="border-border mt-3.5 border-t" [attr.aria-label]="textes.registre">
-          @for (p of historique.value() ?? []; track p.id) {
+          @for (p of lire(historique) ?? []; track p.id) {
             <si-ligne-paiement [paiement]="p" [role]="role()" />
           }
         </div>

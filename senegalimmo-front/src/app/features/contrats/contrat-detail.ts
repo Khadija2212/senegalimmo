@@ -14,6 +14,7 @@ import { etatContrat, libelleNature, taux } from './contrats-vue';
 import { COULEUR_TON, jour } from './etat';
 import { EtatsDesLieux } from './etats-des-lieux';
 import { LIENS_CONTRATS, TEXTES_CONTRATS } from './textes';
+import { lire } from '../../core/ressources/lire';
 
 const INTROUVABLE = [403, 404];
 
@@ -27,6 +28,7 @@ const INTROUVABLE = [403, 404];
   host: { class: 'block' },
 })
 export class ContratDetail {
+  protected readonly lire = lire;
   /** Paramètre de route « :id ». */
   readonly id = input.required<string>();
 
@@ -47,11 +49,11 @@ export class ContratDetail {
     return http instanceof HttpErrorResponse && INTROUVABLE.includes(http.status);
   });
   protected readonly nature = computed(() => {
-    const c = this.contrat.value();
+    const c = lire(this.contrat);
     return c ? libelleNature(c.nature) : '';
   });
   protected readonly etat = computed(() => {
-    const c = this.contrat.value();
+    const c = lire(this.contrat);
     return c ? etatContrat(c) : null;
   });
   protected readonly couleur = computed(() => {
@@ -59,7 +61,7 @@ export class ContratDetail {
     return e ? COULEUR_TON[e.ton] : '';
   });
   protected readonly mandat = computed((): readonly (readonly [string, string])[] => {
-    const c = this.contrat.value();
+    const c = lire(this.contrat);
     if (c?.nature !== 'mandat') return [];
     return [
       [

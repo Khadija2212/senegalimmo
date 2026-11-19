@@ -6,6 +6,7 @@ import { debounceTime, distinctUntilChanged, map, of } from 'rxjs';
 import { CompteAdmin } from '../../../core/modeles/admin';
 import { AdminService } from '../../../core/services/admin';
 import { TEXTES_NOTIFICATION } from './textes';
+import { lire } from '../../../core/ressources/lire';
 
 const DELAI_RECHERCHE_MS = 300;
 const RESULTATS_MAX = 6;
@@ -34,7 +35,7 @@ const PREMIERE_PAGE = 1;
       [value]="saisie()"
       (input)="saisie.set($any($event.target).value)"
     />
-    @if (resultats.value(); as r) {
+    @if (lire(resultats); as r) {
       @if (r.length) {
         <ul class="mt-2 flex flex-col gap-2" [attr.aria-label]="textes.resultats">
           @for (c of r; track c.id) {
@@ -57,6 +58,7 @@ const PREMIERE_PAGE = 1;
   host: { class: 'block' },
 })
 export class ChoisirCompte {
+  protected readonly lire = lire;
   readonly choisir = output<CompteAdmin>();
   protected readonly textes = TEXTES_NOTIFICATION;
   protected readonly longueurMin = LONGUEUR_MIN;

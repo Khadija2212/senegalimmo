@@ -1,5 +1,5 @@
 <main class="mx-auto max-w-[1240px] px-4 pb-24 sm:px-7 lg:px-10">
-  @if (compte.isLoading() && !compte.value()) {
+  @if (compte.isLoading() && !compte.hasValue()) {
     <div class="animate-pulse pt-10" aria-busy="true" [attr.aria-label]="textes.chargement">
       <div class="bg-brume h-10 w-64 rounded-md"></div>
       <div class="bg-brume mt-4 h-4 w-96 max-w-full rounded"></div>
@@ -12,7 +12,7 @@
         {{ textes.reessayer }}
       </button>
     </div>
-  } @else if (compte.value(); as c) {
+  } @else if (lire(compte); as c) {
     @if (!valide()) {
       <section class="max-w-[640px] pt-10" aria-labelledby="t-validation">
         <h1
@@ -81,7 +81,7 @@
           >
           <a class="rubrique" [routerLink]="liens.messages">
             <ng-icon name="siMessage" size="18" />{{ textes.messages }}
-            @if (donnees.value()?.indicateurs?.messages_non_lus; as n) {
+            @if (lire(donnees)?.indicateurs?.messages_non_lus; as n) {
               <span class="n">{{ textes.nonLus(n) }}</span>
             }
           </a>
@@ -96,7 +96,7 @@
         <div class="min-w-0">
           @if (rubrique() === 'performances') {
             <si-rubrique-performances />
-          } @else if (donnees.isLoading() && !donnees.value()) {
+          } @else if (donnees.isLoading() && !donnees.hasValue()) {
             <div class="animate-pulse" aria-busy="true" [attr.aria-label]="textes.chargement">
               <div class="bg-brume h-7 w-40 rounded-md"></div>
               @for (i of [1, 2, 3]; track i) {
@@ -117,7 +117,7 @@
                 {{ textes.reessayer }}
               </button>
             </div>
-          } @else if (donnees.value(); as d) {
+          } @else if (lire(donnees); as d) {
             @switch (rubrique()) {
               @case ('demandes') {
                 @if (demandes(); as dc) {

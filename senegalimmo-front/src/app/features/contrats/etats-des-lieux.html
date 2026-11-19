@@ -3,7 +3,7 @@
 </h2>
 <p class="text-encre-2 mt-1.5 text-[0.92rem]">{{ textes.etatsIntro }}</p>
 
-@if (etats.isLoading() && !etats.value()) {
+@if (etats.isLoading() && !etats.hasValue()) {
   <div class="mt-3.5 animate-pulse" aria-busy="true">
     <div class="bg-brume h-4 w-2/3 rounded"></div>
     <div class="bg-brume mt-3 h-4 w-1/2 rounded"></div>
@@ -17,7 +17,7 @@
   </p>
 } @else {
   <div class="border-border mt-3.5 border-t">
-    @for (e of etats.value() ?? []; track e.id) {
+    @for (e of lire(etats) ?? []; track e.id) {
       <article class="border-border border-b py-4">
         <h3 class="font-semibold">{{ titre(e) }}</h3>
         <p class="text-encre-3 mt-0.5 text-[0.85rem]">{{ textes.faitLe(jour(e.date)) }}</p>

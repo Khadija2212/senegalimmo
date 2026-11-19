@@ -11,6 +11,7 @@ import { SuiviActions } from '../commun/suivi-actions';
 import { TEXTES_ADMIN } from '../textes';
 import { FormulaireOption } from './formulaire-option';
 import { TEXTES_OPTIONS } from './textes';
+import { lire } from '../../../core/ressources/lire';
 
 /** Clé du formulaire de création ; une modification prend l'identifiant de l'option. */
 const NOUVELLE = 'nouvelle';
@@ -45,11 +46,11 @@ const NOUVELLE = 'nouvelle';
         />
       }
 
-      @if (liste.isLoading() && !liste.value()) {
+      @if (liste.isLoading() && !liste.hasValue()) {
         <si-squelette-registre />
       } @else if (liste.error()) {
         <si-erreur-chargement (reessayer)="liste.reload()" />
-      } @else if (liste.value(); as l) {
+      } @else if (lire(liste); as l) {
         @if (l.length) {
           <ul class="border-border mt-3.5 border-t">
             @for (o of l; track o.id) {
@@ -126,6 +127,7 @@ const NOUVELLE = 'nouvelle';
   host: { class: 'block' },
 })
 export class OptionsPremium {
+  protected readonly lire = lire;
   protected readonly textes = TEXTES_OPTIONS;
   protected readonly nouvelle = NOUVELLE;
   private readonly service = inject(AdminService);

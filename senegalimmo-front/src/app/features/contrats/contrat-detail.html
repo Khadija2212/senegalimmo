@@ -3,7 +3,7 @@
     <a class="lien-texte" [routerLink]="cheminContrats">{{ textes.tousLesContrats }}</a>
   </div>
 
-  @if (contrat.isLoading() && !contrat.value()) {
+  @if (contrat.isLoading() && !contrat.hasValue()) {
     <div class="mt-6 animate-pulse" aria-busy="true" [attr.aria-label]="textes.chargement">
       <div class="bg-brume h-3 w-24 rounded"></div>
       <div class="bg-brume mt-3 h-9 w-3/4 rounded-md"></div>
@@ -28,7 +28,7 @@
         {{ textes.reessayer }}
       </button>
     </div>
-  } @else if (contrat.value(); as c) {
+  } @else if (lire(contrat); as c) {
     <header class="border-border border-b pt-5 pb-6">
       <span class="text-encre-3 text-[0.78rem] font-semibold tracking-[0.06em] uppercase">{{
         nature()

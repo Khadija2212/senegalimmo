@@ -8,6 +8,7 @@ import { Role } from '../../core/session/session';
 import { jour } from './etat';
 import { FormEtatDesLieux } from './form-etat-des-lieux';
 import { TEXTES_CONTRATS } from './textes';
+import { lire } from '../../core/ressources/lire';
 
 const TYPES: readonly TypeEtatDesLieux[] = ['entree', 'sortie'];
 
@@ -21,6 +22,7 @@ const TYPES: readonly TypeEtatDesLieux[] = ['entree', 'sortie'];
   host: { class: 'block' },
 })
 export class EtatsDesLieux {
+  protected readonly lire = lire;
   readonly bail = input.required<Bail>();
   readonly role = input.required<Role | null>();
 
@@ -35,13 +37,13 @@ export class EtatsDesLieux {
   /** Types encore à réaliser, proposés au propriétaire tant que le bail est signé. */
   protected readonly manquants = computed(() => {
     if (this.role() !== 'proprietaire' || this.bail().statut !== 'signe') return [];
-    const faits = (this.etats.value() ?? []).map((e) => e.type);
+    const faits = (lire(this.etats) ?? []).map((e) => e.type);
     return TYPES.filter((t) => !faits.includes(t));
   });
   /** Seul le premier état des lieux à valider est un bouton plein. */
   protected readonly premierAValider = computed(
     () =>
-      (this.role() === 'client' ? this.etats.value()?.find((e) => !e.valide_le)?.id : null) ?? null,
+      (this.role() === 'client' ? lire(this.etats)?.find((e) => !e.valide_le)?.id : null) ?? null,
   );
   protected readonly formulaire = signal(false);
   protected readonly enCours = signal<string | null>(null);

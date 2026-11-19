@@ -17,6 +17,7 @@ import { SuiviActions } from '../commun/suivi-actions';
 import { TEXTES_ADMIN } from '../textes';
 import { LigneRetrait } from './ligne-retrait';
 import { TEXTES_RETRAITS } from './textes';
+import { lire } from '../../../core/ressources/lire';
 
 /** Rubrique « Retraits » : approuver (le versement suit) ou rejeter avec un motif. */
 @Component({
@@ -31,7 +32,7 @@ import { TEXTES_RETRAITS } from './textes';
         class="font-display flex items-baseline gap-3 text-[1.55rem] leading-tight font-semibold"
       >
         {{ textes.titre }}
-        @if (liste.value(); as l) {
+        @if (lire(liste); as l) {
           <small class="text-encre-3 font-sans text-[0.85rem] font-medium">{{ l.length }}</small>
         }
       </h2>
@@ -44,11 +45,11 @@ import { TEXTES_RETRAITS } from './textes';
         (choisir)="statut.set($any($event))"
       />
 
-      @if (liste.isLoading() && !liste.value()) {
+      @if (liste.isLoading() && !liste.hasValue()) {
         <si-squelette-registre />
       } @else if (liste.error()) {
         <si-erreur-chargement (reessayer)="liste.reload()" />
-      } @else if (liste.value(); as l) {
+      } @else if (lire(liste); as l) {
         @if (l.length) {
           <div class="border-border mt-3.5 border-t">
             @for (r of l; track r.id) {
@@ -84,6 +85,7 @@ import { TEXTES_RETRAITS } from './textes';
   host: { class: 'block' },
 })
 export class Retraits {
+  protected readonly lire = lire;
   readonly modifie = output<void>();
   protected readonly textes = TEXTES_RETRAITS;
   private readonly service = inject(AdminService);
@@ -95,7 +97,7 @@ export class Retraits {
     stream: ({ params }) => this.service.retraits(params.statut),
   });
   protected readonly principale = computed(
-    () => this.liste.value()?.find((r) => r.statut === 'demande')?.id ?? null,
+    () => lire(this.liste)?.find((r) => r.statut === 'demande')?.id ?? null,
   );
 
   protected approuver(r: RetraitAdmin): void {

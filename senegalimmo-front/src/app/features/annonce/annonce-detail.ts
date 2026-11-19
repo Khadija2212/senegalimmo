@@ -16,6 +16,7 @@ import { PanneauDemarche } from './panneau-demarche/panneau-demarche';
 import { Signaler } from './signaler/signaler';
 import { TitreAnnonce } from './titre-annonce/titre-annonce';
 import { TEXTES_ANNONCE } from './textes';
+import { lire } from '../../core/ressources/lire';
 
 const NON_TROUVEE = 404;
 
@@ -40,6 +41,7 @@ const NON_TROUVEE = 404;
   templateUrl: './annonce-detail.html',
 })
 export class AnnonceDetail {
+  protected readonly lire = lire;
   /** Identifiant de la route /annonces/:id. */
   readonly id = input.required<string>();
   protected readonly textes = TEXTES_ANNONCE;
