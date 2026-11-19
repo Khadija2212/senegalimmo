@@ -1,0 +1,85 @@
+<main class="mx-auto max-w-[1040px] px-4 pb-24 sm:px-7 lg:px-10">
+  <header class="pt-7 pb-6 sm:pt-10 sm:pb-8">
+    <h1 class="font-display text-[clamp(2rem,3.4vw,2.8rem)] leading-[1.05] font-semibold">
+      {{ textes.titre }}
+    </h1>
+    <p class="text-encre-2 mt-2 max-w-[60ch]">
+      @if (compte.hasValue()) {
+        <span class="text-foreground font-semibold">{{ textes.roles[compte.value().role] }}</span>
+      }
+      {{ textes.intro }}
+    </p>
+  </header>
+
+  @if (compte.isLoading() && !compte.hasValue()) {
+    <div
+      class="border-border animate-pulse border-t pt-8"
+      aria-busy="true"
+      [attr.aria-label]="textes.chargement"
+    >
+      <div class="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-12">
+        <div class="bg-brume h-6 w-40 rounded-md"></div>
+        <div>
+          <div class="flex items-center gap-5">
+            <div class="bg-brume size-[72px] rounded-full"></div>
+            <div class="bg-brume h-4 w-32 rounded"></div>
+          </div>
+          <div class="mt-6 grid gap-4 sm:grid-cols-2">
+            @for (i of [1, 2, 3, 4]; track i) {
+              <div class="bg-brume h-[46px] rounded-champ"></div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  } @else if (compte.error()) {
+    <div class="border-input rounded-cadre border border-dashed px-6 py-8" role="alert">
+      <h2 class="font-display text-[1.4rem] font-semibold">{{ textes.erreurTitre }}</h2>
+      <p class="text-encre-2 mt-1.5">{{ textes.erreurTexte }}</p>
+      <button hlmBtn size="grand" class="mt-4 h-[46px]" (click)="compte.reload()">
+        {{ textes.reessayer }}
+      </button>
+    </div>
+  } @else if (compte.hasValue()) {
+    <section
+      class="border-border grid gap-6 border-t py-8 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-12"
+      aria-labelledby="t-infos"
+    >
+      <div>
+        <h2 id="t-infos" class="font-display text-[1.55rem] leading-tight font-semibold">
+          {{ textes.informations }}
+        </h2>
+        <p class="text-encre-2 mt-1.5 text-[0.92rem]">{{ textes.informationsIntro }}</p>
+      </div>
+      <si-infos-profil [compte]="compte.value()" (enregistre)="remplacer($event)" />
+    </section>
+
+    @if (avecPiece()) {
+      <section
+        class="border-border grid gap-6 border-t py-8 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-12"
+        aria-labelledby="t-piece"
+      >
+        <div>
+          <h2 id="t-piece" class="font-display text-[1.55rem] leading-tight font-semibold">
+            {{ textes.piece }}
+          </h2>
+          <p class="text-encre-2 mt-1.5 text-[0.92rem]">{{ introPiece() }}</p>
+        </div>
+        <div class="min-w-0"><si-piece-identite [compte]="compte.value()" /></div>
+      </section>
+    }
+
+    <section
+      class="border-border grid gap-6 border-t py-8 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-12"
+      aria-labelledby="t-mdp"
+    >
+      <div>
+        <h2 id="t-mdp" class="font-display text-[1.55rem] leading-tight font-semibold">
+          {{ textes.motDePasse }}
+        </h2>
+        <p class="text-encre-2 mt-1.5 text-[0.92rem]">{{ textes.motDePasseIntro }}</p>
+      </div>
+      <si-mot-de-passe />
+    </section>
+  }
+</main>

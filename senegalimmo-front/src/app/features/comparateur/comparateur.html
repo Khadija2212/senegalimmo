@@ -1,0 +1,120 @@
+<main class="mx-auto max-w-[1240px] px-4 pb-24 sm:px-7 lg:px-10">
+  <header class="pt-7 pb-6 sm:pt-10 sm:pb-8">
+    <h1 class="font-display text-[clamp(2rem,3.4vw,2.8rem)] leading-[1.05] font-semibold">
+      {{ textes.titre }}
+    </h1>
+    @if (!vide()) {
+      <p class="text-encre-2 mt-2 max-w-[60ch]">{{ textes.intro }}</p>
+    }
+  </header>
+
+  @if (vide()) {
+    <div class="vide">
+      <ng-icon name="siComparer" size="32" class="text-bleu" />
+      <div>
+        <h2 class="font-display text-[1.4rem] leading-tight font-semibold">
+          {{ textes.videTitre }}
+        </h2>
+        <p class="text-encre-2 mt-1.5 max-w-[52ch]">{{ textes.videTexte }}</p>
+        <a hlmBtn size="grand" class="mt-[18px] h-[46px]" [routerLink]="liens.accueil">
+          <ng-icon name="siChercher" size="18" />{{ textes.chercher }}
+        </a>
+      </div>
+    </div>
+  } @else if (donnees.isLoading() && !annonces().length) {
+    <div
+      class="grid animate-pulse grid-cols-2 gap-4 sm:grid-cols-4"
+      aria-busy="true"
+      [attr.aria-label]="textes.chargement"
+    >
+      @for (i of demandes(); track i) {
+        <div>
+          <div class="bg-brume aspect-[4/3] rounded-champ"></div>
+          <div class="bg-brume mt-3 h-4 w-3/4 rounded"></div>
+          <div class="bg-brume mt-2 h-4 w-1/2 rounded"></div>
+        </div>
+      }
+    </div>
+  } @else if (donnees.error()) {
+    <div class="border-input rounded-cadre border border-dashed px-6 py-8" role="alert">
+      <h2 class="font-display text-[1.4rem] font-semibold">{{ textes.erreurTitre }}</h2>
+      <p class="text-encre-2 mt-1.5">{{ textes.erreurTexte }}</p>
+      <button hlmBtn size="grand" class="mt-4 h-[46px]" (click)="donnees.reload()">
+        {{ textes.reessayer }}
+      </button>
+    </div>
+  } @else {
+    <div
+      class="border-border overflow-x-auto border-t"
+      role="region"
+      [attr.aria-label]="textes.tableau"
+      tabindex="0"
+    >
+      <table class="w-full min-w-max border-collapse text-left text-[0.92rem]">
+        <caption class="sr-only">
+          {{
+            textes.tableau
+          }}
+        </caption>
+        <thead>
+          <tr>
+            <td class="bg-background sticky left-0 z-10 w-28 sm:w-44"></td>
+            @for (a of annonces(); track a.id) {
+              <th
+                scope="col"
+                class="w-[210px] min-w-[180px] px-3 pt-5 pb-4 align-top font-normal sm:px-4"
+              >
+                @if (photo(a); as src) {
+                  <img [src]="src" alt="" class="aspect-[4/3] w-full rounded-champ object-cover" />
+                } @else {
+                  <span class="bg-brume block aspect-[4/3] w-full rounded-champ"></span>
+                }
+                <a
+                  class="mt-3 block text-[1rem] leading-snug font-semibold hover:underline hover:underline-offset-[3px]"
+                  [routerLink]="liens.annonce(a.id)"
+                  >{{ a.bien.titre }}</a
+                >
+                <span class="text-encre-2 mt-0.5 block text-[0.86rem]"
+                  >{{ a.bien.quartier }}, {{ a.bien.ville }}</span
+                >
+                <span class="mt-2.5 flex flex-wrap gap-x-4 gap-y-1">
+                  <a class="lien-texte" [routerLink]="liens.annonce(a.id)">{{
+                    textes.voirAnnonce
+                  }}</a>
+                  <button
+                    type="button"
+                    class="lien-texte danger"
+                    [attr.aria-label]="textes.retirerDe(a.bien.titre)"
+                    (click)="retirer(a.id)"
+                  >
+                    {{ textes.retirer }}
+                  </button>
+                </span>
+              </th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (l of lignes(); track l.cle) {
+            <tr class="border-border border-t">
+              <th
+                scope="row"
+                class="bg-background text-encre-2 sticky left-0 z-10 py-3 pr-3 align-top text-[0.84rem] font-semibold"
+              >
+                {{ l.libelle }}
+              </th>
+              @for (c of l.cellules; track $index) {
+                <td
+                  class="px-3 py-3 align-top tabular-nums sm:px-4"
+                  [class.font-semibold]="c.meilleure"
+                >
+                  {{ c.texte }}
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</main>

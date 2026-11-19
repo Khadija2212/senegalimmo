@@ -1,0 +1,58 @@
+import { TypeBien } from '../../core/modeles/annonce';
+
+export const TEXTES_COMPARATEUR = {
+  titre: 'Comparer des biens',
+  intro: 'Les chiffres les plus avantageux de chaque ligne sont écrits en gras.',
+  chargement: 'Chargement de la comparaison',
+  erreurTitre: 'La comparaison n’a pas pu être chargée',
+  erreurTexte: 'Vérifiez votre connexion, puis réessayez.',
+  reessayer: 'Réessayer',
+  videTitre: 'Choisissez deux à quatre annonces',
+  videTexte:
+    'Dans les résultats de recherche ou vos favoris, cochez « Comparer » sur les annonces qui vous intéressent.',
+  chercher: 'Parcourir les annonces',
+  tableau: 'Comparaison des annonces choisies',
+  annonce: 'Annonce',
+  voirAnnonce: 'Voir l’annonce',
+  retirer: 'Retirer',
+  retirerDe: (titre: string) => `Retirer ${titre} de la comparaison`,
+
+  prix: 'Prix',
+  loyer: 'Loyer par mois',
+  prixOuLoyer: 'Prix ou loyer',
+  parMois: ' par mois',
+  charges: 'Charges par mois',
+  caution: 'Caution',
+  surface: 'Surface',
+  prixM2: 'Prix au m²',
+  loyerM2: 'Loyer au m²',
+  pieces: 'Pièces',
+  chambres: 'Chambres',
+  meuble: 'Meublé',
+  type: 'Type',
+  verification: 'Vérification',
+  proprietaire: 'Propriétaire',
+  oui: 'Oui',
+  non: 'Non',
+  aucune: 'Aucune',
+  sansObjet: 'Sans objet',
+  nonCommunique: 'Non communiqué',
+  annonceVerifiee: 'Annonce vérifiée',
+  metreCarre: 'm²',
+  leMetreCarre: ' le m²',
+  types: {
+    appartement: 'Appartement',
+    maison: 'Maison',
+    villa: 'Villa',
+    studio: 'Studio',
+    chambre: 'Chambre',
+    terrain: 'Terrain',
+    bureau: 'Bureau',
+    local_commercial: 'Local commercial',
+  } satisfies Record<TypeBien, string>,
+} as const;
+
+export const LIENS_COMPARATEUR = {
+  accueil: '/',
+  annonce: (id: string): string[] => ['/annonces', id],
+} as const;
