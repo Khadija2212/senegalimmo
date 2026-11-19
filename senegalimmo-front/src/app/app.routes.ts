@@ -1,8 +1,12 @@
 import { Routes } from '@angular/router';
 import { gardeClient } from './core/session/garde-client';
+import { gardeRole } from './core/session/garde-role';
 
-/* Les écrans refaits sont dans le cadre public ; les anciens écrans gardent leurs routes en attendant leur maquette. */
+/** Comptes qui échangent, signent et paient : tous sauf l'administrateur. */
+const UTILISATEURS = ['client', 'proprietaire', 'agent'] as const;
+const TOUS = ['client', 'proprietaire', 'agent', 'administrateur'] as const;
 
+/* Tous les écrans vivent dans le cadre public (en-tête, pied de page). */
 export const routes: Routes = [
   {
     path: '',
@@ -14,14 +18,91 @@ export const routes: Routes = [
         loadComponent: () => import('./features/accueil/accueil').then((m) => m.Accueil),
       },
       {
+        path: 'annonces/:id',
+        loadComponent: () =>
+          import('./features/annonce/annonce-detail').then((m) => m.AnnonceDetail),
+      },
+      {
+        path: 'comparateur',
+        loadComponent: () =>
+          import('./features/comparateur/comparateur').then((m) => m.Comparateur),
+      },
+      {
         path: 'espace',
         canActivate: [gardeClient],
         loadComponent: () => import('./features/espace/espace-client').then((m) => m.EspaceClient),
       },
       {
-        path: 'annonces/:id',
+        path: 'proprietaire',
+        canActivate: [gardeRole('proprietaire')],
         loadComponent: () =>
-          import('./features/annonce/annonce-detail').then((m) => m.AnnonceDetail),
+          import('./features/proprietaire/espace-proprietaire').then((m) => m.EspaceProprietaire),
+      },
+      {
+        path: 'proprietaire/publier',
+        canActivate: [gardeRole('proprietaire')],
+        loadComponent: () =>
+          import('./features/proprietaire/publier/publier-bien').then((m) => m.PublierBien),
+      },
+      {
+        path: 'portefeuille',
+        canActivate: [gardeRole('proprietaire', 'agent')],
+        loadComponent: () =>
+          import('./features/portefeuille/portefeuille').then((m) => m.Portefeuille),
+      },
+      {
+        path: 'agent',
+        canActivate: [gardeRole('agent')],
+        loadComponent: () => import('./features/agent/espace-agent').then((m) => m.EspaceAgent),
+      },
+      {
+        path: 'admin',
+        canActivate: [gardeRole('administrateur')],
+        loadComponent: () => import('./features/admin/espace-admin').then((m) => m.EspaceAdmin),
+      },
+      {
+        path: 'contrats',
+        canActivate: [gardeRole(...UTILISATEURS)],
+        loadComponent: () => import('./features/contrats/contrats').then((m) => m.Contrats),
+      },
+      {
+        path: 'contrats/nouveau-bail',
+        canActivate: [gardeRole('proprietaire')],
+        loadComponent: () =>
+          import('./features/contrats/nouveau-bail').then((m) => m.NouveauBail),
+      },
+      {
+        path: 'contrats/:id',
+        canActivate: [gardeRole(...UTILISATEURS)],
+        loadComponent: () =>
+          import('./features/contrats/contrat-detail').then((m) => m.ContratDetail),
+      },
+      {
+        path: 'paiements',
+        canActivate: [gardeRole(...UTILISATEURS)],
+        loadComponent: () => import('./features/paiements/paiements').then((m) => m.Paiements),
+      },
+      {
+        path: 'paiement/retour',
+        canActivate: [gardeRole(...UTILISATEURS)],
+        loadComponent: () =>
+          import('./features/paiements/retour-paiement').then((m) => m.RetourPaiement),
+      },
+      {
+        path: 'messages',
+        canActivate: [gardeRole(...UTILISATEURS)],
+        loadComponent: () => import('./features/messages/messagerie').then((m) => m.Messagerie),
+      },
+      {
+        path: 'notifications',
+        canActivate: [gardeRole(...TOUS)],
+        loadComponent: () =>
+          import('./features/notifications/notifications').then((m) => m.Notifications),
+      },
+      {
+        path: 'profil',
+        canActivate: [gardeRole(...TOUS)],
+        loadComponent: () => import('./features/profil/profil').then((m) => m.Profil),
       },
     ],
   },
@@ -35,156 +116,39 @@ export const routes: Routes = [
     data: { onglet: 'inscription' },
     loadComponent: () => import('./features/connexion/connexion').then((m) => m.Connexion),
   },
-  {
-    path: 'home',
-    redirectTo: '',
-    pathMatch: 'full',
-  },
-  {
-    path: 'biens/:id',
-    loadComponent: () => import('./pages/bien-detail/bien-detail').then((m) => m.BienDetail),
-  },
-  { path: 'favoris', redirectTo: '/espace?rubrique=favoris', pathMatch: 'full' },
-  {
-    path: 'comparateur',
-    loadComponent: () => import('./pages/comparateur/comparateur').then((m) => m.Comparateur),
-  },
-  {
-    path: 'profil',
-    loadComponent: () => import('./pages/profil/profil').then((m) => m.Profil),
-  },
-  { path: 'visites', redirectTo: 'espace', pathMatch: 'full' },
-  {
-    path: 'admin/annonces',
-    loadComponent: () =>
-      import('./pages/admin/annonces-admin/annonces-admin').then((m) => m.AnnoncesAdmin),
-  },
-  {
-    path: 'admin/utilisateurs',
-    loadComponent: () =>
-      import('./pages/admin/utilisateurs-admin/utilisateurs-admin').then(
-        (m) => m.UtilisateursAdmin,
-      ),
-  },
-  {
-    path: 'admin/retraits',
-    loadComponent: () =>
-      import('./pages/admin/retraits-admin/retraits-admin').then((m) => m.RetraitsAdmin),
-  },
-  {
-    path: 'admin/signalements',
-    loadComponent: () =>
-      import('./pages/admin/signalements-admin/signalements-admin').then(
-        (m) => m.SignalementsAdmin,
-      ),
-  },
-  {
-    path: 'admin/categories',
-    loadComponent: () =>
-      import('./pages/admin/categories-admin/categories-admin').then((m) => m.CategoriesAdmin),
-  },
-  { path: 'demandes', redirectTo: 'espace', pathMatch: 'full' },
-  {
-    path: 'contrats',
-    loadComponent: () => import('./pages/contrats/contrats').then((m) => m.Contrats),
-  },
-  {
-    path: 'paiements',
-    loadComponent: () => import('./pages/paiements/paiements').then((m) => m.Paiements),
-  },
-  {
-    path: 'paiement/retour',
-    loadComponent: () =>
-      import('./pages/paiement-retour/paiement-retour').then((m) => m.PaiementRetour),
-  },
-  { path: 'offres', redirectTo: 'espace', pathMatch: 'full' },
-  {
-    path: 'promesses',
-    loadComponent: () => import('./pages/promesses/promesses').then((m) => m.Promesses),
-  },
-  {
-    path: 'messages',
-    loadComponent: () => import('./pages/messages/messages').then((m) => m.Messages),
-  },
-  {
-    path: 'alertes',
-    loadComponent: () => import('./pages/alertes/alertes').then((m) => m.Alertes),
-  },
-  {
-    path: 'profil',
-    loadComponent: () => import('./pages/profil/profil').then((m) => m.Profil),
-  },
-  {
-    path: 'portefeuille',
-    loadComponent: () => import('./pages/portefeuille/portefeuille').then((m) => m.Portefeuille),
-  },
-  {
-    path: 'quittances',
-    loadComponent: () => import('./pages/quittances/quittances').then((m) => m.Quittances),
-  },
-  {
-    path: 'notations',
-    loadComponent: () => import('./pages/notations/notations').then((m) => m.Notations),
-  },
-  {
-    path: 'avis/:id',
-    loadComponent: () => import('./pages/avis/avis').then((m) => m.Avis),
-  },
-  {
-    path: 'contrats/:id/etats-des-lieux',
-    loadComponent: () => import('./pages/etats-lieux/etats-lieux').then((m) => m.EtatsLieux),
-  },
-  {
-    path: 'mandats',
-    loadComponent: () => import('./pages/mandats/mandats').then((m) => m.Mandats),
-  },
-  {
-    path: 'agents',
-    redirectTo: 'agent/dashboard',
-    pathMatch: 'full',
-  },
-  {
-    path: 'biens-geres',
-    loadComponent: () => import('./pages/biens-geres/biens-geres').then((m) => m.BiensGeres),
-  },
-  {
-    path: 'commissions',
-    loadComponent: () => import('./pages/commissions/commissions').then((m) => m.Commissions),
-  },
-  {
-    path: 'agent/dashboard',
-    loadComponent: () => import('./pages/dashboard/agent/agent').then((m) => m.Agent),
-  },
+
+  /* Anciennes adresses, gardées pour les liens déjà partagés. */
+  { path: 'home', redirectTo: '', pathMatch: 'full' },
   { path: 'login', redirectTo: 'connexion', pathMatch: 'full' },
   { path: 'register', redirectTo: 'inscription', pathMatch: 'full' },
-  {
-    path: 'proprietaire/dashboard',
-    loadComponent: () =>
-      import('./pages/dashboard/proprietaire/proprietaire').then((m) => m.Proprietaire),
-  },
-  {
-    path: 'proprietaire/biens',
-    loadComponent: () => import('./pages/dashboard/mes-biens/mes-biens').then((m) => m.MesBiens),
-  },
-  {
-    path: 'proprietaire/annonces',
-    loadComponent: () => import('./pages/dashboard/mes-biens/mes-biens').then((m) => m.MesBiens),
-  },
-  {
-    path: 'mes-annonces',
-    redirectTo: 'proprietaire/annonces',
-    pathMatch: 'full',
-  },
+  { path: 'favoris', redirectTo: '/espace?rubrique=favoris', pathMatch: 'full' },
+  { path: 'visites', redirectTo: 'espace', pathMatch: 'full' },
+  { path: 'demandes', redirectTo: 'espace', pathMatch: 'full' },
+  { path: 'offres', redirectTo: 'espace', pathMatch: 'full' },
   { path: 'locataire/dashboard', redirectTo: 'espace', pathMatch: 'full' },
   { path: 'acheteur/dashboard', redirectTo: 'espace', pathMatch: 'full' },
   { path: 'client/dashboard', redirectTo: 'espace', pathMatch: 'full' },
+  { path: 'promesses', redirectTo: 'contrats', pathMatch: 'full' },
+  { path: 'quittances', redirectTo: 'paiements', pathMatch: 'full' },
+  { path: 'alertes', redirectTo: 'notifications', pathMatch: 'full' },
+  { path: 'proprietaire/dashboard', redirectTo: 'proprietaire', pathMatch: 'full' },
+  { path: 'proprietaire/biens', redirectTo: '/proprietaire?rubrique=biens', pathMatch: 'full' },
   {
-    path: 'agence/dashboard',
-    redirectTo: 'agent/dashboard',
+    path: 'proprietaire/annonces',
+    redirectTo: '/proprietaire?rubrique=biens',
     pathMatch: 'full',
   },
-  {
-    path: 'admin/dashboard',
-    loadComponent: () => import('./pages/dashboard/admin/admin').then((m) => m.Admin),
-  },
+  { path: 'mes-annonces', redirectTo: '/proprietaire?rubrique=biens', pathMatch: 'full' },
+  { path: 'agent/dashboard', redirectTo: 'agent', pathMatch: 'full' },
+  { path: 'agence/dashboard', redirectTo: 'agent', pathMatch: 'full' },
+  { path: 'agents', redirectTo: 'agent', pathMatch: 'full' },
+  { path: 'biens-geres', redirectTo: '/agent?rubrique=biens', pathMatch: 'full' },
+  { path: 'mandats', redirectTo: '/agent?rubrique=mandats', pathMatch: 'full' },
+  { path: 'commissions', redirectTo: '/admin?rubrique=commissions', pathMatch: 'full' },
+  { path: 'admin/dashboard', redirectTo: 'admin', pathMatch: 'full' },
+  { path: 'admin/annonces', redirectTo: '/admin?rubrique=annonces', pathMatch: 'full' },
+  { path: 'admin/utilisateurs', redirectTo: '/admin?rubrique=comptes', pathMatch: 'full' },
+  { path: 'admin/retraits', redirectTo: '/admin?rubrique=retraits', pathMatch: 'full' },
+  { path: 'admin/signalements', redirectTo: '/admin?rubrique=signalements', pathMatch: 'full' },
+  { path: '**', redirectTo: '' },
 ];
