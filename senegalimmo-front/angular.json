@@ -33,7 +33,6 @@
                 "bundleName": "mapbox",
                 "inject": false
               },
-              "src/material-theme.scss",
               "src/styles.css"
             ]
           },

@@ -64,7 +64,7 @@
   --radius-champ: 8px;
 }
 
-/* Hors couche : passe devant le thème Material encore chargé par les anciens écrans */
+/* Hors couche : base du document, avant toute couche */
 html {
   color-scheme: light;
   -webkit-text-size-adjust: 100%;
