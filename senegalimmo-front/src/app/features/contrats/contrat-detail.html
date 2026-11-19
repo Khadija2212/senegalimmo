@@ -1,0 +1,96 @@
+<main class="mx-auto max-w-[880px] px-4 pb-24 sm:px-7 lg:px-10">
+  <div class="pt-7 sm:pt-10">
+    <a class="lien-texte" [routerLink]="cheminContrats">{{ textes.tousLesContrats }}</a>
+  </div>
+
+  @if (contrat.isLoading() && !contrat.value()) {
+    <div class="mt-6 animate-pulse" aria-busy="true" [attr.aria-label]="textes.chargement">
+      <div class="bg-brume h-3 w-24 rounded"></div>
+      <div class="bg-brume mt-3 h-9 w-3/4 rounded-md"></div>
+      <div class="bg-brume mt-3 h-4 w-1/2 rounded"></div>
+      @for (i of [1, 2, 3]; track i) {
+        <div class="bg-brume mt-6 h-12 rounded-md"></div>
+      }
+    </div>
+  } @else if (introuvable()) {
+    <div class="border-input rounded-cadre mt-6 border border-dashed px-6 py-8" role="alert">
+      <h1 class="font-display text-[1.4rem] font-semibold">{{ textes.introuvableTitre }}</h1>
+      <p class="text-encre-2 mt-1.5">{{ textes.introuvableTexte }}</p>
+      <a hlmBtn size="grand" class="mt-4 h-[46px]" [routerLink]="cheminContrats">{{
+        textes.tousLesContrats
+      }}</a>
+    </div>
+  } @else if (contrat.error()) {
+    <div class="border-input rounded-cadre mt-6 border border-dashed px-6 py-8" role="alert">
+      <h1 class="font-display text-[1.4rem] font-semibold">{{ textes.erreurTitre }}</h1>
+      <p class="text-encre-2 mt-1.5">{{ textes.erreurTexte }}</p>
+      <button hlmBtn size="grand" class="mt-4 h-[46px]" (click)="contrat.reload()">
+        {{ textes.reessayer }}
+      </button>
+    </div>
+  } @else if (contrat.value(); as c) {
+    <header class="border-border border-b pt-5 pb-6">
+      <span class="text-encre-3 text-[0.78rem] font-semibold tracking-[0.06em] uppercase">{{
+        nature()
+      }}</span>
+      <h1 class="font-display mt-1 text-[clamp(1.9rem,3.2vw,2.6rem)] leading-[1.08] font-semibold">
+        {{ c.bien.titre }}
+      </h1>
+      <p class="text-encre-2 mt-1.5">
+        {{ textes.reference(c.reference) }}, {{ c.bien.adresse }}, {{ c.bien.quartier }},
+        {{ c.bien.ville }}
+      </p>
+      @if (etat(); as e) {
+        <p class="mt-3">
+          <b class="font-semibold" [class]="couleur()">{{ e.libelle }}</b>
+          @if (e.explication) {
+            <span class="text-encre-2 ml-1.5">{{ e.explication }}</span>
+          }
+        </p>
+      }
+      <button
+        type="button"
+        class="lien-texte mt-4"
+        [disabled]="ouverture()"
+        (click)="telecharger()"
+      >
+        {{ ouverture() ? textes.ouverturePdf : textes.telechargerPdf }}
+      </button>
+      @if (erreurPdf(); as e) {
+        <p class="text-destructive mt-2 text-[0.88rem]" role="alert">{{ e }}</p>
+      }
+    </header>
+
+    @if (c.signatures.length) {
+      <si-bloc-signatures
+        class="mt-9"
+        [contrat]="c"
+        [compteId]="compteId()"
+        (signe)="signe($event)"
+      />
+    }
+
+    @if (c.nature === 'bail') {
+      <si-bloc-bail class="mt-10" [bail]="c" [role]="role()" (resilie)="contrat.reload()" />
+      @if (c.statut === 'signe' || c.statut === 'resilie') {
+        <si-etats-des-lieux class="mt-10" [bail]="c" [role]="role()" />
+      }
+    } @else if (c.nature === 'promesse_vente') {
+      <si-bloc-promesse class="mt-10" [promesse]="c" [role]="role()" />
+    } @else {
+      <section class="mt-10" aria-labelledby="t-mandat">
+        <h2 id="t-mandat" class="font-display text-[1.55rem] leading-tight font-semibold">
+          {{ textes.mandatConditions }}
+        </h2>
+        <dl class="border-border mt-3.5 border-t">
+          @for (m of mandat(); track m[0]) {
+            <div class="border-border flex justify-between gap-4 border-b py-3">
+              <dt class="text-encre-2">{{ m[0] }}</dt>
+              <dd class="text-right font-semibold tabular-nums">{{ m[1] }}</dd>
+            </div>
+          }
+        </dl>
+      </section>
+    }
+  }
+</main>

@@ -1,0 +1,100 @@
+<main class="mx-auto max-w-[760px] px-4 pb-24 sm:px-7 lg:px-10">
+  <div class="pt-7 sm:pt-10">
+    <a class="lien-texte" [routerLink]="cheminContrats">{{ textes.tousLesContrats }}</a>
+  </div>
+  <h1 class="font-display mt-4 text-[clamp(2rem,3.4vw,2.8rem)] leading-[1.05] font-semibold">
+    {{ textes.nouveauBail }}
+  </h1>
+
+  @if (demandes.isLoading() && !demandes.value()) {
+    <div class="mt-6 animate-pulse" aria-busy="true" [attr.aria-label]="textes.chargement">
+      <div class="bg-brume h-5 w-2/3 rounded"></div>
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="bg-brume mt-4 h-10 rounded-md"></div>
+      }
+    </div>
+  } @else if (demandes.error()) {
+    <div class="border-input rounded-cadre mt-6 border border-dashed px-6 py-8" role="alert">
+      <h2 class="font-display text-[1.4rem] font-semibold">{{ textes.erreurTitre }}</h2>
+      <p class="text-encre-2 mt-1.5">{{ textes.erreurTexte }}</p>
+      <button hlmBtn size="grand" class="mt-4 h-[46px]" (click)="demandes.reload()">
+        {{ textes.reessayer }}
+      </button>
+    </div>
+  } @else if (!choisie()) {
+    <div class="vide" role="alert">
+      <ng-icon name="siContrat" size="32" class="text-bleu" />
+      <div>
+        <h2 class="font-display text-[1.4rem] leading-tight font-semibold">
+          {{ textes.demandeIntrouvable }}
+        </h2>
+        <p class="text-encre-2 mt-1.5 max-w-[52ch]">{{ textes.demandeIntrouvableTexte }}</p>
+        <a hlmBtn size="grand" class="mt-[18px] h-[46px]" [routerLink]="cheminContrats">{{
+          textes.tousLesContrats
+        }}</a>
+      </div>
+    </div>
+  } @else if (choisie(); as d) {
+    <p class="text-encre-2 mt-2 max-w-[62ch]">{{ textes.nouveauBailIntro }}</p>
+
+    <section class="mt-8" aria-labelledby="t-recap">
+      <h2 id="t-recap" class="text-[1.05rem] font-semibold">{{ d.annonce.bien.titre }}</h2>
+      @if (d.client) {
+        <p class="text-encre-2 mt-0.5 text-[0.9rem]">
+          {{ textes.demandeDe(d.client.prenom + ' ' + d.client.nom) }}
+        </p>
+      }
+      <dl class="border-border mt-3.5 border-t">
+        @for (r of recap(); track r[0]) {
+          <div class="border-border flex justify-between gap-4 border-b py-3">
+            <dt class="text-encre-2">{{ r[0] }}</dt>
+            <dd class="text-right font-semibold tabular-nums">{{ r[1] }}</dd>
+          </div>
+        }
+      </dl>
+    </section>
+
+    @if (d.bail) {
+      <p class="mt-6">
+        <b class="text-encre-3 font-semibold">{{ textes.bailExiste }}</b>
+        <a class="lien-texte ml-2" [routerLink]="[cheminContrats, d.bail.id]">{{
+          textes.voirLeBail
+        }}</a>
+      </p>
+    } @else if (d.statut !== 'acceptee') {
+      <p class="text-bleu-vif mt-6 font-semibold" role="alert">{{ textes.demandeNonAcceptee }}</p>
+    } @else {
+      <form class="mt-8" (submit)="$event.preventDefault(); creer()">
+        <span id="l-echeance" class="text-encre-2 mb-2 block text-[0.8rem] font-semibold">{{
+          textes.jourEcheance
+        }}</span>
+        <hlm-select
+          [value]="jourEcheance()"
+          [itemToString]="libelleJour"
+          (valueChange)="choisirJour($event)"
+        >
+          <hlm-select-trigger
+            aria-labelledby="l-echeance"
+            aria-describedby="a-echeance"
+            class="h-11 w-full bg-white sm:w-64"
+            ><hlm-select-value
+          /></hlm-select-trigger>
+          <hlm-select-content *hlmSelectPortal>
+            @for (j of jours; track j) {
+              <hlm-select-item [value]="j">{{ libelleJour(j) }}</hlm-select-item>
+            }
+          </hlm-select-content>
+        </hlm-select>
+        <p id="a-echeance" class="text-encre-3 mt-1.5 text-[0.85rem]">
+          {{ textes.jourEcheanceAide }}
+        </p>
+        <button hlmBtn size="grand" type="submit" class="mt-6 h-[46px]" [disabled]="enCours()">
+          {{ enCours() ? textes.creationEnCours : textes.creerBail }}
+        </button>
+        @if (erreur(); as e) {
+          <p class="text-destructive mt-3 text-[0.88rem]" role="alert">{{ e }}</p>
+        }
+      </form>
+    }
+  }
+</main>

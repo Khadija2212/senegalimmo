@@ -1,0 +1,120 @@
+@let b = bail();
+<h2 class="font-display text-[1.55rem] leading-tight font-semibold">{{ textes.conditions }}</h2>
+<dl class="border-border mt-3.5 grid grid-cols-1 border-t sm:grid-cols-2 sm:gap-x-8">
+  @for (c of conditions(); track c[0]) {
+    <div class="border-border flex justify-between gap-4 border-b py-3">
+      <dt class="text-encre-2">{{ c[0] }}</dt>
+      <dd class="text-right font-semibold tabular-nums">{{ c[1] }}</dd>
+    </div>
+  }
+</dl>
+
+@if (b.statut === 'signe' || b.statut === 'resilie') {
+  <h2 class="font-display mt-10 text-[1.55rem] leading-tight font-semibold">
+    {{ textes.paiementsBail }}
+  </h2>
+  @if (echeancier.isLoading() && !echeancier.value()) {
+    <div class="mt-3.5 animate-pulse" aria-busy="true">
+      <div class="bg-brume h-4 w-2/3 rounded"></div>
+      <div class="bg-brume mt-3 h-4 w-1/2 rounded"></div>
+    </div>
+  } @else if (echeancier.error()) {
+    <p class="text-encre-2 mt-3" role="alert">
+      {{ textes.erreurTexte }}
+      <button type="button" class="lien-texte ml-2" (click)="echeancier.reload()">
+        {{ textes.reessayer }}
+      </button>
+    </p>
+  } @else if (echeancier.value(); as e) {
+    <dl class="border-border mt-3.5 border-t">
+      <div class="border-border flex justify-between gap-4 border-b py-3">
+        <dt class="text-encre-2">{{ textes.caution }}</dt>
+        <dd class="text-right font-semibold">
+          @if (!e.caution) {
+            <span class="text-encre-3">{{ textes.cautionSans }}</span>
+          } @else if (e.caution_payee) {
+            <span class="text-succes">{{ textes.cautionPayee }}</span>
+          } @else {
+            <span class="text-bleu-vif">{{ textes.cautionAPayer }}</span>
+          }
+        </dd>
+      </div>
+      <div class="border-border flex justify-between gap-4 border-b py-3">
+        <dt class="text-encre-2">{{ textes.loyersPayes }}</dt>
+        <dd class="text-right font-semibold tabular-nums">
+          {{ textes.loyersSur(e.loyers_payes, e.loyers_total) }}
+        </dd>
+      </div>
+      <div class="border-border flex justify-between gap-4 border-b py-3">
+        <dt class="text-encre-2">{{ textes.prochaineEcheance }}</dt>
+        <dd class="text-right font-semibold tabular-nums">
+          @if (e.prochaine_echeance) {
+            {{ jour(e.prochaine_echeance) }}
+          } @else {
+            <span class="text-succes">{{ textes.toutPaye }}</span>
+          }
+        </dd>
+      </div>
+    </dl>
+    <div class="mt-4 flex flex-wrap items-center gap-x-5 gap-y-3">
+      @if (propose(); as p) {
+        <a
+          hlmBtn
+          size="grand"
+          class="h-[46px]"
+          [routerLink]="cheminPaiements"
+          [queryParams]="p.parametres"
+          >{{ p.libelle }}</a
+        >
+      }
+      <a class="lien-texte" [routerLink]="cheminPaiements">{{ textes.voirPaiements }}</a>
+    </div>
+  }
+}
+
+@if (peutResilier()) {
+  <div class="mt-8">
+    <button
+      type="button"
+      class="lien-texte danger"
+      [attr.aria-expanded]="confirmation()"
+      (click)="basculer()"
+    >
+      {{ textes.resilier }}
+    </button>
+    @if (confirmation()) {
+      <div class="confirmer mt-3" role="alert">
+        <p class="w-full">{{ textes.confirmerResiliation }}</p>
+        <div class="w-full">
+          <label hlmLabel for="f-motif" class="mb-1.5 block text-[0.85rem] font-semibold">{{
+            textes.motifResiliation
+          }}</label>
+          <textarea
+            hlmTextarea
+            id="f-motif"
+            rows="3"
+            class="w-full bg-white"
+            aria-describedby="f-motif-aide"
+            [value]="motif()"
+            (input)="motif.set($any($event.target).value)"
+          ></textarea>
+          <p id="f-motif-aide" class="mt-1 text-[0.82rem]">{{ textes.motifAide }}</p>
+        </div>
+        <button
+          type="button"
+          class="lien-texte text-alerte-texte"
+          [disabled]="enCours()"
+          (click)="resilier()"
+        >
+          {{ textes.ouiResilier }}
+        </button>
+        <button type="button" class="lien-texte text-alerte-texte" (click)="basculer()">
+          {{ textes.nonGarder }}
+        </button>
+      </div>
+    }
+  </div>
+}
+@if (erreur(); as e) {
+  <p class="text-destructive mt-3 text-[0.88rem]" role="alert">{{ e }}</p>
+}
