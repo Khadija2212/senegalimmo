@@ -28,19 +28,42 @@
       [attr.aria-current]="actif() === 'acheter' ? 'page' : null"
       >{{ textes.acheter }}</a
     >
-    <a
-      class="text-ciel py-1.5 text-[0.95rem] font-medium no-underline hover:text-white"
-      [routerLink]="liens.publier"
-    >
-      {{ textes.publier }}
-    </a>
+    @if (session.estClient()) {
+      <a
+        class="border-b py-1.5 text-[0.95rem] font-medium no-underline"
+        [class]="
+          actif() === 'espace'
+            ? 'border-aqua text-white'
+            : 'border-transparent text-ciel hover:text-white'
+        "
+        [routerLink]="liens.espace"
+        [attr.aria-current]="actif() === 'espace' ? 'page' : null"
+        >{{ textes.monEspace }}</a
+      >
+    } @else {
+      <a
+        class="text-ciel py-1.5 text-[0.95rem] font-medium no-underline hover:text-white"
+        [routerLink]="liens.publier"
+      >
+        {{ textes.publier }}
+      </a>
+    }
   </nav>
 
   <div class="ml-auto hidden items-center gap-5 md:flex">
     @if (session.compte(); as c) {
-      <span class="text-ciel inline-flex items-center gap-2 text-[0.95rem]">
-        <ng-icon name="siCompte" size="20" class="text-aqua" />{{ c.prenom }} {{ c.nom }}
-      </span>
+      @if (session.estClient()) {
+        <a
+          class="inline-flex items-center gap-2 text-[0.95rem] text-white no-underline hover:underline hover:underline-offset-4"
+          [routerLink]="liens.espace"
+        >
+          <ng-icon name="siCompte" size="20" class="text-aqua" />{{ c.prenom }} {{ c.nom }}
+        </a>
+      } @else {
+        <span class="text-ciel inline-flex items-center gap-2 text-[0.95rem]">
+          <ng-icon name="siCompte" size="20" class="text-aqua" />{{ c.prenom }} {{ c.nom }}
+        </span>
+      }
       <button
         hlmBtn
         variant="marine"
@@ -98,7 +121,13 @@
     >
       {{ textes.acheter }}
     </a>
-    <a class="block py-3 text-white" [routerLink]="liens.publier">{{ textes.publier }}</a>
+    @if (session.estClient()) {
+      <a class="block py-3 text-white" [routerLink]="liens.espace" (click)="basculerMenu()">{{
+        textes.monEspace
+      }}</a>
+    } @else {
+      <a class="block py-3 text-white" [routerLink]="liens.publier">{{ textes.publier }}</a>
+    }
     @if (session.compte(); as c) {
       <p class="text-ciel py-3">{{ c.prenom }} {{ c.nom }}</p>
       <button

@@ -5,7 +5,6 @@ import { provideHttpClient, withXsrfConfiguration } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
 import { provideIcons } from '@ng-icons/core';
-import { provideSpartanHlm } from '@spartan-ng/helm/utils';
 import { routes } from './app.routes';
 import { SessionService } from './core/session/session';
 import { ICONES } from './shared/icones/icones';
@@ -25,7 +24,6 @@ export const appConfig: ApplicationConfig = {
     ),
     provideAppInitializer(() => inject(SessionService).charger()),
     provideAnimationsAsync(),
-    provideSpartanHlm(),
     provideIcons(ICONES),
   ],
 };

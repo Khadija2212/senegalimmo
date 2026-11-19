@@ -1,0 +1,15 @@
+/* Confirmation d'une action dans la ligne même, sans fenêtre par-dessus */
+@layer components {
+  .confirmer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    padding: 12px 14px;
+    border-left: 3px solid var(--color-refus);
+    border-radius: 0 8px 8px 0;
+    background: var(--color-alerte);
+    color: var(--color-alerte-texte);
+    font-size: 0.9rem;
+  }
+}

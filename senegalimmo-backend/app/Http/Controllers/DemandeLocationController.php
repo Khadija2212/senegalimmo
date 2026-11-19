@@ -26,7 +26,7 @@ class DemandeLocationController extends Controller
             ? $compte->demandesLocation()
             : DemandeLocation::whereHas('annonce', fn (Builder $q) => $q->whereIn('bien_id', $this->biensGeres($compte)));
 
-        return response()->json($requete->with(['annonce.bien', 'client:id,prenom,nom,telephone,profession', 'bail'])->latest()->get());
+        return response()->json($requete->with(['annonce.bien.medias', 'annonce.bien.proprietaire:id,prenom,nom', 'client:id,prenom,nom,telephone,profession', 'bail'])->latest()->get());
     }
 
     public function store(Request $request): JsonResponse

@@ -8,6 +8,7 @@ export const TEXTES_LAYOUT = {
   connexion: 'Se connecter',
   inscription: 'Créer un compte',
   deconnexion: 'Se déconnecter',
+  monEspace: 'Mon espace',
   ouvrirMenu: 'Ouvrir le menu',
   fermerMenu: 'Fermer le menu',
   presentation:
@@ -26,4 +27,5 @@ export const LIENS = {
   connexion: '/connexion',
   inscription: '/inscription',
   comparer: '/comparateur',
+  espace: '/espace',
 } as const;

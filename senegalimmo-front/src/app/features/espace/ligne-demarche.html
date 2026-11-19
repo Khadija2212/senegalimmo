@@ -1,0 +1,131 @@
+@let d = demarche();
+@if (d.photo) {
+  <img [src]="d.photo" alt="" class="size-16 rounded-champ object-cover sm:h-[72px] sm:w-24" />
+} @else {
+  <span class="bg-brume size-16 rounded-champ sm:h-[72px] sm:w-24"></span>
+}
+
+<div class="min-w-0">
+  <span
+    class="text-encre-3 flex items-center gap-2 text-[0.78rem] font-semibold tracking-[0.06em] uppercase"
+  >
+    <ng-icon [name]="icone()" size="18" class="text-bleu" />{{ genre() }}
+  </span>
+  <h3 class="mt-1 text-[1.02rem] leading-snug font-semibold">
+    <a [routerLink]="lienAnnonce()" class="hover:underline hover:underline-offset-[3px]">{{
+      d.annonce.bien.titre
+    }}</a>
+  </h3>
+  <p class="text-encre-2 mt-1 text-[0.9rem] tabular-nums">
+    <b class="text-foreground font-semibold">{{ d.fort }}</b
+    >{{ d.suite }}
+  </p>
+  <p class="mt-2 text-[0.88rem]">
+    <b class="font-semibold" [class]="couleur()">{{ d.etat.libelle }}</b>
+    @if (d.etat.explication) {
+      <span class="text-encre-2 block sm:ml-1.5 sm:inline">{{ d.etat.explication }}</span>
+    }
+  </p>
+</div>
+
+<div class="col-start-2 flex flex-col items-start gap-2 sm:col-start-auto sm:items-end">
+  @if (d.lien) {
+    @if (principale()) {
+      <a hlmBtn class="h-[42px] px-4 text-[0.9rem]" [routerLink]="d.lien.chemin">{{
+        d.lien.libelle
+      }}</a>
+    } @else {
+      <a class="lien-texte" [routerLink]="d.lien.chemin">{{ d.lien.libelle }}</a>
+    }
+  }
+  @if (d.peutReprogrammer || d.peutAnnuler || d.peutRetirer) {
+    <div class="flex flex-wrap gap-4 sm:justify-end">
+      @if (d.peutReprogrammer) {
+        <button
+          type="button"
+          class="lien-texte"
+          [attr.aria-expanded]="volet() === 'reprogrammer'"
+          (click)="ouvrir('reprogrammer')"
+        >
+          {{ textes.reprogrammer }}
+        </button>
+      }
+      @if (d.peutAnnuler) {
+        <button
+          type="button"
+          class="lien-texte danger"
+          [attr.aria-expanded]="volet() === 'annuler'"
+          (click)="ouvrir('annuler')"
+        >
+          {{ textes.annuler }}
+        </button>
+      }
+      @if (d.peutRetirer) {
+        <button
+          type="button"
+          class="lien-texte danger"
+          [attr.aria-expanded]="volet() === 'retirer'"
+          (click)="ouvrir('retirer')"
+        >
+          {{ textes.retirerOffre }}
+        </button>
+      }
+    </div>
+  }
+  @if (d.interlocuteur; as i) {
+    <a
+      class="lien-texte"
+      [routerLink]="cheminMessages"
+      [queryParams]="{ a: i.id, annonce: d.annonce.id }"
+      >{{ libelleEcrire() }}</a
+    >
+  }
+</div>
+
+@switch (volet()) {
+  @case ('reprogrammer') {
+    <si-reprogrammer-visite
+      class="col-span-2 sm:col-span-2 sm:col-start-2"
+      [ident]="d.cle"
+      [qui]="qui()"
+      [enCours]="enCours()"
+      (valider)="reprogrammer.emit($event)"
+      (fermer)="volet.set(null)"
+    />
+  }
+  @case ('annuler') {
+    <div class="confirmer col-span-2 sm:col-start-2" role="alert">
+      {{ textes.confirmerAnnulation(quand(), quiDebut()) }}
+      <button
+        type="button"
+        class="lien-texte text-alerte-texte"
+        [disabled]="enCours()"
+        (click)="annuler.emit()"
+      >
+        {{ textes.ouiAnnuler }}
+      </button>
+      <button type="button" class="lien-texte text-alerte-texte" (click)="volet.set(null)">
+        {{ textes.nonGarder }}
+      </button>
+    </div>
+  }
+  @case ('retirer') {
+    <div class="confirmer col-span-2 sm:col-start-2" role="alert">
+      {{ textes.confirmerRetrait }}
+      <button
+        type="button"
+        class="lien-texte text-alerte-texte"
+        [disabled]="enCours()"
+        (click)="retirer.emit()"
+      >
+        {{ textes.ouiRetirer }}
+      </button>
+      <button type="button" class="lien-texte text-alerte-texte" (click)="volet.set(null)">
+        {{ textes.nonGarderOffre }}
+      </button>
+    </div>
+  }
+}
+@if (erreur(); as e) {
+  <p class="text-destructive col-span-2 text-[0.85rem] sm:col-start-2" role="alert">{{ e }}</p>
+}

@@ -40,6 +40,12 @@ export class SelectionService {
     return requete.pipe(tap(() => this.gardees.update((s) => basculer(s, id, garder))));
   }
 
+  retirerFavori(id: string): Observable<unknown> {
+    return this.http
+      .delete(`${this.url}/${id}`)
+      .pipe(tap(() => this.gardees.update((s) => basculer(s, id, false))));
+  }
+
   estComparee(id: string): boolean {
     return this.aComparer().includes(id);
   }

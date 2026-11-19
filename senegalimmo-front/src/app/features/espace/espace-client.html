@@ -1,0 +1,222 @@
+<main class="mx-auto max-w-[1240px] px-4 pb-24 sm:px-7 lg:px-10">
+  <section class="flex flex-wrap items-end gap-x-8 gap-y-5 pt-7 pb-5 sm:pt-10 sm:pb-7">
+    <div class="min-w-0">
+      <h1 class="font-display text-[clamp(2rem,3.4vw,2.8rem)] leading-[1.05] font-semibold">
+        {{ salut() }}
+      </h1>
+      @if (resume()) {
+        <p class="text-encre-2 mt-2 max-w-[60ch]">{{ resume() }}</p>
+      }
+    </div>
+    @if (donnees.value(); as d) {
+      @if (!vide()) {
+        <dl
+          class="border-border flex w-full rounded-cadre border sm:w-auto lg:ml-auto"
+          [attr.aria-label]="textes.enBref"
+        >
+          @for (
+            c of [
+              [d.indicateurs.visites, textes.visites],
+              [d.indicateurs.demandes_location, textes.demandes],
+              [d.indicateurs.offres_en_cours, textes.offresEnCours],
+              [d.indicateurs.favoris, textes.favoris],
+            ];
+            track $index
+          ) {
+            <div
+              class="border-border flex min-w-0 flex-1 flex-col-reverse border-r px-3 py-2.5 last:border-r-0 sm:min-w-24 sm:px-[18px] sm:py-3"
+            >
+              <dt class="text-encre-3 text-[0.74rem] sm:text-[0.8rem] sm:whitespace-nowrap">
+                {{ c[1] }}
+              </dt>
+              <dd
+                class="text-[1.5rem] leading-none font-bold tabular-nums [font-variation-settings:'wdth'_85]"
+              >
+                {{ c[0] }}
+              </dd>
+            </div>
+          }
+        </dl>
+      }
+    }
+  </section>
+
+  <div class="grid items-start gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-12">
+    <nav
+      class="border-border flex overflow-x-auto border-b lg:sticky lg:top-24 lg:flex-col lg:border-t lg:border-b-0"
+      [attr.aria-label]="textes.rubriques"
+    >
+      <button
+        type="button"
+        class="rubrique"
+        [attr.aria-current]="rubrique() === 'demarches'"
+        (click)="choisir('demarches')"
+      >
+        <ng-icon name="siListe" size="18" />{{ textes.mesDemarches
+        }}<span class="n">{{ nombreDemarches() }}</span>
+      </button>
+      <button
+        type="button"
+        class="rubrique"
+        [attr.aria-current]="rubrique() === 'favoris'"
+        (click)="choisir('favoris')"
+      >
+        <ng-icon name="siGarder" size="18" />{{ textes.rubriqueFavoris
+        }}<span class="n">{{ donnees.value()?.favoris?.length ?? 0 }}</span>
+      </button>
+      <a class="rubrique" [routerLink]="liens.messages">
+        <ng-icon name="siMessage" size="18" />{{ textes.messages }}
+        @if (donnees.value()?.indicateurs?.messages_non_lus; as n) {
+          <span class="n">{{ textes.nonLus(n) }}</span>
+        }
+      </a>
+      <a class="rubrique" [routerLink]="liens.contrats"
+        ><ng-icon name="siContrat" size="18" />{{ textes.contrats }}</a
+      >
+      <a class="rubrique" [routerLink]="liens.paiements"
+        ><ng-icon name="siMobile" size="18" />{{ textes.paiements }}</a
+      >
+      <a class="rubrique" [routerLink]="liens.profil"
+        ><ng-icon name="siCompte" size="18" />{{ textes.profil }}</a
+      >
+    </nav>
+
+    <div class="min-w-0">
+      @if (donnees.isLoading() && !donnees.value()) {
+        <div class="animate-pulse" aria-busy="true" [attr.aria-label]="textes.chargement">
+          <div class="bg-brume h-7 w-40 rounded-md"></div>
+          @for (i of [1, 2, 3]; track i) {
+            <div class="border-border mt-4 grid grid-cols-[96px_1fr] gap-4 border-b pb-4">
+              <div class="bg-brume h-[72px] rounded-champ"></div>
+              <div>
+                <div class="bg-brume h-4 w-2/3 rounded"></div>
+                <div class="bg-brume mt-3 h-4 w-1/2 rounded"></div>
+              </div>
+            </div>
+          }
+        </div>
+      } @else if (donnees.error()) {
+        <div class="border-input rounded-cadre border border-dashed px-6 py-8" role="alert">
+          <h2 class="font-display text-[1.4rem] font-semibold">{{ textes.erreurTitre }}</h2>
+          <p class="text-encre-2 mt-1.5">{{ textes.erreurTexte }}</p>
+          <button hlmBtn size="grand" class="mt-4 h-[46px]" (click)="donnees.reload()">
+            {{ textes.reessayer }}
+          </button>
+        </div>
+      } @else if (groupes(); as g) {
+        @if (rubrique() === 'favoris') {
+          <section aria-labelledby="t-fav">
+            <h2
+              id="t-fav"
+              class="font-display flex items-baseline gap-3 text-[1.55rem] leading-tight font-semibold"
+            >
+              {{ textes.rubriqueFavoris }}
+              <small class="text-encre-3 font-sans text-[0.85rem] font-medium">{{
+                donnees.value()?.favoris?.length
+              }}</small>
+            </h2>
+            @if (donnees.value()?.favoris?.length) {
+              <p class="text-encre-2 mt-1.5 text-[0.92rem]">{{ textes.favorisIntro }}</p>
+              <si-liste-favoris
+                [favoris]="donnees.value()!.favoris"
+                (retirer)="retirerFavori($event)"
+              />
+            } @else {
+              <div class="vide">
+                <ng-icon name="siGarder" size="32" class="text-bleu" />
+                <div>
+                  <h3 class="font-display text-[1.4rem] leading-tight font-semibold">
+                    {{ textes.favorisVides }}
+                  </h3>
+                  <p class="text-encre-2 mt-1.5 max-w-[52ch]">{{ textes.favorisVidesTexte }}</p>
+                  <a hlmBtn size="grand" class="mt-[18px] h-[46px]" [routerLink]="liens.accueil">
+                    <ng-icon name="siChercher" size="18" />{{ textes.chercherLogement }}
+                  </a>
+                </div>
+              </div>
+            }
+          </section>
+        } @else if (vide()) {
+          <section aria-labelledby="t-vide">
+            <h2 id="t-vide" class="font-display text-[1.55rem] leading-tight font-semibold">
+              {{ textes.mesDemarches }}
+            </h2>
+            <div class="vide">
+              <ng-icon name="siCle" size="32" class="text-bleu" />
+              <div>
+                <h3 class="font-display text-[1.4rem] leading-tight font-semibold">
+                  {{ textes.videTitre }}
+                </h3>
+                <p class="text-encre-2 mt-1.5 max-w-[52ch]">{{ textes.videTexte }}</p>
+                <a hlmBtn size="grand" class="mt-[18px] h-[46px]" [routerLink]="liens.accueil">
+                  <ng-icon name="siChercher" size="18" />{{ textes.chercherLogement }}
+                </a>
+              </div>
+            </div>
+          </section>
+        } @else {
+          @for (
+            bloc of [
+              { cle: 'faire', titre: textes.aFaire, intro: textes.aFaireIntro, liste: g.faire },
+              {
+                cle: 'attente',
+                titre: textes.enAttente,
+                intro: textes.enAttenteIntro,
+                liste: g.attente,
+              },
+            ];
+            track bloc.cle
+          ) {
+            @if (bloc.liste.length) {
+              <section class="mb-11" [attr.aria-labelledby]="'t-' + bloc.cle">
+                <h2
+                  [id]="'t-' + bloc.cle"
+                  class="font-display flex items-baseline gap-3 text-[1.55rem] leading-tight font-semibold"
+                >
+                  {{ bloc.titre }}
+                  <small class="text-encre-3 font-sans text-[0.85rem] font-medium">{{
+                    bloc.liste.length
+                  }}</small>
+                </h2>
+                <p class="text-encre-2 mt-1.5 text-[0.92rem]">{{ bloc.intro }}</p>
+                <div class="border-border mt-3.5 border-t">
+                  @for (d of bloc.liste; track d.cle) {
+                    <si-ligne-demarche
+                      [demarche]="d"
+                      [principale]="d.cle === principale()"
+                      [enCours]="actionEnCours() === d.cle"
+                      [erreur]="erreurs()[d.cle] ?? null"
+                      (reprogrammer)="reprogrammer(d, $event)"
+                      (annuler)="annuler(d)"
+                      (retirer)="retirer(d)"
+                    />
+                  }
+                </div>
+              </section>
+            }
+          }
+          @if (g.termine.length) {
+            <details class="passe group">
+              <summary
+                class="border-border text-encre-2 flex cursor-pointer list-none items-center gap-2.5 border-t py-3 font-semibold"
+              >
+                <ng-icon
+                  name="siBas"
+                  size="18"
+                  class="transition-transform group-open:rotate-180"
+                />{{ textes.terminees }}
+                <small class="text-encre-3 text-[0.85rem]">{{ g.termine.length }}</small>
+              </summary>
+              <div class="border-border border-t opacity-85">
+                @for (d of g.termine; track d.cle) {
+                  <si-ligne-demarche [demarche]="d" />
+                }
+              </div>
+            </details>
+          }
+        }
+      }
+    </div>
+  </div>
+  <si-barre-comparer />
+</main>

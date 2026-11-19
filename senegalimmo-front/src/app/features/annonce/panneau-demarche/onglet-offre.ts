@@ -21,7 +21,7 @@ import { RetourEnvoi } from './retour-envoi';
 
 const RABAIS_PROPOSE = 0.05;
 const POURCENT = 100;
-const CHEMIN_OFFRES = '/offres';
+const CHEMIN_OFFRES = '/espace';
 
 /** Onglet « Faire une offre » : cas « Soumettre une offre d'achat », valable 7 jours. */
 @Component({
