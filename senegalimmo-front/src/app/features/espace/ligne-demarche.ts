@@ -36,7 +36,7 @@ const CHEMIN_MESSAGES = '/messages';
   imports: [RouterLink, NgIcon, HlmButton, ReprogrammerVisite],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './ligne-demarche.html',
-  styleUrls: ['./lien-texte.css', './ligne-demarche.css'],
+  styleUrls: ['../../shared/espace/lien-texte.css', '../../shared/espace/confirmer.css'],
   host: {
     class:
       'grid grid-cols-[64px_minmax(0,1fr)] items-start gap-3.5 border-b border-border py-[18px] sm:grid-cols-[96px_minmax(0,1fr)_auto] sm:gap-[18px]',

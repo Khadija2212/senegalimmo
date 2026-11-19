@@ -12,7 +12,7 @@ const HEURE_DEFAUT = 1;
   selector: 'si-reprogrammer-visite',
   imports: [HlmButton, HlmToggleGroupImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  styleUrl: './lien-texte.css',
+  styleUrl: '../../shared/espace/lien-texte.css',
   template: `
     <span [id]="ident() + '-jour'" class="text-encre-2 mb-2 block text-[0.8rem] font-semibold">{{
       textes.nouveauJour

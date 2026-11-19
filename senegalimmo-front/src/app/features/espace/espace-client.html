@@ -8,7 +8,7 @@
         <p class="text-encre-2 mt-2 max-w-[60ch]">{{ resume() }}</p>
       }
     </div>
-    @if (donnees.value(); as d) {
+    @if (valeur(); as d) {
       @if (!vide()) {
         <dl
           class="border-border flex w-full rounded-cadre border sm:w-auto lg:ml-auto"
@@ -62,11 +62,11 @@
         (click)="choisir('favoris')"
       >
         <ng-icon name="siGarder" size="18" />{{ textes.rubriqueFavoris
-        }}<span class="n">{{ donnees.value()?.favoris?.length ?? 0 }}</span>
+        }}<span class="n">{{ valeur()?.favoris?.length ?? 0 }}</span>
       </button>
       <a class="rubrique" [routerLink]="liens.messages">
         <ng-icon name="siMessage" size="18" />{{ textes.messages }}
-        @if (donnees.value()?.indicateurs?.messages_non_lus; as n) {
+        @if (valeur()?.indicateurs?.messages_non_lus; as n) {
           <span class="n">{{ textes.nonLus(n) }}</span>
         }
       </a>
@@ -82,7 +82,7 @@
     </nav>
 
     <div class="min-w-0">
-      @if (donnees.isLoading() && !donnees.value()) {
+      @if (donnees.isLoading() && !valeur()) {
         <div class="animate-pulse" aria-busy="true" [attr.aria-label]="textes.chargement">
           <div class="bg-brume h-7 w-40 rounded-md"></div>
           @for (i of [1, 2, 3]; track i) {
@@ -112,15 +112,12 @@
             >
               {{ textes.rubriqueFavoris }}
               <small class="text-encre-3 font-sans text-[0.85rem] font-medium">{{
-                donnees.value()?.favoris?.length
+                valeur()?.favoris?.length
               }}</small>
             </h2>
-            @if (donnees.value()?.favoris?.length) {
+            @if (valeur()?.favoris?.length) {
               <p class="text-encre-2 mt-1.5 text-[0.92rem]">{{ textes.favorisIntro }}</p>
-              <si-liste-favoris
-                [favoris]="donnees.value()!.favoris"
-                (retirer)="retirerFavori($event)"
-              />
+              <si-liste-favoris [favoris]="valeur()!.favoris" (retirer)="retirerFavori($event)" />
             } @else {
               <div class="vide">
                 <ng-icon name="siGarder" size="32" class="text-bleu" />

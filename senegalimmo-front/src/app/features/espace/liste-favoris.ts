@@ -14,7 +14,7 @@ const CHEMIN_ANNONCE = '/annonces';
   selector: 'si-liste-favoris',
   imports: [RouterLink, NgIcon, FcfaPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  styleUrl: './lien-texte.css',
+  styleUrl: '../../shared/espace/lien-texte.css',
   template: `
     @for (a of favoris(); track a.id) {
       <div
