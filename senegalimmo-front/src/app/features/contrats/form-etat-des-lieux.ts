@@ -17,6 +17,7 @@ import { Bail, TypeEtatDesLieux } from '../../core/modeles/contrats';
 import { ContratsService } from '../../core/services/contrats';
 import { messageErreur } from '../../core/services/demarches';
 import { TEXTES_CONTRATS } from './textes';
+import { lire } from '../../core/ressources/lire';
 
 /** Formulaire du propriétaire : type, observations, compteurs et photos déjà rangées sur le bien. */
 @Component({
@@ -28,6 +29,7 @@ import { TEXTES_CONTRATS } from './textes';
   host: { class: 'block rounded-cadre border border-border p-4 sm:p-6' },
 })
 export class FormEtatDesLieux {
+  protected readonly lire = lire;
   readonly bail = input.required<Bail>();
   readonly types = input.required<readonly TypeEtatDesLieux[]>();
   readonly cree = output<void>();

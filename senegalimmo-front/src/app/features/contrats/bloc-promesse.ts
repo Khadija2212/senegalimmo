@@ -8,6 +8,7 @@ import { PaiementsService } from '../../core/services/paiements';
 import { Role } from '../../core/session/session';
 import { jour } from './etat';
 import { LIENS_CONTRATS, TEXTES_CONTRATS } from './textes';
+import { lire } from '../../core/ressources/lire';
 
 /** Conditions de la promesse de vente et paiement de l'indemnité par l'acheteur. */
 @Component({
@@ -64,7 +65,7 @@ export class BlocPromesse {
     stream: () => this.service.lister(),
   });
   protected readonly indemnitePayee = computed(() =>
-    (this.paiements.value() ?? []).some(
+    (lire(this.paiements) ?? []).some(
       (p) =>
         p.type === 'indemnite' && p.promesse_id === this.promesse().id && p.statut === 'reussi',
     ),

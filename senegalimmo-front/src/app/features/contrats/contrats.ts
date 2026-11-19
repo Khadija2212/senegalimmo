@@ -9,6 +9,7 @@ import { SessionService } from '../../core/session/session';
 import { ordonner, resumeContrats, versLigne } from './contrats-vue';
 import { LigneContrat } from './ligne-contrat';
 import { LIENS_CONTRATS, TEXTES_CONTRATS } from './textes';
+import { lire } from '../../core/ressources/lire';
 
 const ESPACE_PAR_DEFAUT = '/espace';
 
@@ -22,6 +23,7 @@ const ESPACE_PAR_DEFAUT = '/espace';
   host: { class: 'block' },
 })
 export class Contrats {
+  protected readonly lire = lire;
   protected readonly textes = TEXTES_CONTRATS;
   private readonly session = inject(SessionService);
   private readonly service = inject(ContratsService);
@@ -29,7 +31,7 @@ export class Contrats {
   protected readonly donnees = rxResource({ stream: () => this.service.lister() });
   protected readonly lignes = computed(() => {
     const moi = this.session.compte()?.id ?? '';
-    return ordonner((this.donnees.value() ?? []).map((c) => versLigne(c, moi)));
+    return ordonner((lire(this.donnees) ?? []).map((c) => versLigne(c, moi)));
   });
   protected readonly resume = computed(() => resumeContrats(this.lignes()));
   protected readonly principale = computed(() => this.lignes().find((l) => l.aSigner)?.id ?? null);

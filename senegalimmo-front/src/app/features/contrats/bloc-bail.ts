@@ -20,6 +20,7 @@ import { Role } from '../../core/session/session';
 import { paiementPropose } from './contrats-vue';
 import { jour } from './etat';
 import { LIENS_CONTRATS, TEXTES_CONTRATS } from './textes';
+import { lire } from '../../core/ressources/lire';
 
 /** Conditions du bail, échéancier, paiement du locataire, résiliation par le propriétaire. */
 @Component({
@@ -31,6 +32,7 @@ import { LIENS_CONTRATS, TEXTES_CONTRATS } from './textes';
   host: { class: 'block' },
 })
 export class BlocBail {
+  protected readonly lire = lire;
   readonly bail = input.required<Bail>();
   readonly role = input.required<Role | null>();
   readonly resilie = output<void>();
@@ -60,7 +62,7 @@ export class BlocBail {
     ];
   });
   protected readonly propose = computed(() => {
-    const e = this.echeancier.value();
+    const e = lire(this.echeancier);
     const b = this.bail();
     return e && b.statut === 'signe' && this.role() === 'client' ? paiementPropose(b.id, e) : null;
   });

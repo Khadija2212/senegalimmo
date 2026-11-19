@@ -13,7 +13,7 @@
   <h2 class="font-display mt-10 text-[1.55rem] leading-tight font-semibold">
     {{ textes.paiementsBail }}
   </h2>
-  @if (echeancier.isLoading() && !echeancier.value()) {
+  @if (echeancier.isLoading() && !echeancier.hasValue()) {
     <div class="mt-3.5 animate-pulse" aria-busy="true">
       <div class="bg-brume h-4 w-2/3 rounded"></div>
       <div class="bg-brume mt-3 h-4 w-1/2 rounded"></div>
@@ -25,7 +25,7 @@
         {{ textes.reessayer }}
       </button>
     </p>
-  } @else if (echeancier.value(); as e) {
+  } @else if (lire(echeancier); as e) {
     <dl class="border-border mt-3.5 border-t">
       <div class="border-border flex justify-between gap-4 border-b py-3">
         <dt class="text-encre-2">{{ textes.caution }}</dt>

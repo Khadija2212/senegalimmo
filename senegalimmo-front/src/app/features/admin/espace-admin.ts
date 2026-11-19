@@ -24,6 +24,7 @@ import { Retraits } from './retraits/retraits';
 import { Signalements } from './signalements/signalements';
 import { TEXTES_ADMIN } from './textes';
 import { Transactions } from './transactions/transactions';
+import { lire } from '../../core/ressources/lire';
 
 const ICONES: Readonly<Record<Rubrique, NomIcone>> = {
   annonces: 'siSceau',
@@ -57,6 +58,7 @@ const ICONES: Readonly<Record<Rubrique, NomIcone>> = {
   host: { class: 'block' },
 })
 export class EspaceAdmin {
+  protected readonly lire = lire;
   /** Paramètre « rubrique » de l'adresse ; une rubrique hors du niveau ramène à la première permise. */
   readonly rubrique = input<string>();
 
@@ -67,7 +69,7 @@ export class EspaceAdmin {
 
   protected readonly accueil = rxResource({ stream: () => this.service.accueil() });
 
-  protected readonly niveau = computed(() => this.accueil.value()?.moi.niveau ?? null);
+  protected readonly niveau = computed(() => lire(this.accueil)?.moi.niveau ?? null);
   protected readonly permises = computed(() => {
     const n = this.niveau();
     return n ? rubriquesPermises(n) : [];
@@ -77,12 +79,12 @@ export class EspaceAdmin {
     return n ? rubriqueActive(this.rubrique(), n) : null;
   });
   protected readonly resume = computed(() => {
-    const a = this.accueil.value();
+    const a = lire(this.accueil);
     if (!a) return '';
     return resumerTravail(a.indicateurs, a.moi.niveau) || this.textes.rienEnAttente;
   });
   protected readonly chiffres = computed(() => {
-    const a = this.accueil.value();
+    const a = lire(this.accueil);
     if (!a) return [];
     return indicateursVisibles(a.moi.niveau).map((cle) => ({
       cle,
@@ -94,7 +96,7 @@ export class EspaceAdmin {
   });
 
   protected compteur(r: Rubrique): number | null {
-    const a = this.accueil.value();
+    const a = lire(this.accueil);
     return a ? compteurRubrique(r, a.indicateurs) : null;
   }
 

@@ -20,6 +20,7 @@ import { ErreurChargement } from '../commun/erreur-chargement';
 import { Pagination } from '../commun/pagination';
 import { SqueletteRegistre } from '../commun/squelette-registre';
 import { TEXTES_TRANSACTIONS } from './textes';
+import { lire } from '../../../core/ressources/lire';
 
 const PREMIERE_PAGE = 1;
 const COULEURS: Readonly<Record<StatutPaiement, string>> = {
@@ -94,11 +95,11 @@ const COULEURS: Readonly<Record<StatutPaiement, string>> = {
         (choisir)="statut.set($any($event))"
       />
 
-      @if (donnees.isLoading() && !donnees.value()) {
+      @if (donnees.isLoading() && !donnees.hasValue()) {
         <si-squelette-registre />
       } @else if (donnees.error()) {
         <si-erreur-chargement (reessayer)="donnees.reload()" />
-      } @else if (donnees.value(); as d) {
+      } @else if (lire(donnees); as d) {
         <dl
           class="border-border mt-5 flex w-full rounded-cadre border sm:w-auto sm:max-w-md"
           [attr.aria-label]="textes.sommes"
@@ -168,6 +169,7 @@ const COULEURS: Readonly<Record<StatutPaiement, string>> = {
   host: { class: 'block' },
 })
 export class Transactions {
+  protected readonly lire = lire;
   protected readonly textes = TEXTES_TRANSACTIONS;
   protected readonly couleurs = COULEURS;
   protected readonly date = dateCourte;

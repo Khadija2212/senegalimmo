@@ -9,6 +9,7 @@ import { ContratsService } from '../../core/services/contrats';
 import { messageErreur } from '../../core/services/demarches';
 import { jour } from './etat';
 import { LIENS_CONTRATS, TEXTES_CONTRATS } from './textes';
+import { lire } from '../../core/ressources/lire';
 
 /** Bornes de BailController::store et valeur par défaut de Proprietaire::creerBail. */
 const JOUR_MAX = 28;
@@ -36,7 +37,7 @@ export class NouveauBail {
 
   protected readonly demandes = rxResource({ stream: () => this.service.demandesLocation() });
   protected readonly choisie = computed(
-    () => this.demandes.value()?.find((d) => d.id === this.demande()) ?? null,
+    () => lire(this.demandes)?.find((d) => d.id === this.demande()) ?? null,
   );
   protected readonly recap = computed((): readonly (readonly [string, string])[] => {
     const d = this.choisie();

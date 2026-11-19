@@ -6,6 +6,7 @@ import { fcfa } from '../../core/format/fcfa';
 import { AgentService } from '../../core/services/agent';
 import { pourcent } from './agent-vue';
 import { LIENS_AGENT, TEXTES_AGENT } from './textes';
+import { lire } from '../../core/ressources/lire';
 
 /** Cas « Consulter ses performances » : chiffres sobres, sans graphique. */
 @Component({
@@ -19,7 +20,7 @@ import { LIENS_AGENT, TEXTES_AGENT } from './textes';
     </h2>
     <p class="text-encre-2 mt-1.5 text-[0.92rem]">{{ textes.performancesIntro }}</p>
 
-    @if (performances.isLoading() && !performances.value()) {
+    @if (performances.isLoading() && !performances.hasValue()) {
       <div class="mt-5 animate-pulse" aria-busy="true" [attr.aria-label]="textes.chargement">
         @for (i of [1, 2, 3, 4]; track i) {
           <div class="border-border flex justify-between border-b py-4">
@@ -72,7 +73,7 @@ export class RubriquePerformances {
   protected readonly performances = rxResource({ stream: () => this.service.performances() });
 
   protected readonly lignes = computed(() => {
-    const p = this.performances.value();
+    const p = lire(this.performances);
     if (!p) return null;
     const t = this.textes;
     return [

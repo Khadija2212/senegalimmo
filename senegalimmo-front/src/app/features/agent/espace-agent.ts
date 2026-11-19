@@ -15,6 +15,7 @@ import { RubriquePerformances } from './rubrique-performances';
 import { RubriqueVisites } from './rubrique-visites';
 import { LIENS_AGENT, RubriqueAgent, TEXTES_AGENT } from './textes';
 import { grouperVisites } from './visites-vue';
+import { lire } from '../../core/ressources/lire';
 
 const RUBRIQUE_DEFAUT: RubriqueAgent = 'visites';
 
@@ -44,6 +45,7 @@ interface EntreeNav {
   host: { class: 'block' },
 })
 export class EspaceAgent {
+  protected readonly lire = lire;
   /** Paramètre « rubrique » de l'adresse. */
   readonly rubrique = input<RubriqueAgent>(RUBRIQUE_DEFAUT);
 
@@ -55,18 +57,18 @@ export class EspaceAgent {
 
   /** Le compte complet : un agent pas encore validé ne voit que le message d'attente. */
   protected readonly compte = rxResource({ stream: () => this.service.compte() });
-  protected readonly valide = computed(() => this.compte.value()?.statut_validation === 'valide');
+  protected readonly valide = computed(() => lire(this.compte)?.statut_validation === 'valide');
   protected readonly donnees = rxResource({
     params: () => (this.valide() ? true : undefined),
     stream: () => this.service.charger(),
   });
 
   protected readonly visites = computed(() => {
-    const d = this.donnees.value();
+    const d = lire(this.donnees);
     return d ? grouperVisites(d.visites) : null;
   });
   protected readonly demandes = computed(() => {
-    const d = this.donnees.value();
+    const d = lire(this.donnees);
     return d ? demandesClients(d.demandes, d.offres) : null;
   });
   protected readonly resume = computed(() => {
@@ -77,7 +79,7 @@ export class EspaceAgent {
     return resumerAgent(aConfirmer, v.sansCompteRendu.length, d.enAttente.length);
   });
   protected readonly indicateurs = computed(() => {
-    const i = this.donnees.value()?.indicateurs;
+    const i = lire(this.donnees)?.indicateurs;
     if (!i) return null;
     return [
       { valeur: String(i.biens_assignes), libelle: this.textes.biensAssignes },
@@ -89,7 +91,7 @@ export class EspaceAgent {
   /** Rubriques de la colonne, avec ce qui attend dans chacune. */
   protected readonly rubriquesNav = computed((): readonly EntreeNav[] => {
     const v = this.visites();
-    const d = this.donnees.value();
+    const d = lire(this.donnees);
     const t = this.textes;
     return [
       {
@@ -110,7 +112,7 @@ export class EspaceAgent {
     ];
   });
   protected readonly salut = computed(() =>
-    this.textes.bonjour(this.compte.value()?.prenom ?? this.session.compte()?.prenom ?? ''),
+    this.textes.bonjour(lire(this.compte)?.prenom ?? this.session.compte()?.prenom ?? ''),
   );
 
   protected choisir(r: RubriqueAgent): void {

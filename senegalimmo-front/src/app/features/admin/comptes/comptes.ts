@@ -23,6 +23,7 @@ import { SuiviActions } from '../commun/suivi-actions';
 import { TEXTES_ADMIN } from '../textes';
 import { LigneCompte } from './ligne-compte';
 import { TEXTES_COMPTES } from './textes';
+import { lire } from '../../../core/ressources/lire';
 
 const PREMIERE_PAGE = 1;
 const DELAI_RECHERCHE_MS = 300;
@@ -49,7 +50,7 @@ const DELAI_RECHERCHE_MS = 300;
         class="font-display flex items-baseline gap-3 text-[1.55rem] leading-tight font-semibold"
       >
         {{ textes.titre }}
-        @if (liste.value(); as l) {
+        @if (lire(liste); as l) {
           <small class="text-encre-3 font-sans text-[0.85rem] font-medium">{{ l.total }}</small>
         }
       </h2>
@@ -81,11 +82,11 @@ const DELAI_RECHERCHE_MS = 300;
         />
       </div>
 
-      @if (liste.isLoading() && !liste.value()) {
+      @if (liste.isLoading() && !liste.hasValue()) {
         <si-squelette-registre />
       } @else if (liste.error()) {
         <si-erreur-chargement (reessayer)="liste.reload()" />
-      } @else if (liste.value(); as l) {
+      } @else if (lire(liste); as l) {
         @if (l.data.length) {
           <div class="border-border mt-3.5 border-t">
             @for (c of l.data; track c.id) {
@@ -127,6 +128,7 @@ const DELAI_RECHERCHE_MS = 300;
   host: { class: 'block' },
 })
 export class Comptes {
+  protected readonly lire = lire;
   readonly modifie = output<void>();
   protected readonly textes = TEXTES_COMPTES;
   private readonly service = inject(AdminService);
