@@ -7,6 +7,7 @@ export const TEXTES_LAYOUT = {
   publier: 'Publier un bien',
   connexion: 'Se connecter',
   inscription: 'Créer un compte',
+  deconnexion: 'Se déconnecter',
   ouvrirMenu: 'Ouvrir le menu',
   fermerMenu: 'Fermer le menu',
   presentation:
@@ -22,7 +23,7 @@ export const LIENS = {
   louer: { chemin: '/', parametres: { transaction: 'location' } },
   acheter: { chemin: '/', parametres: { transaction: 'vente' } },
   publier: '/proprietaire/biens',
-  connexion: '/login',
-  inscription: '/register',
+  connexion: '/connexion',
+  inscription: '/inscription',
   comparer: '/comparateur',
 } as const;

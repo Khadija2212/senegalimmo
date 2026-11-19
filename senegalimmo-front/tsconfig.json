@@ -20,7 +20,8 @@
       "@spartan-ng/helm/tabs": ["./src/app/shared/ui/tabs/src/index.ts"],
       "@spartan-ng/helm/toggle-group": ["./src/app/shared/ui/toggle-group/src/index.ts"],
       "@spartan-ng/helm/toggle": ["./src/app/shared/ui/toggle/src/index.ts"],
-      "@spartan-ng/helm/select": ["./src/app/shared/ui/select/src/index.ts"]
+      "@spartan-ng/helm/select": ["./src/app/shared/ui/select/src/index.ts"],
+      "@spartan-ng/helm/radio-group": ["./src/app/shared/ui/radio-group/src/index.ts"]
     }
   },
   "angularCompilerOptions": {

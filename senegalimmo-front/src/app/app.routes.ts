@@ -20,6 +20,16 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'connexion',
+    data: { onglet: 'connexion' },
+    loadComponent: () => import('./features/connexion/connexion').then((m) => m.Connexion),
+  },
+  {
+    path: 'inscription',
+    data: { onglet: 'inscription' },
+    loadComponent: () => import('./features/connexion/connexion').then((m) => m.Connexion),
+  },
+  {
     path: 'home',
     redirectTo: '',
     pathMatch: 'full',
@@ -151,14 +161,8 @@ export const routes: Routes = [
     path: 'agent/dashboard',
     loadComponent: () => import('./pages/dashboard/agent/agent').then((m) => m.Agent),
   },
-  {
-    path: 'login',
-    loadComponent: () => import('./pages/auth/login/login').then((m) => m.Login),
-  },
-  {
-    path: 'register',
-    loadComponent: () => import('./pages/auth/register/register').then((m) => m.Register),
-  },
+  { path: 'login', redirectTo: 'connexion', pathMatch: 'full' },
+  { path: 'register', redirectTo: 'inscription', pathMatch: 'full' },
   {
     path: 'proprietaire/dashboard',
     loadComponent: () =>

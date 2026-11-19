@@ -4,10 +4,10 @@ import { NgIcon } from '@ng-icons/core';
 import { FcfaPipe } from '../../../core/format/fcfa.pipe';
 import { Annonce } from '../../../core/modeles/annonce';
 import { SelectionService } from '../../../core/services/selection';
+import { CHEMIN_CONNEXION, versConnexion } from '../../../core/session/contexte-connexion';
 import { SessionService } from '../../../core/session/session';
+import { TEXTES_DEMARCHE } from '../../annonce/textes';
 import { TEXTES_ACCUEIL } from '../textes';
-
-const CHEMIN_CONNEXION = '/login';
 
 /** Fiche d'une annonce dans les résultats. */
 @Component({
@@ -32,7 +32,12 @@ export class FicheAnnonce {
 
   protected garder(): void {
     if (!this.session.estClient()) {
-      this.router.navigate([CHEMIN_CONNEXION], { queryParams: { retour: this.router.url } });
+      const { queryParams, state } = versConnexion(
+        this.router.url,
+        this.annonce(),
+        TEXTES_DEMARCHE.actionConnexion.garder,
+      );
+      this.router.navigate([CHEMIN_CONNEXION], { queryParams, state });
       return;
     }
     this.selection.basculerFavori(this.annonce().id).subscribe();

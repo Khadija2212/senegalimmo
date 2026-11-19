@@ -82,6 +82,14 @@ abstract class Compte extends Authenticatable
      */
     public function sAuthentifier(string $email, string $motDePasse): string
     {
+        $this->verifierIdentifiants($email, $motDePasse);
+
+        return $this->createToken(self::NOM_JETON)->plainTextToken;
+    }
+
+    /** Partie commune de « S'authentifier » : le site garde ensuite une session, les autres clients un jeton. */
+    public function verifierIdentifiants(string $email, string $motDePasse): void
+    {
         if (strcasecmp($this->email, $email) !== 0 || ! Hash::check($motDePasse, $this->password)) {
             throw new OperationRefusee('Adresse e-mail ou mot de passe incorrect.', OperationRefusee::NON_AUTHENTIFIE);
         }
@@ -89,8 +97,6 @@ abstract class Compte extends Authenticatable
             throw new OperationRefusee("Ce compte est suspendu. Contactez l'administration.", OperationRefusee::INTERDIT);
         }
         $this->apresConnexion();
-
-        return $this->createToken(self::NOM_JETON)->plainTextToken;
     }
 
     /** Ce qui se passe à chaque connexion réussie ; Utilisateur y note la dernière connexion. */

@@ -21,7 +21,7 @@
     >
   </div>
 } @else {
-  <div hlmTabs tab="visite" class="mt-[22px]">
+  <div hlmTabs [tab]="ongletInitial()" class="mt-[22px]">
     <div hlmTabsList class="grid h-auto w-full grid-cols-2 border-b border-border p-0">
       <button hlmTabsTrigger="visite" class="onglet">{{ textesDemarche.visiter }}</button>
       <button hlmTabsTrigger="demande" class="onglet">

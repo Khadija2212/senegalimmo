@@ -4,6 +4,7 @@ import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { NgIcon } from '@ng-icons/core';
 import { filter, map, startWith } from 'rxjs';
 import { HlmButton } from '@spartan-ng/helm/button';
+import { SessionService } from '../../core/session/session';
 import { Marque } from '../marque/marque';
 import { LIENS, TEXTES_LAYOUT } from '../textes';
 
@@ -18,6 +19,7 @@ export class EnTete {
   protected readonly textes = TEXTES_LAYOUT;
   protected readonly liens = LIENS;
   protected readonly menuOuvert = signal(false);
+  protected readonly session = inject(SessionService);
   private readonly router = inject(Router);
   private readonly url = toSignal(
     this.router.events.pipe(
@@ -36,5 +38,10 @@ export class EnTete {
 
   basculerMenu(): void {
     this.menuOuvert.update((o) => !o);
+  }
+
+  protected deconnecter(): void {
+    this.menuOuvert.set(false);
+    this.session.deconnecter().subscribe(() => this.router.navigateByUrl('/'));
   }
 }

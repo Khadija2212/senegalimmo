@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmInput } from '@spartan-ng/helm/input';
@@ -89,7 +89,7 @@ const CHEMIN_DEMANDES = '/demandes';
     <p class="text-encre-3 mt-2.5 text-[0.82rem]">{{ textes.noteLocation }}</p>
   `,
 })
-export class OngletLocation {
+export class OngletLocation implements OnInit {
   readonly annonce = input.required<AnnonceDetaillee>();
   protected readonly textes = TEXTES_DEMARCHE;
   protected readonly envoi = inject(EnvoiDemarche);
@@ -100,6 +100,16 @@ export class OngletLocation {
   protected readonly duree = signal<number>(DUREES_MOIS[0]);
   protected readonly message = signal('');
   protected readonly libelleDuree = (d: number): string => `${d} ${this.textes.mois}`;
+
+  ngOnInit(): void {
+    const repris = this.envoi.valeursReprises('demande');
+    if (!repris) return;
+    const entree = String(repris['entree'] ?? '');
+    if (entree >= this.minimum) this.entree.set(entree);
+    const duree = Number(repris['duree']);
+    if ((DUREES_MOIS as readonly number[]).includes(duree)) this.duree.set(duree);
+    this.message.set(String(repris['message'] ?? ''));
+  }
 
   protected envoyer(): void {
     const a = this.annonce();
@@ -119,6 +129,10 @@ export class OngletLocation {
         texte: this.textes.demandeTexte(qui),
         lien: CHEMIN_DEMANDES,
         libelleLien: this.textes.voirDemandes,
+      },
+      {
+        onglet: 'demande',
+        valeurs: { entree: this.entree(), duree: this.duree(), message: this.message() },
       },
     );
   }

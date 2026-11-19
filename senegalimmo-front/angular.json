@@ -28,7 +28,11 @@
               }
             ],
             "styles": [
-              { "input": "node_modules/mapbox-gl/dist/mapbox-gl.css", "bundleName": "mapbox", "inject": false },
+              {
+                "input": "node_modules/mapbox-gl/dist/mapbox-gl.css",
+                "bundleName": "mapbox",
+                "inject": false
+              },
               "src/material-theme.scss",
               "src/styles.css"
             ]
@@ -67,7 +71,10 @@
               "buildTarget": "senegalimmo-front:build:development"
             }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "development",
+          "options": {
+            "proxyConfig": "proxy.conf.json"
+          }
         },
         "test": {
           "builder": "@angular/build:unit-test"

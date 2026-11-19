@@ -1,0 +1,191 @@
+<form [formGroup]="form" (ngSubmit)="envoyer()" novalidate>
+  @if (alerte(); as a) {
+    <p
+      class="border-destructive bg-alerte text-alerte-texte mb-[18px] rounded-r-lg border-l-[3px] px-3.5 py-3 text-[0.9rem]"
+      role="alert"
+    >
+      {{ a }}
+    </p>
+  }
+
+  <span id="l-profil" class="text-encre-2 mb-2 block text-[0.82rem] font-semibold">{{
+    textes.vousVenezPour
+  }}</span>
+  <hlm-radio-group
+    formControlName="role"
+    aria-labelledby="l-profil"
+    class="border-border gap-0 border-t"
+  >
+    @for (p of profils; track p.role) {
+      <label
+        class="border-border hover:bg-brume/50 has-[[data-checked=true]]:border-l-bleu has-[[data-checked=true]]:bg-brume grid cursor-pointer grid-cols-[20px_24px_1fr] items-start gap-3 border-b border-l-[3px] border-l-transparent px-3 py-3.5"
+      >
+        <hlm-radio [value]="p.role" class="mt-0.5">
+          <hlm-radio-indicator indicator />
+        </hlm-radio>
+        <ng-icon [name]="p.icone" size="24" class="text-bleu" />
+        <span>
+          <b class="block font-semibold">{{ p.titre }}</b>
+          <span class="text-encre-2 text-[0.86rem]">{{ p.texte }}</span>
+        </span>
+      </label>
+    }
+  </hlm-radio-group>
+  @if (note(); as n) {
+    <p
+      class="text-encre-2 mt-3 grid grid-cols-[18px_1fr] gap-2.5 text-[0.85rem]"
+      aria-live="polite"
+    >
+      <ng-icon name="siSceau" size="18" class="text-bleu mt-0.5" />{{ n }}
+    </p>
+  }
+
+  <div class="mt-[22px] grid gap-x-3 gap-y-4 sm:grid-cols-2">
+    <div>
+      <label
+        hlmLabel
+        for="i-prenom"
+        class="text-encre-2 mb-[7px] block text-[0.82rem] font-semibold"
+        >{{ textes.prenom }}</label
+      >
+      <input
+        hlmInput
+        id="i-prenom"
+        autocomplete="given-name"
+        class="h-[46px] bg-white text-[0.95rem]"
+        formControlName="prenom"
+      />
+      @if (message(form.controls.prenom); as m) {
+        <p class="text-destructive mt-1.5 text-[0.82rem]">{{ m }}</p>
+      }
+    </div>
+    <div>
+      <label
+        hlmLabel
+        for="i-nom"
+        class="text-encre-2 mb-[7px] block text-[0.82rem] font-semibold"
+        >{{ textes.nom }}</label
+      >
+      <input
+        hlmInput
+        id="i-nom"
+        autocomplete="family-name"
+        class="h-[46px] bg-white text-[0.95rem]"
+        formControlName="nom"
+      />
+      @if (message(form.controls.nom); as m) {
+        <p class="text-destructive mt-1.5 text-[0.82rem]">{{ m }}</p>
+      }
+    </div>
+  </div>
+
+  <label
+    hlmLabel
+    for="i-email"
+    class="text-encre-2 mt-4 mb-[7px] block text-[0.82rem] font-semibold"
+    >{{ textes.email }}</label
+  >
+  <input
+    hlmInput
+    id="i-email"
+    type="email"
+    autocomplete="email"
+    class="h-[46px] bg-white text-[0.95rem]"
+    formControlName="email"
+    aria-describedby="i-email-faute"
+  />
+  @if (message(form.controls.email); as m) {
+    <p id="i-email-faute" class="text-destructive mt-1.5 text-[0.82rem]">
+      {{ m }}
+      @if (emailPris()) {
+        <button
+          type="button"
+          class="font-semibold underline underline-offset-[3px]"
+          (click)="versConnexion.emit()"
+        >
+          {{ textes.seConnecter }}
+        </button>
+      }
+    </p>
+  }
+
+  <label
+    hlmLabel
+    for="i-tel"
+    class="text-encre-2 mt-4 mb-[7px] block text-[0.82rem] font-semibold"
+    >{{ textes.telephone }}</label
+  >
+  <div class="grid grid-cols-[72px_1fr]">
+    <span
+      class="border-input bg-brume grid place-items-center rounded-l-lg border border-r-0 text-[0.92rem] font-semibold tabular-nums"
+      aria-hidden="true"
+      >{{ textes.indicatif }}</span
+    >
+    <input
+      hlmInput
+      id="i-tel"
+      type="tel"
+      inputmode="tel"
+      autocomplete="tel-national"
+      class="h-[46px] rounded-l-none bg-white text-[0.95rem] tabular-nums"
+      formControlName="telephone"
+      aria-describedby="i-tel-aide"
+    />
+  </div>
+  @if (message(form.controls.telephone); as m) {
+    <p class="text-destructive mt-1.5 text-[0.82rem]">{{ m }}</p>
+  } @else {
+    <p id="i-tel-aide" class="text-encre-3 mt-1.5 text-[0.8rem]">{{ textes.aideTelephone }}</p>
+  }
+
+  <div class="mt-4 grid gap-x-3 gap-y-4 sm:grid-cols-2">
+    <div>
+      <label
+        hlmLabel
+        for="i-mdp"
+        class="text-encre-2 mb-[7px] block text-[0.82rem] font-semibold"
+        >{{ textes.motDePasse }}</label
+      >
+      <si-champ-secret
+        champId="i-mdp"
+        autocomplete="new-password"
+        [controle]="form.controls.password"
+      />
+      @if (message(form.controls.password); as m) {
+        <p class="text-destructive mt-1.5 text-[0.82rem]">{{ m }}</p>
+      } @else {
+        <p class="text-encre-3 mt-1.5 text-[0.8rem]">{{ textes.aideMotDePasse }}</p>
+      }
+    </div>
+    <div>
+      <label
+        hlmLabel
+        for="i-mdp2"
+        class="text-encre-2 mb-[7px] block text-[0.82rem] font-semibold"
+        >{{ textes.confirmation }}</label
+      >
+      <si-champ-secret
+        champId="i-mdp2"
+        autocomplete="new-password"
+        [controle]="form.controls.password_confirmation"
+      />
+      @if (message(form.controls.password_confirmation); as m) {
+        <p class="text-destructive mt-1.5 text-[0.82rem]">{{ m }}</p>
+      }
+    </div>
+  </div>
+
+  <button hlmBtn size="grand" type="submit" class="mt-6 h-[52px] w-full" [disabled]="enCours()">
+    {{ enCours() ? textes.creationEnCours : textes.creerMonCompte }}
+  </button>
+  <p class="text-encre-2 mt-[18px] text-[0.92rem]">
+    {{ textes.dejaInscrit }}
+    <button
+      type="button"
+      class="text-bleu font-semibold underline underline-offset-4"
+      (click)="versConnexion.emit()"
+    >
+      {{ textes.seConnecter }}
+    </button>
+  </p>
+</form>

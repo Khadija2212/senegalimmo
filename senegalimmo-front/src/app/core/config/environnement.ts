@@ -5,6 +5,6 @@ import { MAPBOX_JETON } from './jetons';
   recopiée dans jetons.ts par scripts/ecrire-jetons.mjs avant chaque lancement.
 */
 export const ENVIRONNEMENT = {
-  apiUrl: 'http://127.0.0.1:8000/api',
+  apiUrl: '/api',
   mapboxJeton: MAPBOX_JETON,
 } as const;

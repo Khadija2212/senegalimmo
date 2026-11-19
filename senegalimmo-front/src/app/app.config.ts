@@ -1,13 +1,13 @@
 import { registerLocaleData } from '@angular/common';
 import localeFr from '@angular/common/locales/fr';
-import { ApplicationConfig, LOCALE_ID } from '@angular/core';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { ApplicationConfig, LOCALE_ID, inject, provideAppInitializer } from '@angular/core';
+import { provideHttpClient, withXsrfConfiguration } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
 import { provideIcons } from '@ng-icons/core';
 import { provideSpartanHlm } from '@spartan-ng/helm/utils';
 import { routes } from './app.routes';
-import { authInterceptor } from './interceptors/auth-interceptor';
+import { SessionService } from './core/session/session';
 import { ICONES } from './shared/icones/icones';
 
 registerLocaleData(localeFr);
@@ -20,7 +20,10 @@ export const appConfig: ApplicationConfig = {
       withComponentInputBinding(),
       withInMemoryScrolling({ scrollPositionRestoration: 'enabled' }),
     ),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(
+      withXsrfConfiguration({ cookieName: 'XSRF-TOKEN', headerName: 'X-XSRF-TOKEN' }),
+    ),
+    provideAppInitializer(() => inject(SessionService).charger()),
     provideAnimationsAsync(),
     provideSpartanHlm(),
     provideIcons(ICONES),
