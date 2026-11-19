@@ -23,7 +23,7 @@ class OffreAchat extends Model
 
     protected $table = 'offres_achat';
 
-    protected $fillable = ['annonce_id', 'montant', 'message', 'statut', 'expire_le'];
+    protected $fillable = ['annonce_id', 'montant', 'message', 'statut', 'motif_refus', 'expire_le'];
 
     protected $attributes = ['statut' => 'en_attente'];
 
@@ -74,7 +74,7 @@ class OffreAchat extends Model
     public function refuser(string $motif): void
     {
         $this->exigerEnAttente();
-        $this->update(['statut' => StatutOffre::REFUSEE]);
+        $this->update(['statut' => StatutOffre::REFUSEE, 'motif_refus' => $motif]);
         $this->client->notifier("Offre d'achat refusée", 'Votre offre pour « '.$this->annonce->bien->titre.' » est refusée : '.$motif);
     }
 
@@ -83,6 +83,7 @@ class OffreAchat extends Model
     {
         $this->exigerEnAttente();
         $this->update(['statut' => StatutOffre::RETIREE]);
+        $this->annonce->bien->notifierInterlocuteurs("Offre d'achat retirée", $this->client->prenom.' '.$this->client->nom.' retire son offre de '.Annonce::fcfa($this->montant).' pour « '.$this->annonce->bien->titre.' ».');
     }
 
     /** Une offre dont la validité est passée expire au premier accès. */

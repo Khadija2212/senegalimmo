@@ -164,7 +164,7 @@ function depuisDemande(d: DemandeLocation): Demarche {
       : d.statut === 'en_attente'
         ? { libelle: T.attenteProprietaire, ton: 'attente', explication: null }
         : d.statut === 'refusee'
-          ? { libelle: T.refusee(dateCourte(maj)), ton: 'non', explication: null }
+          ? { libelle: T.refusee(dateCourte(maj)), ton: 'non', explication: d.motif_refus }
           : { libelle: T.annulee, ton: 'neutre', explication: null };
   const proprietaire = d.annonce.bien.proprietaire;
   return {
@@ -187,6 +187,7 @@ function depuisDemande(d: DemandeLocation): Demarche {
             role: T.roleProprietaire,
           }
         : null,
+    peutAnnuler: d.statut === 'en_attente',
   };
 }
 
@@ -234,7 +235,7 @@ function etatOffre(o: OffreAchat, maj: Date, maintenant: Date): Etat {
       };
     }
     case 'refusee':
-      return { libelle: T.refusee(dateCourte(maj)), ton: 'non', explication: null };
+      return { libelle: T.refusee(dateCourte(maj)), ton: 'non', explication: o.motif_refus };
     case 'retiree':
       return { libelle: T.retiree, ton: 'neutre', explication: null };
     case 'expiree':

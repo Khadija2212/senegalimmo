@@ -1,0 +1,84 @@
+# Vérifications à chaque push et pull request. Les tests restent sur les postes
+# (ils ne sont pas poussés) : la CI contrôle le style, les migrations, le seeder et le build.
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend Laravel
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: senegalimmo-backend
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: senegalimmo_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: senegalimmo_ci
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@2.40.0
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql, gd, intl, zip
+          coverage: none
+      - name: Cache Composer
+        uses: actions/cache@v6
+        with:
+          path: ~/.composer/cache
+          key: composer-${{ hashFiles('senegalimmo-backend/composer.lock') }}
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Style (Pint)
+        run: vendor/bin/pint --test
+      - name: Préparer l'application
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+      - name: Migrations et données de démonstration
+        run: |
+          php artisan migrate:fresh --seed --force
+          php artisan db:seed --class=DemoSeeder --force
+      - name: Tests suivis par Git
+        run: php artisan test
+
+  front:
+    name: Front Angular
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: senegalimmo-front
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: senegalimmo-front/package-lock.json
+      - run: npm ci
+      - name: Style (Prettier, nouveau code)
+        run: npx prettier --check "src/app/{core,features,layout}/**/*.{ts,html,css}"
+      - name: Build de production
+        run: npm run build

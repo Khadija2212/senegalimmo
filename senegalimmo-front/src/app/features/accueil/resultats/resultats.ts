@@ -59,14 +59,12 @@ export class Resultats {
   );
 
   protected readonly reperes = computed<Repere[]>(() =>
-    this.recherche
-      .points()
-      .map((p) => ({
-        id: p.id,
-        lng: p.longitude,
-        lat: p.latitude,
-        texte: fcfaCourt(p.prix + p.charges),
-      })),
+    this.recherche.points().map((p) => ({
+      id: p.id,
+      lng: p.longitude,
+      lat: p.latitude,
+      texte: fcfaCourt(p.prix + p.charges),
+    })),
   );
 
   protected montrer(vue: 'liste' | 'carte'): void {

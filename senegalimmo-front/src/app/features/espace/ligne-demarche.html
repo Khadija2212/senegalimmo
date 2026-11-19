@@ -57,7 +57,7 @@
           [attr.aria-expanded]="volet() === 'annuler'"
           (click)="ouvrir('annuler')"
         >
-          {{ textes.annuler }}
+          {{ annulation().bouton }}
         </button>
       }
       @if (d.peutRetirer) {
@@ -95,14 +95,14 @@
   }
   @case ('annuler') {
     <div class="confirmer col-span-2 sm:col-start-2" role="alert">
-      {{ textes.confirmerAnnulation(quand(), quiDebut()) }}
+      {{ annulation().question }}
       <button
         type="button"
         class="lien-texte text-alerte-texte"
         [disabled]="enCours()"
         (click)="annuler.emit()"
       >
-        {{ textes.ouiAnnuler }}
+        {{ annulation().oui }}
       </button>
       <button type="button" class="lien-texte text-alerte-texte" (click)="volet.set(null)">
         {{ textes.nonGarder }}

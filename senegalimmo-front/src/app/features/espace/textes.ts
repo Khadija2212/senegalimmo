@@ -77,6 +77,10 @@ export const TEXTES_ESPACE = {
   confirmerAnnulation: (quand: string, qui: string) =>
     `Annuler la visite du ${quand} ? ${qui} recevra un message.`,
   ouiAnnuler: 'Oui, annuler la visite',
+  annulerDemande: 'Annuler la demande',
+  confirmerAnnulationDemande: (qui: string) =>
+    `Annuler votre demande de location ? ${qui} recevra un message.`,
+  ouiAnnulerDemande: 'Oui, annuler la demande',
   nonGarder: 'Non, la garder',
   confirmerRetrait:
     "Retirer cette offre ? Le propriétaire sera prévenu et l'offre ne pourra plus être acceptée.",

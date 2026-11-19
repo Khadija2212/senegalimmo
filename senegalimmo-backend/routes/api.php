@@ -98,6 +98,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('/favoris/{annonce}', [FavoriController::class, 'store']);
         Route::delete('/favoris/{annonce}', [FavoriController::class, 'destroy']);
         Route::post('/demandes-location', [DemandeLocationController::class, 'store']);
+        Route::post('/demandes-location/{demande}/annuler', [DemandeLocationController::class, 'annuler']);
         Route::post('/visites', [VisiteController::class, 'store']);
         Route::post('/offres-achat', [OffreAchatController::class, 'store']);
         Route::post('/offres-achat/{offre}/retirer', [OffreAchatController::class, 'retirer']);

@@ -16,7 +16,7 @@ class DemandeLocation extends Model
 
     protected $table = 'demandes_location';
 
-    protected $fillable = ['annonce_id', 'date_entree_souhaitee', 'duree_mois', 'message', 'statut'];
+    protected $fillable = ['annonce_id', 'date_entree_souhaitee', 'duree_mois', 'message', 'statut', 'motif_refus'];
 
     protected $attributes = ['statut' => 'en_attente'];
 
@@ -48,7 +48,15 @@ class DemandeLocation extends Model
     public function refuser(string $motif): void
     {
         $this->exigerStatut(StatutDemande::EN_ATTENTE);
-        $this->update(['statut' => StatutDemande::REFUSEE]);
+        $this->update(['statut' => StatutDemande::REFUSEE, 'motif_refus' => $motif]);
         $this->client->notifier('Demande de location refusée', 'Votre demande pour « '.$this->annonce->bien->titre.' » est refusée : '.$motif);
+    }
+
+    /** Opération du diagramme : le client annule sa demande tant qu'elle attend une réponse. */
+    public function annuler(): void
+    {
+        $this->exigerStatut(StatutDemande::EN_ATTENTE);
+        $this->update(['statut' => StatutDemande::ANNULEE]);
+        $this->annonce->bien->notifierInterlocuteurs('Demande de location annulée', $this->client->prenom.' '.$this->client->nom.' annule sa demande pour « '.$this->annonce->bien->titre.' ».');
     }
 }
