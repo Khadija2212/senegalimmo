@@ -1,0 +1,157 @@
+<main class="mx-auto max-w-[1240px] px-4 pb-24 sm:px-7 lg:px-10">
+  @if (compte.isLoading() && !compte.value()) {
+    <div class="animate-pulse pt-10" aria-busy="true" [attr.aria-label]="textes.chargement">
+      <div class="bg-brume h-10 w-64 rounded-md"></div>
+      <div class="bg-brume mt-4 h-4 w-96 max-w-full rounded"></div>
+    </div>
+  } @else if (compte.error()) {
+    <div class="border-input mt-10 rounded-cadre border border-dashed px-6 py-8" role="alert">
+      <h1 class="font-display text-[1.6rem] font-semibold">{{ textes.erreurTitre }}</h1>
+      <p class="text-encre-2 mt-1.5">{{ textes.erreurTexte }}</p>
+      <button hlmBtn size="grand" class="mt-4 h-[46px]" (click)="compte.reload()">
+        {{ textes.reessayer }}
+      </button>
+    </div>
+  } @else if (compte.value(); as c) {
+    @if (!valide()) {
+      <section class="max-w-[640px] pt-10" aria-labelledby="t-validation">
+        <h1
+          id="t-validation"
+          class="font-display text-[clamp(2rem,3.4vw,2.8rem)] leading-[1.05] font-semibold"
+        >
+          {{ c.statut_validation === 'refuse' ? textes.refuseTitre : textes.attenteTitre }}
+        </h1>
+        <p class="text-encre-2 mt-3">
+          {{ c.statut_validation === 'refuse' ? textes.refuseTexte : textes.attenteTexte }}
+        </p>
+      </section>
+    } @else {
+      <section class="flex flex-wrap items-end gap-x-8 gap-y-5 pt-7 pb-5 sm:pt-10 sm:pb-7">
+        <div class="min-w-0">
+          <h1 class="font-display text-[clamp(2rem,3.4vw,2.8rem)] leading-[1.05] font-semibold">
+            {{ salut() }}
+          </h1>
+          @if (resume()) {
+            <p class="text-encre-2 mt-2 max-w-[60ch]">{{ resume() }}</p>
+          }
+        </div>
+        @if (indicateurs(); as ind) {
+          <dl
+            class="border-border grid w-full grid-cols-2 overflow-hidden rounded-cadre border sm:flex sm:w-auto lg:ml-auto"
+            [attr.aria-label]="textes.enBref"
+          >
+            @for (i of ind; track i.libelle) {
+              <div
+                class="border-border -mr-px -mb-px flex min-w-0 flex-1 flex-col-reverse border-r border-b px-3 py-2.5 sm:min-w-24 sm:px-[18px] sm:py-3"
+              >
+                <dt class="text-encre-3 text-[0.74rem] sm:text-[0.8rem] sm:whitespace-nowrap">
+                  {{ i.libelle }}
+                </dt>
+                <dd
+                  class="text-[1.5rem] leading-none font-bold tabular-nums [font-variation-settings:'wdth'_85]"
+                >
+                  {{ i.valeur }}
+                </dd>
+              </div>
+            }
+          </dl>
+        }
+      </section>
+
+      <div class="grid items-start gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-12">
+        <nav
+          class="border-border flex overflow-x-auto border-b lg:sticky lg:top-24 lg:flex-col lg:border-t lg:border-b-0"
+          [attr.aria-label]="textes.rubriques"
+        >
+          @for (r of rubriquesNav(); track r.cle) {
+            <button
+              type="button"
+              class="rubrique"
+              [attr.aria-current]="rubrique() === r.cle"
+              (click)="choisir(r.cle)"
+            >
+              <ng-icon [name]="r.icone" size="18" />{{ r.libelle }}
+              @if (r.n !== null) {
+                <span class="n">{{ r.n }}</span>
+              }
+            </button>
+          }
+          <a class="rubrique" [routerLink]="liens.portefeuille"
+            ><ng-icon name="siMobile" size="18" />{{ textes.portefeuille }}</a
+          >
+          <a class="rubrique" [routerLink]="liens.messages">
+            <ng-icon name="siMessage" size="18" />{{ textes.messages }}
+            @if (donnees.value()?.indicateurs?.messages_non_lus; as n) {
+              <span class="n">{{ textes.nonLus(n) }}</span>
+            }
+          </a>
+          <a class="rubrique" [routerLink]="liens.contrats"
+            ><ng-icon name="siContrat" size="18" />{{ textes.contrats }}</a
+          >
+          <a class="rubrique" [routerLink]="liens.profil"
+            ><ng-icon name="siCompte" size="18" />{{ textes.profil }}</a
+          >
+        </nav>
+
+        <div class="min-w-0">
+          @if (rubrique() === 'performances') {
+            <si-rubrique-performances />
+          } @else if (donnees.isLoading() && !donnees.value()) {
+            <div class="animate-pulse" aria-busy="true" [attr.aria-label]="textes.chargement">
+              <div class="bg-brume h-7 w-40 rounded-md"></div>
+              @for (i of [1, 2, 3]; track i) {
+                <div class="border-border mt-4 grid grid-cols-[96px_1fr] gap-4 border-b pb-4">
+                  <div class="bg-brume h-[72px] rounded-champ"></div>
+                  <div>
+                    <div class="bg-brume h-4 w-2/3 rounded"></div>
+                    <div class="bg-brume mt-3 h-4 w-1/2 rounded"></div>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else if (donnees.error()) {
+            <div class="border-input rounded-cadre border border-dashed px-6 py-8" role="alert">
+              <h2 class="font-display text-[1.4rem] font-semibold">{{ textes.erreurTitre }}</h2>
+              <p class="text-encre-2 mt-1.5">{{ textes.erreurTexte }}</p>
+              <button hlmBtn size="grand" class="mt-4 h-[46px]" (click)="recharger()">
+                {{ textes.reessayer }}
+              </button>
+            </div>
+          } @else if (donnees.value(); as d) {
+            @switch (rubrique()) {
+              @case ('demandes') {
+                @if (demandes(); as dc) {
+                  <si-rubrique-demandes [demandes]="dc" (modifie)="recharger()" />
+                }
+              }
+              @case ('biens') {
+                <si-rubrique-biens
+                  [biens]="d.biens"
+                  [mandats]="d.mandats"
+                  (modifie)="recharger()"
+                  (voirMandats)="choisir('mandats')"
+                />
+              }
+              @case ('mandats') {
+                <si-rubrique-mandats
+                  [mandats]="d.mandats"
+                  [biens]="d.biens"
+                  (modifie)="recharger()"
+                />
+              }
+              @default {
+                @if (visites(); as v) {
+                  <si-rubrique-visites
+                    [visites]="v"
+                    (modifie)="recharger()"
+                    (voirBiens)="choisir('biens')"
+                  />
+                }
+              }
+            }
+          }
+        </div>
+      </div>
+    }
+  }
+</main>

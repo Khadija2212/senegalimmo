@@ -1,0 +1,60 @@
+<form (submit)="$event.preventDefault(); payer()">
+  <fieldset>
+    <legend class="text-encre-2 mb-1 text-[0.8rem] font-semibold">{{ textes.quoiPayer }}</legend>
+    <hlm-radio-group
+      class="border-border block border-t"
+      [value]="choix()"
+      (valueChange)="choisir($event)"
+    >
+      @for (s of dus(); track s.cle) {
+        <label
+          hlmLabel
+          class="border-border grid cursor-pointer grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 gap-y-1 border-b py-3.5 sm:grid-cols-[auto_minmax(0,1fr)_auto]"
+        >
+          <hlm-radio class="mt-0.5" [value]="s.cle"><hlm-radio-indicator indicator /></hlm-radio>
+          <span class="min-w-0">
+            <span class="block font-semibold">{{ s.libelle }}</span>
+            <span class="text-encre-2 block text-[0.88rem] font-normal">
+              {{ s.bien }}
+              @if (s.echeance) {
+                <span class="text-encre-3">, {{ textes.echeanceLe(jour(s.echeance)) }}</span>
+              }
+            </span>
+          </span>
+          <b class="col-start-2 font-semibold tabular-nums sm:col-start-auto">{{
+            fcfa(s.montant)
+          }}</b>
+        </label>
+      }
+    </hlm-radio-group>
+  </fieldset>
+
+  <fieldset class="mt-6">
+    <legend class="text-encre-2 mb-2 text-[0.8rem] font-semibold">{{ textes.methode }}</legend>
+    <hlm-radio-group
+      class="grid grid-cols-1 gap-2 sm:grid-cols-2"
+      [value]="methode()"
+      (valueChange)="choisirMethode($event)"
+    >
+      @for (m of methodes; track m) {
+        <label
+          hlmLabel
+          class="border-border has-[[data-checked=true]]:border-ring flex cursor-pointer items-center gap-3 rounded-champ border px-3.5 py-3"
+        >
+          <hlm-radio [value]="m"><hlm-radio-indicator indicator /></hlm-radio>
+          {{ libelleMethode(m) }}
+        </label>
+      }
+    </hlm-radio-group>
+  </fieldset>
+
+  @if (choisie(); as s) {
+    <button hlmBtn size="grand" type="submit" class="mt-6 h-[46px]" [disabled]="enCours()">
+      {{ enCours() ? textes.ouverture : textes.payer(fcfa(s.montant)) }}
+    </button>
+  }
+  <p class="text-encre-3 mt-2 max-w-[60ch] text-[0.85rem]">{{ textes.redirection }}</p>
+  @if (erreur(); as e) {
+    <p class="text-destructive mt-3 text-[0.88rem]" role="alert">{{ e }}</p>
+  }
+</form>

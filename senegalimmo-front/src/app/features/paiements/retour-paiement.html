@@ -1,0 +1,99 @@
+<main class="mx-auto max-w-[720px] px-4 pt-10 pb-24 sm:px-7 sm:pt-16">
+  <h1 class="font-display text-[clamp(2rem,3.4vw,2.8rem)] leading-[1.05] font-semibold">
+    {{ textes.retourTitre }}
+  </h1>
+
+  @let s = suivi();
+  @let p = paiement();
+  <div class="border-border mt-6 border-t pt-6" aria-live="polite">
+    @switch (s.phase) {
+      @case ('chargement') {
+        <div class="animate-pulse" aria-busy="true">
+          <div class="bg-brume h-6 w-48 rounded"></div>
+          <div class="bg-brume mt-3 h-4 w-3/4 rounded"></div>
+        </div>
+        <p class="text-encre-2 mt-4">{{ textes.retourVerification }}</p>
+      }
+      @case ('sans_reference') {
+        <p class="text-[1.2rem] font-semibold">{{ textes.retourSansReference }}</p>
+        <p class="text-encre-2 mt-1.5">{{ textes.retourSansReferenceTexte }}</p>
+        <a hlmBtn size="grand" class="mt-5 h-[46px]" [routerLink]="cheminPaiements">{{
+          textes.voirPaiements
+        }}</a>
+      }
+      @case ('erreur') {
+        <div role="alert">
+          <p class="text-[1.2rem] font-semibold">{{ textes.erreurTitre }}</p>
+          <p class="text-encre-2 mt-1.5">{{ textes.erreurTexte }}</p>
+          <button hlmBtn size="grand" class="mt-5 h-[46px]" (click)="verifier()">
+            {{ textes.reessayer }}
+          </button>
+        </div>
+      }
+      @case ('reussi') {
+        <p class="text-succes text-[1.35rem] font-semibold">{{ textes.retourReussi }}</p>
+        @if (p) {
+          <p class="text-encre-2 mt-1.5">{{ textes.retourReussiTexte(montant(), p.libelle) }}</p>
+        }
+      }
+      @case ('en_cours') {
+        <p class="text-bleu-vif text-[1.35rem] font-semibold">{{ textes.retourEnCours }}</p>
+        <p class="text-encre-2 mt-1.5">{{ textes.retourEnCoursTexte }}</p>
+      }
+      @case ('attente_longue') {
+        <p class="text-bleu-vif text-[1.35rem] font-semibold">{{ textes.retourLong }}</p>
+        <p class="text-encre-2 mt-1.5">{{ textes.retourLongTexte }}</p>
+      }
+      @case ('echoue') {
+        <p class="text-refus text-[1.35rem] font-semibold" role="alert">
+          {{ textes.retourEchoue }}
+        </p>
+        <p class="text-encre-2 mt-1.5">{{ textes.retourEchoueTexte }}</p>
+      }
+      @case ('rembourse') {
+        <p class="text-encre-3 text-[1.35rem] font-semibold">{{ textes.retourRembourse }}</p>
+        <p class="text-encre-2 mt-1.5">{{ textes.retourRembourseTexte }}</p>
+      }
+    }
+
+    @if (p) {
+      <p class="text-encre-3 mt-3 text-[0.85rem] tabular-nums">
+        {{ textes.reference(p.reference) }}
+      </p>
+      <div class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
+        @if (s.phase === 'reussi' && document(); as d) {
+          <button
+            hlmBtn
+            size="grand"
+            type="button"
+            class="h-[46px]"
+            [disabled]="ouverture()"
+            (click)="telecharger()"
+          >
+            {{ ouverture() ? textes.ouvertureDocument : d }}
+          </button>
+        } @else if (s.phase === 'echoue') {
+          <a
+            hlmBtn
+            size="grand"
+            class="h-[46px]"
+            [routerLink]="cheminPaiements"
+            [queryParams]="relance()"
+            >{{ textes.recommencer }}</a
+          >
+        } @else if (s.phase === 'attente_longue') {
+          <button hlmBtn size="grand" type="button" class="h-[46px]" (click)="verifier()">
+            {{ textes.verifierEncore }}
+          </button>
+        }
+        @if (lienContrat(); as l) {
+          <a class="lien-texte" [routerLink]="l">{{ textes.voirContrat }}</a>
+        }
+        <a class="lien-texte" [routerLink]="cheminPaiements">{{ textes.voirPaiements }}</a>
+      </div>
+      @if (erreurDocument(); as e) {
+        <p class="text-destructive mt-3 text-[0.88rem]" role="alert">{{ e }}</p>
+      }
+    }
+  </div>
+</main>

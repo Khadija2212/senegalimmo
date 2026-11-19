@@ -9,6 +9,8 @@ export const TEXTES_LAYOUT = {
   inscription: 'Créer un compte',
   deconnexion: 'Se déconnecter',
   monEspace: 'Mon espace',
+  notifications: 'Notifications',
+  nonLues: (n: number) => (n > 1 ? `${n} non lues` : '1 non lue'),
   ouvrirMenu: 'Ouvrir le menu',
   fermerMenu: 'Fermer le menu',
   presentation:
@@ -23,7 +25,9 @@ export const TEXTES_LAYOUT = {
 export const LIENS = {
   louer: { chemin: '/', parametres: { transaction: 'location' } },
   acheter: { chemin: '/', parametres: { transaction: 'vente' } },
-  publier: '/proprietaire/biens',
+  publier: '/proprietaire/publier',
+  profil: '/profil',
+  notifications: '/notifications',
   connexion: '/connexion',
   inscription: '/inscription',
   comparer: '/comparateur',

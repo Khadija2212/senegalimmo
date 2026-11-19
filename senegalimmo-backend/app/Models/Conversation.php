@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\DB;
 
 /** Conversation du diagramme : 2..* participants, à propos de 0..1 Annonce, composée de Messages. */
@@ -37,6 +38,15 @@ class Conversation extends Model
     public function messages(): HasMany
     {
         return $this->hasMany(Message::class);
+    }
+
+    /**
+     * Dernier message, pour l'extrait affiché dans la liste des conversations.
+     * Tri par date plutôt que latestOfMany : Postgres n'a pas de MAX sur les UUID.
+     */
+    public function dernierMessage(): HasOne
+    {
+        return $this->hasOne(Message::class)->orderByDesc('envoye_le');
     }
 
     /** La conversation de ces deux utilisateurs sur cette annonce, créée si elle n'existe pas. */

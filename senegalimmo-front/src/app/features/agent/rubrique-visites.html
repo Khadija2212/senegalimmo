@@ -1,0 +1,101 @@
+@let v = visites();
+<div class="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+  <div class="min-w-0">
+    <h2 class="font-display text-[1.55rem] leading-tight font-semibold">
+      {{ textes.rubriqueVisites }}
+    </h2>
+    <p class="text-encre-2 mt-1.5 text-[0.92rem]">{{ textes.notePlanning }}</p>
+  </div>
+  <button
+    hlmBtn
+    variant="trait"
+    class="h-[42px] px-4 text-[0.9rem]"
+    [disabled]="exportEnCours()"
+    (click)="exporter()"
+  >
+    <ng-icon name="siCalendrier" size="18" />{{
+      exportEnCours() ? textes.exportEnCours : textes.exporterPlanning
+    }}
+  </button>
+</div>
+@if (erreurExport()) {
+  <p class="text-destructive mt-2 text-[0.85rem]" role="alert">{{ textes.erreurPlanning }}</p>
+}
+
+@if (vide()) {
+  <div class="vide">
+    <ng-icon name="siCalendrier" size="32" class="text-bleu" />
+    <div>
+      <h3 class="font-display text-[1.4rem] leading-tight font-semibold">
+        {{ textes.visitesVides }}
+      </h3>
+      <p class="text-encre-2 mt-1.5 max-w-[52ch]">{{ textes.visitesVidesTexte }}</p>
+      <button type="button" class="lien-texte mt-4" (click)="voirBiens.emit()">
+        {{ textes.voirBiens }}
+      </button>
+    </div>
+  </div>
+}
+
+@for (
+  bloc of [
+    { cle: 'aVenir', titre: textes.aVenir, intro: textes.aVenirIntro, liste: v.aVenir },
+    {
+      cle: 'sansCompteRendu',
+      titre: textes.sansCompteRendu,
+      intro: textes.sansCompteRenduIntro,
+      liste: v.sansCompteRendu,
+    },
+  ];
+  track bloc.cle
+) {
+  @if (bloc.liste.length) {
+    <section class="mt-9" [attr.aria-labelledby]="'t-' + bloc.cle">
+      <h3
+        [id]="'t-' + bloc.cle"
+        class="font-display flex items-baseline gap-3 text-[1.35rem] leading-tight font-semibold"
+      >
+        {{ bloc.titre }}
+        <small class="text-encre-3 font-sans text-[0.85rem] font-medium">{{
+          bloc.liste.length
+        }}</small>
+      </h3>
+      <p class="text-encre-2 mt-1.5 text-[0.92rem]">{{ bloc.intro }}</p>
+      <div class="border-border mt-3.5 border-t">
+        @for (l of bloc.liste; track l.cle) {
+          <si-ligne-visite
+            [ligne]="l"
+            [principale]="
+              l.cle ===
+              (bloc.cle === 'aVenir' ? principales().aVenir : principales().sansCompteRendu)
+            "
+            [enCours]="suivi.enCours() === l.cle"
+            [erreur]="suivi.erreurs()[l.cle] ?? null"
+            (confirmer)="confirmer(l)"
+            (refuser)="refuser(l, $event)"
+            (reprogrammer)="reprogrammer(l, $event)"
+            (rediger)="rediger(l, $event)"
+          />
+        }
+      </div>
+    </section>
+  }
+}
+
+@if (v.historique.length) {
+  <details class="group mt-9">
+    <summary
+      class="border-border text-encre-2 flex cursor-pointer list-none items-center gap-2.5 border-t py-3 font-semibold"
+    >
+      <ng-icon name="siBas" size="18" class="transition-transform group-open:rotate-180" />{{
+        textes.historique
+      }}
+      <small class="text-encre-3 text-[0.85rem]">{{ v.historique.length }}</small>
+    </summary>
+    <div class="border-border border-t opacity-85">
+      @for (l of v.historique; track l.cle) {
+        <si-ligne-visite [ligne]="l" />
+      }
+    </div>
+  </details>
+}

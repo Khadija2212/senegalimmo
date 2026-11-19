@@ -1,0 +1,173 @@
+@let l = ligne();
+@if (l.photo) {
+  <img [src]="l.photo" alt="" class="h-20 w-24 rounded-media object-cover sm:h-28 sm:w-40" />
+} @else {
+  <span class="bg-brume h-20 w-24 rounded-media sm:h-28 sm:w-40"></span>
+}
+
+<div class="min-w-0">
+  <h3 class="text-[1.02rem] leading-snug font-semibold">
+    @if (l.annonceId) {
+      <a
+        [routerLink]="[liens.annonces, l.annonceId]"
+        class="hover:underline hover:underline-offset-[3px]"
+        >{{ l.titre }}</a
+      >
+    } @else {
+      {{ l.titre }}
+    }
+  </h3>
+  <p class="text-encre-2 mt-1 text-[0.9rem]">{{ l.lieu }}</p>
+  @if (l.prix !== null) {
+    <p
+      class="mt-2 text-[1.15rem] leading-none font-bold tabular-nums [font-variation-settings:'wdth'_85]"
+    >
+      {{ l.prix | fcfa }}
+      @if (l.transaction === 'location') {
+        <span class="text-encre-3 text-[0.82rem] font-medium">{{ textes.parMois }}</span>
+      }
+    </p>
+  }
+  <p class="mt-2 text-[0.88rem]">
+    <b class="font-semibold" [class]="couleur()">{{ l.etat.libelle }}</b>
+    @if (l.etat.explication) {
+      <span class="text-encre-2 block sm:ml-1.5 sm:inline">{{ l.etat.explication }}</span>
+    }
+  </p>
+  @if (l.vues !== null) {
+    <p class="text-encre-3 mt-1 text-[0.82rem] tabular-nums">{{ textes.vues(l.vues) }}</p>
+  }
+</div>
+
+@if (l.peutSuspendre || l.peutReprendre || l.peutConclure || l.peutMettreEnAvant) {
+  <div
+    class="col-start-2 flex flex-wrap gap-x-4 gap-y-2 sm:col-start-auto sm:flex-col sm:items-end"
+  >
+    @if (l.peutMettreEnAvant) {
+      <button
+        type="button"
+        class="lien-texte"
+        [attr.aria-expanded]="volet() === 'premium'"
+        (click)="ouvrir('premium')"
+      >
+        {{ textes.mettreEnAvant }}
+      </button>
+    }
+    @if (l.peutReprendre) {
+      <button
+        type="button"
+        class="lien-texte"
+        [disabled]="enCours()"
+        (click)="agir.emit('reprendre')"
+      >
+        {{ textes.reprendre }}
+      </button>
+    }
+    @if (l.peutConclure) {
+      <button
+        type="button"
+        class="lien-texte"
+        [attr.aria-expanded]="volet() === 'conclure'"
+        (click)="ouvrir('conclure')"
+      >
+        {{ textes.conclure }}
+      </button>
+    }
+    @if (l.peutSuspendre) {
+      <button
+        type="button"
+        class="lien-texte danger"
+        [attr.aria-expanded]="volet() === 'suspendre'"
+        (click)="ouvrir('suspendre')"
+      >
+        {{ textes.suspendre }}
+      </button>
+    }
+  </div>
+}
+@if (l.peutReprendre) {
+  <p class="text-encre-3 col-span-2 text-[0.82rem] sm:col-start-2">{{ textes.noteReprendre }}</p>
+}
+
+@switch (volet()) {
+  @case ('suspendre') {
+    <div class="confirmer col-span-2 sm:col-start-2" role="alert">
+      {{ textes.questionSuspendre }}
+      <button
+        type="button"
+        class="lien-texte text-alerte-texte"
+        [disabled]="enCours()"
+        (click)="agir.emit('suspendre')"
+      >
+        {{ textes.ouiSuspendre }}
+      </button>
+      <button type="button" class="lien-texte text-alerte-texte" (click)="volet.set(null)">
+        {{ textes.nonGarder }}
+      </button>
+    </div>
+  }
+  @case ('conclure') {
+    <div class="confirmer col-span-2 sm:col-start-2" role="alert">
+      {{ textes.questionConclure(l.transaction === 'location') }}
+      <button
+        type="button"
+        class="lien-texte text-alerte-texte"
+        [disabled]="enCours()"
+        (click)="agir.emit('conclure')"
+      >
+        {{ textes.ouiConclure }}
+      </button>
+      <button type="button" class="lien-texte text-alerte-texte" (click)="volet.set(null)">
+        {{ textes.nonGarder }}
+      </button>
+    </div>
+  }
+  @case ('premium') {
+    <div class="border-border col-span-2 rounded-cadre border px-4 py-3.5 sm:col-start-2">
+      @if (options()?.length) {
+        <span
+          [id]="'l-option-' + l.bienId"
+          class="text-encre-2 mb-2 block text-[0.8rem] font-semibold"
+          >{{ textes.choisirOption }}</span
+        >
+        <hlm-toggle-group
+          type="single"
+          variant="case"
+          class="flex-wrap"
+          [spacing]="1.5"
+          [nullable]="true"
+          [attr.aria-labelledby]="'l-option-' + l.bienId"
+          [value]="option()"
+          (valueChange)="choisirOption($event)"
+        >
+          @for (o of options(); track o.id) {
+            <button hlmToggleGroupItem [value]="o.id" class="h-auto px-3 py-2 text-left">
+              <span class="block font-semibold">{{ o.libelle }}</span>
+              <span class="text-encre-2 block text-[0.8rem]">{{ libelleOption(o) }}</span>
+            </button>
+          }
+        </hlm-toggle-group>
+        <div class="mt-3 flex flex-wrap items-center gap-4">
+          @if (optionChoisie()) {
+            <button type="button" class="lien-texte" [disabled]="enCours()" (click)="activer()">
+              {{ prixActivation() }}
+            </button>
+          }
+          <button type="button" class="lien-texte" (click)="volet.set(null)">
+            {{ textes.fermer }}
+          </button>
+        </div>
+      } @else {
+        <p class="text-encre-2 text-[0.88rem]">
+          {{ textes.aucuneOption }}
+          <button type="button" class="lien-texte ml-2" (click)="volet.set(null)">
+            {{ textes.fermer }}
+          </button>
+        </p>
+      }
+    </div>
+  }
+}
+@if (erreur(); as e) {
+  <p class="text-destructive col-span-2 text-[0.85rem] sm:col-start-2" role="alert">{{ e }}</p>
+}

@@ -20,7 +20,7 @@ import { LIENS_ESPACE, Rubrique, TEXTES_ESPACE } from './textes';
   imports: [RouterLink, NgIcon, HlmButton, LigneDemarche, ListeFavoris, BarreComparer],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './espace-client.html',
-  styleUrl: './espace-client.css',
+  styleUrl: '../../shared/espace/rubriques.css',
   host: { class: 'block' },
 })
 export class EspaceClient {
@@ -35,11 +35,15 @@ export class EspaceClient {
   private readonly router = inject(Router);
 
   protected readonly donnees = rxResource({ stream: () => this.service.charger() });
+  /** Données chargées, ou rien : value() lève une erreur quand le chargement a échoué. */
+  protected readonly valeur = computed(() =>
+    this.donnees.hasValue() ? this.donnees.value() : undefined,
+  );
   protected readonly actionEnCours = signal<string | null>(null);
   protected readonly erreurs = signal<Readonly<Record<string, string>>>({});
 
   protected readonly groupes = computed(() => {
-    const d = this.donnees.value();
+    const d = this.valeur();
     return d ? grouperDemarches(d.visites, d.demandes, d.offres) : null;
   });
   protected readonly vide = computed(() => {

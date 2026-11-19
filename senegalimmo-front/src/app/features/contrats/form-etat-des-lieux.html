@@ -1,0 +1,92 @@
+<form (submit)="$event.preventDefault(); enregistrer()">
+  @if (types().length > 1) {
+    <fieldset>
+      <legend class="text-encre-2 mb-2 text-[0.8rem] font-semibold">{{ textes.typeEtat }}</legend>
+      <hlm-radio-group
+        class="flex flex-wrap gap-x-6 gap-y-2"
+        [value]="type()"
+        (valueChange)="choisirType($event)"
+      >
+        @for (t of types(); track t) {
+          <label class="flex cursor-pointer items-center gap-2.5" hlmLabel>
+            <hlm-radio [value]="t"><hlm-radio-indicator indicator /></hlm-radio>
+            {{ libelle(t) }}
+          </label>
+        }
+      </hlm-radio-group>
+    </fieldset>
+  } @else {
+    <h3 class="font-semibold">{{ libelle(type()) }}</h3>
+  }
+
+  <label
+    hlmLabel
+    for="f-observations"
+    class="text-encre-2 mt-5 mb-2 block text-[0.8rem] font-semibold"
+    >{{ textes.observations }}</label
+  >
+  <textarea
+    hlmTextarea
+    id="f-observations"
+    rows="4"
+    class="w-full bg-white"
+    [value]="observations()"
+    (input)="observations.set($any($event.target).value)"
+  ></textarea>
+
+  <label hlmLabel for="f-releve" class="text-encre-2 mt-4 mb-2 block text-[0.8rem] font-semibold">{{
+    textes.releve
+  }}</label>
+  <input
+    hlmInput
+    id="f-releve"
+    class="h-11 w-full bg-white"
+    [value]="releve()"
+    (input)="releve.set($any($event.target).value)"
+  />
+
+  <fieldset class="mt-5">
+    <legend class="text-encre-2 mb-2 text-[0.8rem] font-semibold">{{ textes.photos }}</legend>
+    @if (photos.isLoading()) {
+      <div class="grid animate-pulse grid-cols-3 gap-2 sm:grid-cols-5" aria-busy="true">
+        @for (i of [1, 2, 3]; track i) {
+          <div class="bg-brume aspect-[4/3] rounded-champ"></div>
+        }
+      </div>
+    } @else if (photos.value()?.length) {
+      <ul class="grid grid-cols-3 gap-2 sm:grid-cols-5">
+        @for (p of photos.value() ?? []; track p.id; let i = $index) {
+          <li>
+            <label class="relative block cursor-pointer">
+              <img
+                [src]="p.lien"
+                alt=""
+                class="aspect-[4/3] w-full rounded-champ object-cover"
+                [class.opacity-60]="!choisies().includes(p.id)"
+              />
+              <input
+                type="checkbox"
+                class="accent-bleu absolute top-2 left-2 size-4"
+                [attr.aria-label]="textes.photo(i + 1)"
+                [checked]="choisies().includes(p.id)"
+                (change)="basculerPhoto(p.id, $any($event.target).checked)"
+              />
+            </label>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="text-encre-2 text-[0.9rem]">{{ textes.photosVides }}</p>
+    }
+  </fieldset>
+
+  <div class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
+    <button hlmBtn size="grand" type="submit" class="h-[46px]" [disabled]="enCours()">
+      {{ textes.enregistrerEtat }}
+    </button>
+    <button type="button" class="lien-texte" (click)="fermer.emit()">{{ textes.fermer }}</button>
+  </div>
+  @if (erreur(); as e) {
+    <p class="text-destructive mt-3 text-[0.88rem]" role="alert">{{ e }}</p>
+  }
+</form>

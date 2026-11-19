@@ -1,0 +1,102 @@
+<h2 class="font-display text-[1.55rem] leading-tight font-semibold">
+  {{ textes.etatsDesLieux }}
+</h2>
+<p class="text-encre-2 mt-1.5 text-[0.92rem]">{{ textes.etatsIntro }}</p>
+
+@if (etats.isLoading() && !etats.value()) {
+  <div class="mt-3.5 animate-pulse" aria-busy="true">
+    <div class="bg-brume h-4 w-2/3 rounded"></div>
+    <div class="bg-brume mt-3 h-4 w-1/2 rounded"></div>
+  </div>
+} @else if (etats.error()) {
+  <p class="text-encre-2 mt-3" role="alert">
+    {{ textes.erreurTexte }}
+    <button type="button" class="lien-texte ml-2" (click)="etats.reload()">
+      {{ textes.reessayer }}
+    </button>
+  </p>
+} @else {
+  <div class="border-border mt-3.5 border-t">
+    @for (e of etats.value() ?? []; track e.id) {
+      <article class="border-border border-b py-4">
+        <h3 class="font-semibold">{{ titre(e) }}</h3>
+        <p class="text-encre-3 mt-0.5 text-[0.85rem]">{{ textes.faitLe(jour(e.date)) }}</p>
+        @if (e.observations) {
+          <p class="mt-2 text-[0.92rem]">
+            <span class="text-encre-2">{{ textes.observations }} : </span>{{ e.observations }}
+          </p>
+        }
+        @if (e.releve_compteurs) {
+          <p class="mt-1 text-[0.92rem]">
+            <span class="text-encre-2">{{ textes.releve }} : </span>{{ e.releve_compteurs }}
+          </p>
+        }
+        @if (e.photos.length) {
+          <ul class="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
+            @for (p of e.photos; track p.id; let i = $index) {
+              <li>
+                <a [href]="p.lien" target="_blank" rel="noopener">
+                  <img
+                    [src]="p.lien"
+                    [alt]="textes.photo(i + 1)"
+                    class="aspect-[4/3] w-full rounded-champ object-cover"
+                  />
+                </a>
+              </li>
+            }
+          </ul>
+        }
+        <p class="mt-2.5 text-[0.88rem]">
+          @if (e.valide_le) {
+            <b class="text-succes font-semibold">{{ textes.valideLe(jour(e.valide_le)) }}</b>
+          } @else {
+            <b class="text-bleu-vif font-semibold">{{ textes.aValider }}</b>
+          }
+        </p>
+        @if (role() === 'client' && !e.valide_le) {
+          @if (e.id === premierAValider()) {
+            <button
+              hlmBtn
+              type="button"
+              class="mt-3 h-[42px] px-4 text-[0.9rem]"
+              [disabled]="enCours() === e.id"
+              (click)="valider(e)"
+            >
+              {{ textes.valider }}
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="lien-texte mt-3"
+              [disabled]="enCours() === e.id"
+              (click)="valider(e)"
+            >
+              {{ textes.valider }}
+            </button>
+          }
+        }
+      </article>
+    } @empty {
+      <p class="text-encre-2 border-border border-b py-4">{{ textes.aucunEtat }}</p>
+    }
+  </div>
+
+  @if (manquants().length) {
+    @if (formulaire()) {
+      <si-form-etat-des-lieux
+        class="mt-5"
+        [bail]="bail()"
+        [types]="manquants()"
+        (cree)="cree()"
+        (fermer)="formulaire.set(false)"
+      />
+    } @else {
+      <button type="button" class="lien-texte mt-4" (click)="formulaire.set(true)">
+        {{ textes.realiser(titre(manquants()[0])) }}
+      </button>
+    }
+  }
+}
+@if (erreur(); as e) {
+  <p class="text-destructive mt-3 text-[0.88rem]" role="alert">{{ e }}</p>
+}

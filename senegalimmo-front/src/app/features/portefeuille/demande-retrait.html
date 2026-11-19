@@ -1,0 +1,81 @@
+<form
+  [formGroup]="form"
+  (ngSubmit)="envoyer()"
+  novalidate
+  class="border-border rounded-cadre border px-4 py-5 sm:px-6"
+  aria-labelledby="t-retrait"
+>
+  <h2 id="t-retrait" class="font-display text-[1.4rem] leading-tight font-semibold">
+    {{ t.demanderRetrait }}
+  </h2>
+  @if (alerte(); as a) {
+    <p
+      class="border-destructive bg-alerte text-alerte-texte mt-3 rounded-r-lg border-l-[3px] px-3.5 py-3 text-[0.9rem]"
+      role="alert"
+    >
+      {{ a }}
+    </p>
+  }
+
+  <label
+    hlmLabel
+    for="r-montant"
+    class="text-encre-2 mt-4 mb-2 block text-[0.8rem] font-semibold"
+    >{{ t.montant }}</label
+  >
+  <input
+    hlmInput
+    id="r-montant"
+    type="number"
+    step="1"
+    inputmode="numeric"
+    class="h-11 w-full bg-white tabular-nums"
+    [attr.aria-describedby]="message('montant') ? 'r-montant-err' : 'r-montant-note'"
+    formControlName="montant"
+  />
+  @if (message('montant'); as m) {
+    <p id="r-montant-err" class="text-destructive mt-1.5 text-[0.82rem]" role="alert">{{ m }}</p>
+  } @else {
+    <p id="r-montant-note" class="text-encre-3 mt-1.5 text-[0.8rem]">
+      {{ t.montantNote(fcfa(minimum()), fcfa(disponible())) }}
+    </p>
+  }
+
+  <span id="r-methode-l" class="text-encre-2 mt-4 mb-2 block text-[0.8rem] font-semibold">{{
+    t.methode
+  }}</span>
+  <hlm-toggle-group
+    type="single"
+    variant="case"
+    class="flex-wrap"
+    [spacing]="1.5"
+    formControlName="methode"
+    aria-labelledby="r-methode-l"
+  >
+    @for (m of methodes; track m.valeur) {
+      <button hlmToggleGroupItem [value]="m.valeur" class="h-11 px-4">{{ m.libelle }}</button>
+    }
+  </hlm-toggle-group>
+
+  <label hlmLabel for="r-numero" class="text-encre-2 mt-4 mb-2 block text-[0.8rem] font-semibold">{{
+    t.numero
+  }}</label>
+  <input
+    hlmInput
+    id="r-numero"
+    type="tel"
+    autocomplete="tel"
+    inputmode="tel"
+    class="h-11 w-full bg-white tabular-nums"
+    [placeholder]="t.numeroPlaceholder"
+    [attr.aria-describedby]="message('numero_beneficiaire') ? 'r-numero-err' : null"
+    formControlName="numero_beneficiaire"
+  />
+  @if (message('numero_beneficiaire'); as m) {
+    <p id="r-numero-err" class="text-destructive mt-1.5 text-[0.82rem]" role="alert">{{ m }}</p>
+  }
+
+  <button hlmBtn type="submit" size="grand" class="mt-5 h-[50px] w-full" [disabled]="enCours()">
+    {{ enCours() ? t.envoiEnCours : t.envoyer }}
+  </button>
+</form>

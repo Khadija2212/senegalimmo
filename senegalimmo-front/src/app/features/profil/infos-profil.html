@@ -1,0 +1,228 @@
+<form [formGroup]="form" (ngSubmit)="envoyer()" novalidate>
+  @if (alerte(); as a) {
+    <p
+      class="border-destructive bg-alerte text-alerte-texte mb-[18px] rounded-r-lg border-l-[3px] px-3.5 py-3 text-[0.9rem]"
+      role="alert"
+    >
+      {{ a }}
+    </p>
+  }
+
+  <div class="flex items-center gap-5">
+    @if (image(); as src) {
+      <img [src]="src" alt="" class="size-[72px] shrink-0 rounded-full object-cover" />
+    } @else {
+      <span
+        class="bg-brume text-bleu font-display grid size-[72px] shrink-0 place-items-center rounded-full text-[1.6rem] font-semibold"
+        aria-hidden="true"
+        >{{ lettres() }}</span
+      >
+    }
+    <div class="min-w-0">
+      <span class="text-encre-2 block text-[0.82rem] font-semibold">{{ textes.photo }}</span>
+      <input
+        id="p-photo"
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        class="sr-only"
+        aria-describedby="p-photo-aide"
+        (change)="choisirPhoto($event)"
+      />
+      <label for="p-photo" class="lien-texte mt-1 inline-block">{{
+        compte().photo_url || image() ? textes.changerPhoto : textes.choisirPhoto
+      }}</label>
+      @if (erreurPhoto(); as m) {
+        <p class="text-destructive mt-1.5 text-[0.82rem]" role="alert">{{ m }}</p>
+      } @else {
+        <p id="p-photo-aide" class="text-encre-3 mt-1.5 text-[0.8rem]">
+          @if (compte().photo_url && !image()) {
+            {{ textes.photoEnregistree }}
+          }
+          {{ textes.photoAide }}
+        </p>
+      }
+    </div>
+  </div>
+
+  <div class="mt-6 grid gap-x-3 gap-y-4 sm:grid-cols-2">
+    <div>
+      <label
+        hlmLabel
+        for="p-prenom"
+        class="text-encre-2 mb-[7px] block text-[0.82rem] font-semibold"
+        >{{ textes.prenom }}</label
+      >
+      <input
+        hlmInput
+        id="p-prenom"
+        autocomplete="given-name"
+        class="h-[46px] bg-white text-[0.95rem]"
+        formControlName="prenom"
+      />
+      @if (message(form.controls.prenom); as m) {
+        <p class="text-destructive mt-1.5 text-[0.82rem]">{{ m }}</p>
+      }
+    </div>
+    <div>
+      <label
+        hlmLabel
+        for="p-nom"
+        class="text-encre-2 mb-[7px] block text-[0.82rem] font-semibold"
+        >{{ textes.nom }}</label
+      >
+      <input
+        hlmInput
+        id="p-nom"
+        autocomplete="family-name"
+        class="h-[46px] bg-white text-[0.95rem]"
+        formControlName="nom"
+      />
+      @if (message(form.controls.nom); as m) {
+        <p class="text-destructive mt-1.5 text-[0.82rem]">{{ m }}</p>
+      }
+    </div>
+    <div>
+      <label
+        hlmLabel
+        for="p-tel"
+        class="text-encre-2 mb-[7px] block text-[0.82rem] font-semibold"
+        >{{ textes.telephone }}</label
+      >
+      <input
+        hlmInput
+        id="p-tel"
+        type="tel"
+        inputmode="tel"
+        autocomplete="tel"
+        class="h-[46px] bg-white text-[0.95rem] tabular-nums"
+        formControlName="telephone"
+        aria-describedby="p-tel-aide"
+      />
+      @if (message(form.controls.telephone); as m) {
+        <p class="text-destructive mt-1.5 text-[0.82rem]">{{ m }}</p>
+      } @else {
+        <p id="p-tel-aide" class="text-encre-3 mt-1.5 text-[0.8rem]">{{ textes.aideTelephone }}</p>
+      }
+    </div>
+    <div>
+      <span class="text-encre-2 mb-[7px] block text-[0.82rem] font-semibold">{{
+        textes.email
+      }}</span>
+      <p class="flex h-[46px] items-center truncate text-[0.95rem]">{{ compte().email }}</p>
+      <p class="text-encre-3 mt-1.5 text-[0.8rem]">{{ textes.emailFixe }}</p>
+    </div>
+
+    @switch (role()) {
+      @case ('client') {
+        <div>
+          <label
+            hlmLabel
+            for="p-naissance"
+            class="text-encre-2 mb-[7px] block text-[0.82rem] font-semibold"
+            >{{ textes.dateNaissance }}</label
+          >
+          <input
+            hlmInput
+            id="p-naissance"
+            type="date"
+            autocomplete="bday"
+            class="h-[46px] bg-white text-[0.95rem]"
+            formControlName="date_naissance"
+          />
+          @if (message(form.controls.date_naissance); as m) {
+            <p class="text-destructive mt-1.5 text-[0.82rem]">{{ m }}</p>
+          }
+        </div>
+        <div>
+          <label
+            hlmLabel
+            for="p-profession"
+            class="text-encre-2 mb-[7px] block text-[0.82rem] font-semibold"
+            >{{ textes.profession }}</label
+          >
+          <input
+            hlmInput
+            id="p-profession"
+            autocomplete="organization-title"
+            class="h-[46px] bg-white text-[0.95rem]"
+            formControlName="profession"
+          />
+          @if (message(form.controls.profession); as m) {
+            <p class="text-destructive mt-1.5 text-[0.82rem]">{{ m }}</p>
+          }
+        </div>
+      }
+      @case ('proprietaire') {
+        <div class="sm:col-span-2">
+          <label
+            hlmLabel
+            for="p-adresse"
+            class="text-encre-2 mb-[7px] block text-[0.82rem] font-semibold"
+            >{{ textes.adresse }}</label
+          >
+          <input
+            hlmInput
+            id="p-adresse"
+            autocomplete="street-address"
+            class="h-[46px] bg-white text-[0.95rem]"
+            formControlName="adresse"
+          />
+          @if (message(form.controls.adresse); as m) {
+            <p class="text-destructive mt-1.5 text-[0.82rem]">{{ m }}</p>
+          }
+        </div>
+      }
+      @case ('agent') {
+        <div>
+          <label
+            hlmLabel
+            for="p-carte"
+            class="text-encre-2 mb-[7px] block text-[0.82rem] font-semibold"
+            >{{ textes.carteProfessionnelle }}</label
+          >
+          <input
+            hlmInput
+            id="p-carte"
+            class="h-[46px] bg-white text-[0.95rem]"
+            formControlName="numero_carte_professionnelle"
+          />
+          @if (message(form.controls.numero_carte_professionnelle); as m) {
+            <p class="text-destructive mt-1.5 text-[0.82rem]">{{ m }}</p>
+          }
+        </div>
+        <div>
+          <label
+            hlmLabel
+            for="p-agence"
+            class="text-encre-2 mb-[7px] block text-[0.82rem] font-semibold"
+            >{{ textes.agence }}</label
+          >
+          <input
+            hlmInput
+            id="p-agence"
+            autocomplete="organization"
+            class="h-[46px] bg-white text-[0.95rem]"
+            formControlName="agence"
+          />
+          @if (message(form.controls.agence); as m) {
+            <p class="text-destructive mt-1.5 text-[0.82rem]">{{ m }}</p>
+          }
+        </div>
+        <p class="text-[0.88rem] sm:col-span-2">
+          <span class="text-encre-2 mr-1.5">{{ textes.validation }}</span>
+          <b class="font-semibold" [class]="validation().couleur">{{ validation().libelle }}</b>
+          <span class="text-encre-2 block sm:ml-1.5 sm:inline">{{ validation().explication }}</span>
+        </p>
+      }
+    }
+  </div>
+
+  <div class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
+    <button hlmBtn size="grand" type="submit" class="h-[46px]" [disabled]="enCours()">
+      {{ enCours() ? textes.enregistrement : textes.enregistrer }}
+    </button>
+    @if (succes()) {
+      <p class="text-succes text-[0.9rem] font-semibold" role="status">{{ textes.enregistre }}</p>
+    }
+  </div>
+</form>

@@ -1,9 +1,12 @@
 <div
-  class="mx-auto flex h-[60px] max-w-[1240px] items-center gap-10 px-4 sm:px-7 md:h-[72px] lg:px-10"
+  class="mx-auto flex h-[60px] max-w-[1240px] items-center gap-6 px-4 sm:px-7 md:h-[72px] lg:gap-10 lg:px-10"
 >
   <si-marque />
 
-  <nav class="hidden gap-7 md:flex" [attr.aria-label]="textes.navigation">
+  <nav
+    class="hidden shrink-0 gap-7 whitespace-nowrap lg:flex"
+    [attr.aria-label]="textes.navigation"
+  >
     <a
       class="border-b py-1.5 text-[0.95rem] font-medium no-underline"
       [class]="
@@ -28,7 +31,7 @@
       [attr.aria-current]="actif() === 'acheter' ? 'page' : null"
       >{{ textes.acheter }}</a
     >
-    @if (session.estClient()) {
+    @if (lienEspace(); as espace) {
       <a
         class="border-b py-1.5 text-[0.95rem] font-medium no-underline"
         [class]="
@@ -36,11 +39,12 @@
             ? 'border-aqua text-white'
             : 'border-transparent text-ciel hover:text-white'
         "
-        [routerLink]="liens.espace"
+        [routerLink]="espace"
         [attr.aria-current]="actif() === 'espace' ? 'page' : null"
         >{{ textes.monEspace }}</a
       >
-    } @else {
+    }
+    @if (montrerPublier()) {
       <a
         class="text-ciel py-1.5 text-[0.95rem] font-medium no-underline hover:text-white"
         [routerLink]="liens.publier"
@@ -50,20 +54,26 @@
     }
   </nav>
 
-  <div class="ml-auto hidden items-center gap-5 md:flex">
+  <div class="ml-auto hidden shrink-0 items-center gap-5 whitespace-nowrap lg:flex">
     @if (session.compte(); as c) {
-      @if (session.estClient()) {
-        <a
-          class="inline-flex items-center gap-2 text-[0.95rem] text-white no-underline hover:underline hover:underline-offset-4"
-          [routerLink]="liens.espace"
-        >
-          <ng-icon name="siCompte" size="20" class="text-aqua" />{{ c.prenom }} {{ c.nom }}
-        </a>
-      } @else {
-        <span class="text-ciel inline-flex items-center gap-2 text-[0.95rem]">
-          <ng-icon name="siCompte" size="20" class="text-aqua" />{{ c.prenom }} {{ c.nom }}
-        </span>
-      }
+      <a
+        class="text-ciel inline-flex items-baseline gap-1.5 text-[0.95rem] no-underline hover:text-white"
+        [routerLink]="liens.notifications"
+        >{{ textes.notifications }}
+        @if (compteur.nonLues(); as n) {
+          <span
+            class="text-aqua font-semibold tabular-nums"
+            [attr.aria-label]="textes.nonLues(n)"
+            >{{ n }}</span
+          >
+        }
+      </a>
+      <a
+        class="hidden items-center gap-2 text-[0.95rem] text-white no-underline hover:underline hover:underline-offset-4 xl:inline-flex"
+        [routerLink]="liens.profil"
+      >
+        <ng-icon name="siCompte" size="20" class="text-aqua" />{{ c.prenom }} {{ c.nom }}
+      </a>
       <button
         hlmBtn
         variant="marine"
@@ -94,7 +104,7 @@
 
   <button
     type="button"
-    class="ml-auto inline-flex size-11 items-center justify-center text-white md:hidden"
+    class="ml-auto inline-flex size-11 items-center justify-center text-white lg:hidden"
     [attr.aria-label]="menuOuvert() ? textes.fermerMenu : textes.ouvrirMenu"
     [attr.aria-expanded]="menuOuvert()"
     (click)="basculerMenu()"
@@ -104,7 +114,7 @@
 </div>
 
 @if (menuOuvert()) {
-  <nav class="border-t border-white/15 px-4 pb-5 md:hidden" [attr.aria-label]="textes.navigation">
+  <nav class="border-t border-white/15 px-4 pb-5 lg:hidden" [attr.aria-label]="textes.navigation">
     <a
       class="block py-3 text-white"
       [routerLink]="liens.louer.chemin"
@@ -121,15 +131,26 @@
     >
       {{ textes.acheter }}
     </a>
-    @if (session.estClient()) {
-      <a class="block py-3 text-white" [routerLink]="liens.espace" (click)="basculerMenu()">{{
+    @if (lienEspace(); as espace) {
+      <a class="block py-3 text-white" [routerLink]="espace" (click)="basculerMenu()">{{
         textes.monEspace
       }}</a>
-    } @else {
-      <a class="block py-3 text-white" [routerLink]="liens.publier">{{ textes.publier }}</a>
+    }
+    @if (montrerPublier()) {
+      <a class="block py-3 text-white" [routerLink]="liens.publier" (click)="basculerMenu()">{{
+        textes.publier
+      }}</a>
     }
     @if (session.compte(); as c) {
-      <p class="text-ciel py-3">{{ c.prenom }} {{ c.nom }}</p>
+      <a class="block py-3 text-white" [routerLink]="liens.notifications" (click)="basculerMenu()"
+        >{{ textes.notifications }}
+        @if (compteur.nonLues(); as n) {
+          <span class="text-aqua font-semibold tabular-nums">{{ n }}</span>
+        }
+      </a>
+      <a class="text-ciel block py-3" [routerLink]="liens.profil" (click)="basculerMenu()"
+        >{{ c.prenom }} {{ c.nom }}</a
+      >
       <button
         hlmBtn
         variant="marine"
