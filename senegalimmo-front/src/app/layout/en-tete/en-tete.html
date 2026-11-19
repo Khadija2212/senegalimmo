@@ -4,7 +4,7 @@
   <si-marque />
 
   <nav
-    class="hidden gap-5 whitespace-nowrap md:flex lg:gap-7"
+    class="hidden shrink-0 gap-7 whitespace-nowrap lg:flex"
     [attr.aria-label]="textes.navigation"
   >
     <a
@@ -54,7 +54,7 @@
     }
   </nav>
 
-  <div class="ml-auto hidden items-center gap-4 whitespace-nowrap md:flex lg:gap-5">
+  <div class="ml-auto hidden shrink-0 items-center gap-5 whitespace-nowrap lg:flex">
     @if (session.compte(); as c) {
       <a
         class="text-ciel inline-flex items-baseline gap-1.5 text-[0.95rem] no-underline hover:text-white"
@@ -69,7 +69,7 @@
         }
       </a>
       <a
-        class="hidden items-center gap-2 text-[0.95rem] text-white no-underline hover:underline hover:underline-offset-4 lg:inline-flex"
+        class="hidden items-center gap-2 text-[0.95rem] text-white no-underline hover:underline hover:underline-offset-4 xl:inline-flex"
         [routerLink]="liens.profil"
       >
         <ng-icon name="siCompte" size="20" class="text-aqua" />{{ c.prenom }} {{ c.nom }}
@@ -104,7 +104,7 @@
 
   <button
     type="button"
-    class="ml-auto inline-flex size-11 items-center justify-center text-white md:hidden"
+    class="ml-auto inline-flex size-11 items-center justify-center text-white lg:hidden"
     [attr.aria-label]="menuOuvert() ? textes.fermerMenu : textes.ouvrirMenu"
     [attr.aria-expanded]="menuOuvert()"
     (click)="basculerMenu()"
@@ -114,7 +114,7 @@
 </div>
 
 @if (menuOuvert()) {
-  <nav class="border-t border-white/15 px-4 pb-5 md:hidden" [attr.aria-label]="textes.navigation">
+  <nav class="border-t border-white/15 px-4 pb-5 lg:hidden" [attr.aria-label]="textes.navigation">
     <a
       class="block py-3 text-white"
       [routerLink]="liens.louer.chemin"

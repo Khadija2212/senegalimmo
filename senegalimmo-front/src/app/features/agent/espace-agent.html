@@ -37,12 +37,12 @@
         </div>
         @if (indicateurs(); as ind) {
           <dl
-            class="border-border flex w-full rounded-cadre border sm:w-auto lg:ml-auto"
+            class="border-border grid w-full grid-cols-2 overflow-hidden rounded-cadre border sm:flex sm:w-auto lg:ml-auto"
             [attr.aria-label]="textes.enBref"
           >
             @for (i of ind; track i.libelle) {
               <div
-                class="border-border flex min-w-0 flex-1 flex-col-reverse border-r px-3 py-2.5 last:border-r-0 sm:min-w-24 sm:px-[18px] sm:py-3"
+                class="border-border -mr-px -mb-px flex min-w-0 flex-1 flex-col-reverse border-r border-b px-3 py-2.5 sm:min-w-24 sm:px-[18px] sm:py-3"
               >
                 <dt class="text-encre-3 text-[0.74rem] sm:text-[0.8rem] sm:whitespace-nowrap">
                   {{ i.libelle }}
