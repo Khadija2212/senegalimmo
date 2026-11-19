@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\DecisionModeration;
+use App\Enums\RoleAdmin;
 use App\Enums\StatutValidation;
 use App\Enums\TypeMandat;
 use App\Enums\TypeMedia;
@@ -41,11 +42,23 @@ class DemoSeeder extends Seeder
         'fatou' => [Client::class, 'Fatou', 'Ba', 'fatou.ba@senegalimmo.test', '774445566'],
     ];
 
+    /** Un administrateur par niveau borné ; le super administrateur vient d'AdminSeeder. [niveau, prénom, nom, e-mail, téléphone] */
+    private const ADMINISTRATEURS = [
+        [RoleAdmin::MODERATEUR, 'Aminata', 'Fall', 'moderation@senegalimmo.test', '775556677'],
+        [RoleAdmin::FINANCE, 'Cheikh', 'Gueye', 'finance@senegalimmo.test', '776667788'],
+    ];
+
     public function run(): void
     {
         $this->call(AdminSeeder::class);
-        $admin = Administrateur::query()->firstOrFail();
+        $admin = Administrateur::where('niveau', RoleAdmin::SUPER_ADMIN)->firstOrFail();
         $comptes = collect(self::COMPTES)->map(fn (array $c): Compte => $this->compte(...$c));
+        foreach (self::ADMINISTRATEURS as [$niveau, $prenom, $nom, $email, $telephone]) {
+            Administrateur::updateOrCreate(['email' => $email], [
+                'prenom' => $prenom, 'nom' => $nom, 'telephone' => $telephone, 'niveau' => $niveau,
+                'password' => env('DEMO_MOT_DE_PASSE', self::MOT_DE_PASSE_DEFAUT),
+            ]);
+        }
 
         foreach (require self::DOSSIER.'/annonces.php' as $donnees) {
             if (Bien::where('titre', $donnees['bien']['titre'])->exists()) {
