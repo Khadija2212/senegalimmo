@@ -1,0 +1,151 @@
+@let r = requete();
+@if (r.photo) {
+  <img [src]="r.photo" alt="" class="size-16 rounded-champ object-cover sm:h-[72px] sm:w-24" />
+} @else {
+  <span class="bg-brume size-16 rounded-champ sm:h-[72px] sm:w-24"></span>
+}
+
+<div class="min-w-0">
+  <span
+    class="text-encre-3 flex items-center gap-2 text-[0.78rem] font-semibold tracking-[0.06em] uppercase"
+  >
+    <ng-icon [name]="icone()" size="18" class="text-bleu" />{{ genre() }}
+  </span>
+  <h3 class="mt-1 text-[1.02rem] leading-snug font-semibold">
+    <a
+      [routerLink]="[liens.annonces, r.annonceId]"
+      class="hover:underline hover:underline-offset-[3px]"
+      >{{ r.titre }}</a
+    >
+  </h3>
+  <p class="text-encre-2 mt-1 text-[0.9rem] tabular-nums">
+    <b class="text-foreground font-semibold">{{ r.fort }}</b
+    >{{ r.suite }}
+  </p>
+  @if (r.message) {
+    <p class="text-encre-2 mt-1.5 max-w-[60ch] text-[0.88rem]">
+      <span class="text-encre-3">{{ textes.messageClient }}</span> {{ r.message }}
+    </p>
+  }
+  <p class="mt-2 text-[0.88rem]">
+    <b class="font-semibold" [class]="couleur()">{{ r.etat.libelle }}</b>
+    @if (r.etat.explication) {
+      <span class="text-encre-2 block sm:ml-1.5 sm:inline">{{ r.etat.explication }}</span>
+    }
+  </p>
+</div>
+
+<div class="col-start-2 flex flex-col items-start gap-2 sm:col-start-auto sm:items-end">
+  @if (r.accepter) {
+    @if (principale()) {
+      <button
+        hlmBtn
+        type="button"
+        class="h-[42px] px-4 text-[0.9rem]"
+        [disabled]="enCours()"
+        (click)="accepterDemande()"
+      >
+        {{ r.accepter }}
+      </button>
+    } @else {
+      <button type="button" class="lien-texte" [disabled]="enCours()" (click)="accepterDemande()">
+        {{ r.accepter }}
+      </button>
+    }
+  }
+  @if (r.creerBail) {
+    @if (principale()) {
+      <a
+        hlmBtn
+        class="h-[42px] px-4 text-[0.9rem]"
+        [routerLink]="liens.nouveauBail"
+        [queryParams]="{ demande: r.id }"
+        >{{ textes.creerBail }}</a
+      >
+    } @else {
+      <a class="lien-texte" [routerLink]="liens.nouveauBail" [queryParams]="{ demande: r.id }">{{
+        textes.creerBail
+      }}</a>
+    }
+  }
+  @if (r.peutRefuser) {
+    <button
+      type="button"
+      class="lien-texte danger"
+      [attr.aria-expanded]="volet() === 'refuser'"
+      (click)="ouvrir('refuser')"
+    >
+      {{ textes.refuser }}
+    </button>
+  }
+  @if (r.aTraiter) {
+    <a
+      class="lien-texte"
+      [routerLink]="liens.messages"
+      [queryParams]="{ a: r.client.id, annonce: r.annonceId }"
+      >{{ textes.ecrireClient }}</a
+    >
+  }
+</div>
+
+@switch (volet()) {
+  @case ('refuser') {
+    <div class="col-span-2 sm:col-start-2">
+      <label
+        hlmLabel
+        [for]="'motif-' + r.cle"
+        class="text-encre-2 mb-2 block text-[0.8rem] font-semibold"
+        >{{ textes.motifRefus }}</label
+      >
+      <textarea
+        hlmTextarea
+        [id]="'motif-' + r.cle"
+        rows="2"
+        class="w-full bg-white"
+        [attr.maxlength]="motifMax"
+        [attr.aria-invalid]="motifManquant()"
+        [attr.aria-describedby]="motifManquant() ? 'motif-err-' + r.cle : null"
+        [placeholder]="textes.motifPlaceholder"
+        [value]="motif()"
+        (input)="saisirMotif($any($event.target).value)"
+      ></textarea>
+      @if (motifManquant()) {
+        <p [id]="'motif-err-' + r.cle" class="text-destructive mt-1.5 text-[0.82rem]" role="alert">
+          {{ textes.motifRequis }}
+        </p>
+      }
+      <div class="mt-3 flex flex-wrap items-center gap-4">
+        <button
+          type="button"
+          class="lien-texte danger"
+          [disabled]="enCours()"
+          (click)="envoyerRefus()"
+        >
+          {{ textes.envoyerRefus }}
+        </button>
+        <button type="button" class="lien-texte" (click)="volet.set(null)">
+          {{ textes.garder }}
+        </button>
+      </div>
+    </div>
+  }
+  @case ('accepter') {
+    <div class="confirmer col-span-2 sm:col-start-2" role="alert">
+      {{ textes.questionAccepterOffre }}
+      <button
+        type="button"
+        class="lien-texte text-alerte-texte"
+        [disabled]="enCours()"
+        (click)="accepter.emit()"
+      >
+        {{ textes.ouiAccepterOffre }}
+      </button>
+      <button type="button" class="lien-texte text-alerte-texte" (click)="volet.set(null)">
+        {{ textes.nonPasMaintenant }}
+      </button>
+    </div>
+  }
+}
+@if (erreur(); as e) {
+  <p class="text-destructive col-span-2 text-[0.85rem] sm:col-start-2" role="alert">{{ e }}</p>
+}

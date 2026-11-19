@@ -1,0 +1,23 @@
+export const TEXTES_MANDAT = {
+  titre: (agent: string) => `Confier un bien à ${agent}`,
+  bien: 'Bien confié',
+  choisirBien: 'Choisissez un bien',
+  type: 'Type de mandat',
+  simple: 'Simple',
+  exclusif: 'Exclusif',
+  noteExclusif: 'Exclusif : vous ne confiez ce bien à aucun autre agent pendant le mandat.',
+  taux: 'Commission, en %',
+  debut: 'Début',
+  fin: 'Fin',
+  envoyer: 'Envoyer le mandat en signature',
+  envoiEnCours: 'Envoi en cours',
+  annuler: 'Annuler',
+  note: 'Le mandat prend effet une fois signé par vous et par l’agent, depuis la page Contrats.',
+  requis: 'Ce champ est obligatoire.',
+  tauxInvalide: 'Indiquez un taux entre 0 et 100.',
+  debutPasse: "Le début ne peut pas être avant aujourd'hui.",
+  finAvantDebut: 'La fin doit venir après le début.',
+  confie: (agent: string) =>
+    `Le mandat est envoyé à ${agent} pour signature. Signez-le à votre tour dans Contrats.`,
+  erreur: "Le mandat n'a pas pu être envoyé. Réessayez dans un instant.",
+} as const;

@@ -1,0 +1,120 @@
+<main class="mx-auto max-w-[1240px] px-4 pb-24 sm:px-7 lg:px-10">
+  <section class="flex flex-wrap items-end gap-x-8 gap-y-5 pt-7 pb-5 sm:pt-10 sm:pb-7">
+    <div class="min-w-0">
+      <h1 class="font-display text-[clamp(2rem,3.4vw,2.8rem)] leading-[1.05] font-semibold">
+        {{ salut() }}
+      </h1>
+      @if (resume()) {
+        <p class="text-encre-2 mt-2 max-w-[60ch]">{{ resume() }}</p>
+      }
+    </div>
+    @if (ind(); as i) {
+      @if (!neuf()) {
+        <dl
+          class="border-border flex w-full rounded-cadre border sm:w-auto lg:ml-auto"
+          [attr.aria-label]="textes.enBref"
+        >
+          @for (
+            c of [
+              [aTraiter(), textes.aTraiterCourt],
+              [i.annonces_publiees, textes.enLigne],
+              [i.annonces_en_moderation, textes.enModeration],
+            ];
+            track $index
+          ) {
+            <div
+              class="border-border flex min-w-0 flex-1 flex-col-reverse border-r px-3 py-2.5 last:border-r-0 sm:min-w-24 sm:px-[18px] sm:py-3"
+            >
+              <dt class="text-encre-3 text-[0.74rem] sm:text-[0.8rem] sm:whitespace-nowrap">
+                {{ c[1] }}
+              </dt>
+              <dd
+                class="text-[1.5rem] leading-none font-bold tabular-nums [font-variation-settings:'wdth'_85]"
+              >
+                {{ c[0] }}
+              </dd>
+            </div>
+          }
+        </dl>
+      }
+    }
+  </section>
+
+  @if (publie()) {
+    <p
+      class="border-succes text-succes mb-6 rounded-r-lg border-l-[3px] bg-white px-3.5 py-3 text-[0.92rem] font-medium"
+      role="status"
+    >
+      {{ textes.annoncePubliee }}
+    </p>
+  }
+
+  <div class="grid items-start gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-12">
+    <nav
+      class="border-border flex overflow-x-auto border-b lg:sticky lg:top-24 lg:flex-col lg:border-t lg:border-b-0"
+      [attr.aria-label]="textes.rubriques"
+    >
+      <button
+        type="button"
+        class="rubrique"
+        [attr.aria-current]="active() === 'traiter'"
+        (click)="choisir('traiter')"
+      >
+        <ng-icon name="siListe" size="18" />{{ textes.rubriqueTraiter
+        }}<span class="n">{{ aTraiter() }}</span>
+      </button>
+      <button
+        type="button"
+        class="rubrique"
+        [attr.aria-current]="active() === 'biens'"
+        (click)="choisir('biens')"
+      >
+        <ng-icon name="siImmeuble" size="18" />{{ textes.rubriqueBiens
+        }}<span class="n">{{ ind()?.biens ?? 0 }}</span>
+      </button>
+      <button
+        type="button"
+        class="rubrique"
+        [attr.aria-current]="active() === 'agents'"
+        (click)="choisir('agents')"
+      >
+        <ng-icon name="siSceau" size="18" />{{ textes.rubriqueAgents }}
+      </button>
+      <a class="rubrique" [routerLink]="liens.messages">
+        <ng-icon name="siMessage" size="18" />{{ textes.messages }}
+        @if (ind()?.messages_non_lus; as n) {
+          <span class="n">{{ textes.nonLus(n) }}</span>
+        }
+      </a>
+      <a class="rubrique" [routerLink]="liens.contrats"
+        ><ng-icon name="siContrat" size="18" />{{ textes.contrats }}</a
+      >
+      <a class="rubrique" [routerLink]="liens.paiements"
+        ><ng-icon name="siCalendrier" size="18" />{{ textes.paiements }}</a
+      >
+      <a class="rubrique" [routerLink]="liens.portefeuille">
+        <ng-icon name="siMobile" size="18" />{{ textes.portefeuille }}
+        @if (ind(); as i) {
+          <span class="n">{{ i.solde | fcfa }}</span>
+        }
+      </a>
+      <a class="rubrique" [routerLink]="liens.profil"
+        ><ng-icon name="siCompte" size="18" />{{ textes.profil }}</a
+      >
+    </nav>
+
+    <div class="min-w-0">
+      @switch (active()) {
+        @case ('biens') {
+          <si-rubrique-biens (modifie)="indicateurs.reload()" />
+        }
+        @case ('agents') {
+          <si-rubrique-agents />
+        }
+        @default {
+          <si-rubrique-traiter (modifie)="indicateurs.reload()" />
+        }
+      }
+    </div>
+  </div>
+</main>

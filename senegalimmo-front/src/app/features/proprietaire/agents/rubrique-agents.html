@@ -1,0 +1,128 @@
+@if (vue(); as v) {
+  <h2 class="font-display text-[1.55rem] leading-tight font-semibold">
+    {{ textes.rubriqueAgents }}
+  </h2>
+  <p class="text-encre-2 mt-1.5 max-w-[64ch] text-[0.92rem]">{{ textes.agentsIntro }}</p>
+  @if (reussite(); as r) {
+    <p class="text-succes mt-3 text-[0.9rem] font-semibold" role="status">{{ r }}</p>
+  }
+
+  @if (v.mandats.length) {
+    <section class="mt-8" aria-labelledby="t-mandats">
+      <h3
+        id="t-mandats"
+        class="font-display flex items-baseline gap-3 text-[1.3rem] leading-tight font-semibold"
+      >
+        {{ textes.mandatsEnCours }}
+        <small class="text-encre-3 font-sans text-[0.85rem] font-medium">{{
+          v.mandats.length
+        }}</small>
+      </h3>
+      <p class="text-encre-2 mt-1 text-[0.9rem]">{{ textes.mandatsIntro }}</p>
+      <div class="border-border mt-3 border-t">
+        @for (m of v.mandats; track m.cle) {
+          <div
+            class="border-border grid grid-cols-[64px_minmax(0,1fr)] items-start gap-3.5 border-b py-4 sm:grid-cols-[96px_minmax(0,1fr)] sm:gap-[18px]"
+          >
+            @if (m.photo) {
+              <img
+                [src]="m.photo"
+                alt=""
+                class="size-16 rounded-champ object-cover sm:h-[72px] sm:w-24"
+              />
+            } @else {
+              <span class="bg-brume size-16 rounded-champ sm:h-[72px] sm:w-24"></span>
+            }
+            <div class="min-w-0">
+              <p class="font-semibold">{{ m.titre }}</p>
+              <p class="text-encre-2 mt-1 text-[0.9rem]">
+                <b class="text-foreground font-semibold">{{ m.agent }}</b
+                >. {{ m.detail }}
+              </p>
+              <p class="mt-2 text-[0.88rem]">
+                <b class="font-semibold" [class]="couleurs[m.etat.ton]">{{ m.etat.libelle }}</b>
+                @if (m.etat.explication) {
+                  <span class="text-encre-2 block sm:ml-1.5 sm:inline">{{
+                    m.etat.explication
+                  }}</span>
+                }
+              </p>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  <section class="mt-10" aria-labelledby="t-agents">
+    <h3
+      id="t-agents"
+      class="font-display flex items-baseline gap-3 text-[1.3rem] leading-tight font-semibold"
+    >
+      {{ textes.agentsValides }}
+      <small class="text-encre-3 font-sans text-[0.85rem] font-medium">{{ v.agents.length }}</small>
+    </h3>
+    @if (v.agents.length) {
+      @if (!v.libres.length) {
+        <p class="text-encre-2 mt-1 text-[0.9rem]">{{ textes.aucunBienLibre }}</p>
+      }
+      <div class="border-border mt-3 border-t">
+        @for (a of v.agents; track a.id) {
+          <div
+            class="border-border grid grid-cols-[48px_minmax(0,1fr)] items-start gap-3.5 border-b py-4 sm:grid-cols-[48px_minmax(0,1fr)_auto]"
+          >
+            @if (a.photo_url) {
+              <img [src]="a.photo_url" alt="" class="size-12 rounded-full object-cover" />
+            } @else {
+              <span class="bg-brume text-bleu grid size-12 place-items-center rounded-full">
+                <ng-icon name="siCompte" size="22" />
+              </span>
+            }
+            <div class="min-w-0">
+              <p class="font-semibold">{{ nom(a) }}</p>
+              <p class="text-encre-2 mt-0.5 text-[0.88rem]">
+                {{ a.agence ?? textes.agenceIndependant }}
+              </p>
+              @if (a.valide_le) {
+                <p class="text-encre-3 mt-0.5 text-[0.82rem]">
+                  {{ textes.valideLe(dateJour(a.valide_le)) }}
+                </p>
+              }
+            </div>
+            @if (v.libres.length) {
+              <button
+                type="button"
+                class="lien-texte col-start-2 justify-self-start sm:col-start-auto sm:justify-self-end"
+                [attr.aria-expanded]="ouvert() === a.id"
+                (click)="basculer(a.id)"
+              >
+                {{ textes.confierBien }}
+              </button>
+            }
+            @if (ouvert() === a.id) {
+              <si-confier-bien
+                class="col-span-2 mt-2 sm:col-start-2"
+                [agent]="a"
+                [biens]="v.libres"
+                (confie)="confie($event)"
+                (fermer)="ouvert.set(null)"
+              />
+            }
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="vide">
+        <ng-icon name="siSceau" size="32" class="text-bleu" />
+        <div>
+          <h4 class="font-display text-[1.4rem] leading-tight font-semibold">
+            {{ textes.agentsVidesTitre }}
+          </h4>
+          <p class="text-encre-2 mt-1.5 max-w-[52ch]">{{ textes.agentsVidesTexte }}</p>
+        </div>
+      </div>
+    }
+  </section>
+} @else {
+  <si-chargement-rubrique [erreur]="!!donnees.error()" (reessayer)="donnees.reload()" />
+}

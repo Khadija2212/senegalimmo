@@ -1,0 +1,129 @@
+@let ident = agent().id;
+<form
+  [formGroup]="form"
+  (ngSubmit)="envoyer()"
+  novalidate
+  class="border-border rounded-cadre border px-4 py-4 sm:px-5"
+>
+  <h4 class="font-semibold">{{ textes.titre(agent().prenom + ' ' + agent().nom) }}</h4>
+  @if (alerte(); as a) {
+    <p
+      class="border-destructive bg-alerte text-alerte-texte mt-3 rounded-r-lg border-l-[3px] px-3.5 py-3 text-[0.9rem]"
+      role="alert"
+    >
+      {{ a }}
+    </p>
+  }
+
+  <div class="mt-4 grid gap-x-3 gap-y-4 sm:grid-cols-2">
+    <div class="sm:col-span-2">
+      <span [id]="'l-bien-' + ident" class="text-encre-2 mb-2 block text-[0.8rem] font-semibold">{{
+        textes.bien
+      }}</span>
+      <hlm-select formControlName="bien_id" [itemToString]="titreDe">
+        <hlm-select-trigger [attr.aria-labelledby]="'l-bien-' + ident" class="h-11 w-full bg-white"
+          ><hlm-select-value [placeholder]="textes.choisirBien"
+        /></hlm-select-trigger>
+        <hlm-select-content *hlmSelectPortal>
+          @for (b of biens(); track b.id) {
+            <hlm-select-item [value]="b.id">{{ b.titre }}</hlm-select-item>
+          }
+        </hlm-select-content>
+      </hlm-select>
+      @if (message('bien_id'); as m) {
+        <p class="text-destructive mt-1.5 text-[0.82rem]" role="alert">{{ m }}</p>
+      }
+    </div>
+
+    <div>
+      <span [id]="'l-type-' + ident" class="text-encre-2 mb-2 block text-[0.8rem] font-semibold">{{
+        textes.type
+      }}</span>
+      <hlm-toggle-group
+        type="single"
+        variant="case"
+        [spacing]="1.5"
+        formControlName="type"
+        [attr.aria-labelledby]="'l-type-' + ident"
+      >
+        <button hlmToggleGroupItem value="simple" class="h-11 px-4">{{ textes.simple }}</button>
+        <button hlmToggleGroupItem value="exclusif" class="h-11 px-4">
+          {{ textes.exclusif }}
+        </button>
+      </hlm-toggle-group>
+    </div>
+
+    <div>
+      <label
+        hlmLabel
+        [for]="'f-taux-' + ident"
+        class="text-encre-2 mb-2 block text-[0.8rem] font-semibold"
+        >{{ textes.taux }}</label
+      >
+      <input
+        hlmInput
+        [id]="'f-taux-' + ident"
+        type="number"
+        min="0"
+        max="100"
+        step="0.5"
+        inputmode="decimal"
+        class="h-11 w-full bg-white tabular-nums"
+        formControlName="taux_commission"
+      />
+      @if (message('taux_commission'); as m) {
+        <p class="text-destructive mt-1.5 text-[0.82rem]" role="alert">{{ m }}</p>
+      }
+    </div>
+
+    <div>
+      <label
+        hlmLabel
+        [for]="'f-debut-' + ident"
+        class="text-encre-2 mb-2 block text-[0.8rem] font-semibold"
+        >{{ textes.debut }}</label
+      >
+      <input
+        hlmInput
+        [id]="'f-debut-' + ident"
+        type="date"
+        class="h-11 w-full bg-white"
+        [min]="aujourdhui"
+        formControlName="date_debut"
+      />
+      @if (message('date_debut'); as m) {
+        <p class="text-destructive mt-1.5 text-[0.82rem]" role="alert">{{ m }}</p>
+      }
+    </div>
+
+    <div>
+      <label
+        hlmLabel
+        [for]="'f-fin-' + ident"
+        class="text-encre-2 mb-2 block text-[0.8rem] font-semibold"
+        >{{ textes.fin }}</label
+      >
+      <input
+        hlmInput
+        [id]="'f-fin-' + ident"
+        type="date"
+        class="h-11 w-full bg-white"
+        formControlName="date_fin"
+      />
+      @if (message('date_fin'); as m) {
+        <p class="text-destructive mt-1.5 text-[0.82rem]" role="alert">{{ m }}</p>
+      }
+    </div>
+  </div>
+
+  @if (form.controls.type.value === 'exclusif') {
+    <p class="text-encre-2 mt-3 text-[0.85rem]">{{ textes.noteExclusif }}</p>
+  }
+  <div class="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3">
+    <button hlmBtn type="submit" class="h-[46px] px-5" [disabled]="enCours()">
+      {{ enCours() ? textes.envoiEnCours : textes.envoyer }}
+    </button>
+    <button type="button" class="lien-texte" (click)="fermer.emit()">{{ textes.annuler }}</button>
+  </div>
+  <p class="text-encre-3 mt-3 text-[0.82rem]">{{ textes.note }}</p>
+</form>
