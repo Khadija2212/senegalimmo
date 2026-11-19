@@ -1,0 +1,122 @@
+@let l = ligne();
+@if (l.photo) {
+  <img [src]="l.photo" alt="" class="size-16 rounded-champ object-cover sm:h-[72px] sm:w-24" />
+} @else {
+  <span class="bg-brume size-16 rounded-champ sm:h-[72px] sm:w-24"></span>
+}
+
+<div class="min-w-0">
+  <span
+    class="text-encre-3 flex items-center gap-2 text-[0.78rem] font-semibold tracking-[0.06em] uppercase"
+  >
+    <ng-icon name="siSceau" size="18" class="text-bleu" />{{ l.type }}
+  </span>
+  <h3 class="mt-1 text-[1.02rem] leading-snug font-semibold">{{ l.mandat.bien.titre }}</h3>
+  <p class="text-encre-2 mt-1 text-[0.9rem]">
+    @if (l.proprietaire) {
+      {{ textes.proprietaireDe(l.proprietaire) }}
+    } @else {
+      {{ l.mandat.bien.quartier }}, {{ l.mandat.bien.ville }}
+    }
+  </p>
+  <p class="text-encre-2 mt-1 text-[0.9rem] tabular-nums">
+    <b class="text-foreground font-semibold">{{ l.commission }}</b
+    >{{ textes.finLe(l.fin) }}
+  </p>
+  <p class="mt-2 text-[0.88rem]">
+    <b class="font-semibold" [class]="couleur()">{{ l.etat.libelle }}</b>
+    @if (l.etat.explication) {
+      <span class="text-encre-2 block sm:ml-1.5 sm:inline">{{ l.etat.explication }}</span>
+    }
+  </p>
+</div>
+
+<div class="col-start-2 flex flex-col items-start gap-2 sm:col-start-auto sm:items-end">
+  @if (l.aSigner) {
+    @if (principale()) {
+      <a hlmBtn class="h-[42px] px-4 text-[0.9rem]" [routerLink]="liens.contrats">{{
+        textes.signer
+      }}</a>
+    } @else {
+      <a class="lien-texte" [routerLink]="liens.contrats">{{ textes.signer }}</a>
+    }
+  }
+  @if (l.peutRenouveler || l.peutResilier) {
+    <div class="flex flex-wrap gap-4 sm:justify-end">
+      @if (l.peutRenouveler) {
+        <button
+          type="button"
+          class="lien-texte"
+          [attr.aria-expanded]="volet() === 'renouveler'"
+          (click)="ouvrir('renouveler')"
+        >
+          {{ textes.renouveler }}
+        </button>
+      }
+      @if (l.peutResilier) {
+        <button
+          type="button"
+          class="lien-texte danger"
+          [attr.aria-expanded]="volet() === 'resilier'"
+          (click)="ouvrir('resilier')"
+        >
+          {{ textes.resilier }}
+        </button>
+      }
+    </div>
+  }
+</div>
+
+@switch (volet()) {
+  @case ('renouveler') {
+    <div class="border-ciel bg-brume col-span-2 block rounded-cadre border p-[18px] sm:col-start-2">
+      <label
+        hlmLabel
+        [for]="'mandat-' + l.mandat.id + '-duree'"
+        class="text-encre-2 mb-2 block text-[0.8rem] font-semibold"
+        >{{ textes.dureeMois }}</label
+      >
+      <input
+        hlmInput
+        type="number"
+        min="1"
+        [max]="dureeMax"
+        [id]="'mandat-' + l.mandat.id + '-duree'"
+        class="h-11 w-28 bg-white tabular-nums"
+        [value]="duree()"
+        (input)="duree.set($any($event.target).valueAsNumber)"
+      />
+      <div class="mt-4 flex flex-wrap items-center gap-4">
+        <button
+          hlmBtn
+          size="grand"
+          class="h-11"
+          [disabled]="enCours() || !dureeValide()"
+          (click)="renouveler.emit(duree())"
+        >
+          {{ enCours() ? textes.envoiEnCours : textes.renouvelerPour(duree()) }}
+        </button>
+        <button type="button" class="lien-texte" (click)="volet.set(null)">
+          {{ textes.fermer }}
+        </button>
+      </div>
+    </div>
+  }
+  @case ('resilier') {
+    <si-saisie-motif
+      class="col-span-2 sm:col-start-2"
+      [ident]="'mandat-' + l.mandat.id"
+      [question]="textes.confirmerResiliation(l.mandat.bien.titre)"
+      [libelle]="textes.motifResiliation"
+      [exemple]="textes.placeholderResiliation"
+      [oui]="textes.ouiResilier"
+      [non]="textes.nonGarderMandat"
+      [enCours]="enCours()"
+      (valider)="resilier.emit($event)"
+      (fermer)="volet.set(null)"
+    />
+  }
+}
+@if (erreur(); as e) {
+  <p class="text-destructive col-span-2 text-[0.85rem] sm:col-start-2" role="alert">{{ e }}</p>
+}

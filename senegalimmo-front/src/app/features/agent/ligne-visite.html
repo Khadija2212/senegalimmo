@@ -1,0 +1,135 @@
+@let l = ligne();
+@if (l.photo) {
+  <img [src]="l.photo" alt="" class="size-16 rounded-champ object-cover sm:h-[72px] sm:w-24" />
+} @else {
+  <span class="bg-brume size-16 rounded-champ sm:h-[72px] sm:w-24"></span>
+}
+
+<div class="min-w-0">
+  <span
+    class="text-encre-3 flex items-center gap-2 text-[0.78rem] font-semibold tracking-[0.06em] uppercase"
+  >
+    <ng-icon name="siCle" size="18" class="text-bleu" />{{ textes.genreVisite }}
+  </span>
+  <h3 class="mt-1 text-[1.02rem] leading-snug font-semibold">
+    <a [routerLink]="lienAnnonce()" class="hover:underline hover:underline-offset-[3px]">{{
+      l.annonce.bien.titre
+    }}</a>
+  </h3>
+  <p class="text-encre-2 mt-1 text-[0.9rem] tabular-nums">
+    <b class="text-foreground font-semibold">{{ l.quand }}</b
+    >{{ textes.par(l.nomClient, l.client.telephone) }}
+  </p>
+  <p class="mt-2 text-[0.88rem]">
+    <b class="font-semibold" [class]="couleur()">{{ l.etat.libelle }}</b>
+    @if (l.etat.explication) {
+      <span class="text-encre-2 block sm:ml-1.5 sm:inline">{{ l.etat.explication }}</span>
+    }
+  </p>
+  @if (l.compteRendu) {
+    <p class="text-encre-2 mt-2 max-w-[62ch] text-[0.88rem] whitespace-pre-line">
+      {{ l.compteRendu }}
+    </p>
+  }
+</div>
+
+<div class="col-start-2 flex flex-col items-start gap-2 sm:col-start-auto sm:items-end">
+  @if (l.peutConfirmer) {
+    @if (principale()) {
+      <button
+        hlmBtn
+        class="h-[42px] px-4 text-[0.9rem]"
+        [disabled]="enCours()"
+        (click)="confirmer.emit()"
+      >
+        {{ textes.confirmer }}
+      </button>
+    } @else {
+      <button type="button" class="lien-texte" [disabled]="enCours()" (click)="confirmer.emit()">
+        {{ textes.confirmer }}
+      </button>
+    }
+    <button
+      type="button"
+      class="lien-texte danger"
+      [attr.aria-expanded]="volet() === 'refuser'"
+      (click)="ouvrir('refuser')"
+    >
+      {{ textes.refuser }}
+    </button>
+  }
+  @if (l.peutReprogrammer) {
+    <button
+      type="button"
+      class="lien-texte"
+      [attr.aria-expanded]="volet() === 'reprogrammer'"
+      (click)="ouvrir('reprogrammer')"
+    >
+      {{ textes.reprogrammer }}
+    </button>
+  }
+  @if (l.peutRediger) {
+    @if (principale()) {
+      <button
+        hlmBtn
+        class="h-[42px] px-4 text-[0.9rem]"
+        [attr.aria-expanded]="volet() === 'rediger'"
+        (click)="ouvrir('rediger')"
+      >
+        {{ textes.redigerCompteRendu }}
+      </button>
+    } @else {
+      <button
+        type="button"
+        class="lien-texte"
+        [attr.aria-expanded]="volet() === 'rediger'"
+        (click)="ouvrir('rediger')"
+      >
+        {{ textes.redigerCompteRendu }}
+      </button>
+    }
+  }
+  @if (l.groupe === 'aVenir') {
+    <a
+      class="lien-texte"
+      [routerLink]="liens.messages"
+      [queryParams]="{ a: l.client.id, annonce: l.annonce.id }"
+      >{{ textes.ecrireClient }}</a
+    >
+  }
+</div>
+
+@switch (volet()) {
+  @case ('refuser') {
+    <si-saisie-motif
+      class="col-span-2 sm:col-start-2"
+      [ident]="l.cle"
+      [libelle]="textes.motifRefus"
+      [oui]="textes.ouiRefuser"
+      [enCours]="enCours()"
+      (valider)="refuser.emit($event)"
+      (fermer)="volet.set(null)"
+    />
+  }
+  @case ('reprogrammer') {
+    <si-reprogrammer-agent
+      class="col-span-2 sm:col-start-2"
+      [ident]="l.cle"
+      [enCours]="enCours()"
+      (valider)="reprogrammer.emit($event)"
+      (fermer)="volet.set(null)"
+    />
+  }
+  @case ('rediger') {
+    <si-formulaire-compte-rendu
+      class="col-span-2 sm:col-start-2"
+      [ident]="l.cle"
+      [enCours]="enCours()"
+      (valider)="rediger.emit($event)"
+      (fermer)="volet.set(null)"
+    />
+  }
+}
+@if (erreur(); as e) {
+  <p class="text-destructive col-span-2 text-[0.85rem] sm:col-start-2" role="alert">{{ e }}</p>
+}
