@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Contracts\ServiceStockage;
 use App\Enums\CanalNotification;
 use App\Enums\Role;
 use App\Enums\StatutCompte;
@@ -45,7 +46,16 @@ abstract class Compte extends Authenticatable
         'valide_le' => 'datetime',
     ];
 
-    protected $appends = ['role'];
+    protected $appends = ['role', 'photo_lien'];
+
+    /** Durée de validité de l'adresse de lecture de la photo. */
+    private const DUREE_LIEN_PHOTO_MIN = 60;
+
+    /** Adresse de lecture temporaire de la photo de profil, ou null sans photo. */
+    public function getPhotoLienAttribute(): ?string
+    {
+        return $this->photo_url ? app(ServiceStockage::class)->urlSignee($this->photo_url, self::DUREE_LIEN_PHOTO_MIN) : null;
+    }
 
     protected static function colonneDiscriminante(): string
     {

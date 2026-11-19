@@ -18,7 +18,7 @@ class ConversationController extends Controller
     public function index(Request $request): JsonResponse
     {
         $moi = $request->user();
-        $conversations = $moi->conversations()->with(['participants:id,prenom,nom,role,photo_url', 'annonce.bien:id,titre'])
+        $conversations = $moi->conversations()->with(['participants:id,prenom,nom,role,photo_url', 'annonce.bien:id,titre', 'dernierMessage'])
             ->orderByDesc('dernier_message_le')->get()
             ->map(fn (Conversation $c) => $c->toArray() + ['non_lus' => $c->nonLus($moi)]);
 

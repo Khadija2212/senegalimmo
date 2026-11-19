@@ -67,7 +67,7 @@ class RechercheController extends Controller
             'ids.*' => ['uuid', 'distinct'],
         ])['ids'];
 
-        return response()->json(Annonce::publiees()->with('bien.medias')->whereIn('id', $ids)->get());
+        return response()->json(Annonce::publiees()->with(['bien.medias', 'bien.proprietaire:id,prenom,nom'])->whereIn('id', $ids)->get());
     }
 
     public function consulter(Annonce $annonce): JsonResponse
